@@ -4,12 +4,23 @@ import sys
 from flask import Flask, render_template  # 新增：导入 render_template 用于渲染模板
 from flask_apscheduler import APScheduler
 
+# 修正：动态获取项目根目录（兼容开发和打包环境）
+if getattr(sys, 'frozen', False):
+    # 打包后的环境（可执行文件运行时）
+    PROJECT_ROOT = os.path.dirname(sys.executable)
+else:
+    # 开发环境（通过 run.py 启动时）
+    PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 # 检查项目根目录是否在 sys.path 中
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
-    raise ImportError(
-        f"项目根目录 {PROJECT_ROOT} 未加入 sys.path！\n"
-        "请通过项目根目录的 run.py 启动，不要直接执行 app 模块。"
+    # 自动添加根目录到 sys.path（避免手动启动的问题）
+    sys.path.insert(0, PROJECT_ROOT)
+    # 注释掉强制报错的逻辑，改为警告
+    import logging
+    logging.warning(
+        f"项目根目录 {PROJECT_ROOT} 未加入 sys.path，已自动添加！\n"
+        "建议通过项目根目录的 run.py 启动。"
     )
 
 # 导入配置
