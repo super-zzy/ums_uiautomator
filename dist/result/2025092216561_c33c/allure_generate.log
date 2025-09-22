@@ -1,0 +1,10 @@
+=== 任务2025092216561_c33c Allure报告生成日志 ===
+生成时间：2025-09-22 16:56:25
+生成耗时：0.07秒
+执行命令：allure generate D:\PyCharmProjects\ums_uiautomator\dist\result\2025092216561_c33c\allure_raw -o D:\PyCharmProjects\ums_uiautomator\dist\result\2025092216561_c33c\allure_html --clean --title report_2025092216561_c33c
+
+=== 标准输出（stdout）===
+无输出
+
+=== 错误输出（stderr）===
+无错误输出

@@ -1,0 +1,25 @@
+{
+  "task_id": "2025092216561_c33c",
+  "device_id": "AF8YVB1805003480",
+  "suite_path": "D:\\PyCharmProjects\\ums_uiautomator\\dist\\test_suite\\demo.py",
+  "generate_time": "2025-09-22 16:56:25",
+  "report_config": {
+    "clean_before_generate": true,
+    "generate_timeout": 600,
+    "report_compress": false,
+    "compress_format": "zip",
+    "keep_raw_data": false
+  },
+  "report_info": {
+    "status": "failed",
+    "index_path": null,
+    "compress_path": null,
+    "error_msg": "'NoneType' object is not subscriptable",
+    "generate_duration": 0.07
+  },
+  "file_stats": {
+    "task_log_size_mb": 0.0012,
+    "allure_log_size_mb": 0.0004,
+    "raw_data_count": 0
+  }
+}
