@@ -22,7 +22,7 @@ a = Analysis(
         (os.path.join(PROJECT_ROOT, 'app', 'templates'), 'app/templates'),
     ],
     hiddenimports=[
-        'yaml', 'flask', 'apscheduler', 'uiautomator2', 'pytest', 'allure_pytest'
+        'yaml', 'flask', 'apscheduler', 'uiautomator2', 'pytest', 'allure_pytest', 'core', 'core.device_manager', 'core.uiautomator'
     ],
     hookspath=[],
     hooksconfig={},
@@ -45,7 +45,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='AutomationTest',  # 可执行文件名称
+    name='UmsUiautomator',  # 可执行文件名称
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
