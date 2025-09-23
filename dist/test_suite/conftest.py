@@ -2,6 +2,22 @@
 # @Author   : zyli3
 # -*- coding: utf-8 -*-
 import pytest
+import sys
+import os
+from pathlib import Path
+
+# 处理 PyInstaller 单文件模式的路径问题
+if getattr(sys, 'frozen', False):
+    # 运行在打包后的环境中
+    base_path = Path(sys._MEIPASS)
+else:
+    # 运行在开发环境中
+    base_path = Path(__file__).parent.parent
+
+# 将核心模块目录添加到系统路径
+sys.path.append(str(base_path))
+
+# 现在可以正常导入
 from core.device_manager import DeviceManager
 from core.uiautomator import Uiautomator
 

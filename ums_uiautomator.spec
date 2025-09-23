@@ -19,6 +19,7 @@ a = Analysis(
         (os.path.join(PROJECT_ROOT, 'conf'), 'conf'),
         # 其他必要目录...
         (os.path.join(PROJECT_ROOT, 'test_suite'), 'test_suite'),
+        (os.path.join(PROJECT_ROOT, 'core'), 'core'),
         (os.path.join(PROJECT_ROOT, 'app', 'templates'), 'app/templates'),
     ],
     hiddenimports=[
