@@ -1,0 +1,1 @@
+{"b4bf34a9849d985419f9bc8954a342aa":{"statistic":{"failed":0,"broken":1,"skipped":0,"passed":0,"unknown":0,"total":1},"items":[{"uid":"78bb4b9347a940fa","status":"broken","statusDetails":"AttributeError: 'Uiautomator' object has no attribute 'unlock'","time":{"start":1758615699536,"stop":1758615699537,"duration":1}}]}}

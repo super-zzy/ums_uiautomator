@@ -1,0 +1,11 @@
+=== 任务2025092316230_9c6b Pytest执行日志 ===
+执行时间：2025-09-23 16:23:13
+执行耗时：6.73秒
+执行命令：python -m pytest D:\PyCharmProjects\ums_uiautomator\dist\test_suite\demo.py --device_id=AF8YVB1805003480 --task_id=2025092316230_9c6b --alluredir=D:\PyCharmProjects\ums_uiautomator\dist\result\2025092316230_9c6b\allure_raw -v --tb=short --timeout=3600
+返回码：1
+
+=== 标准输出（stdout）===
+无输出
+
+=== 错误输出（stderr）===
+无错误输出

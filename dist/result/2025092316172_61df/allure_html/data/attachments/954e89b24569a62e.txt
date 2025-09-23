@@ -1,0 +1,5 @@
+INFO     device_AF8YVB1805003480:log_util.py:60 设备AF8YVB1805003480执行亮屏操作
+INFO     device_AF8YVB1805003480:log_util.py:60 设备AF8YVB1805003480点击坐标：(100, 100)
+INFO     device_AF8YVB1805003480:log_util.py:60 设备AF8YVB1805003480点击坐标：(200, 200)
+INFO     device_AF8YVB1805003480:log_util.py:60 两次点击操作完成，测试通过
+INFO     device_AF8YVB1805003480:log_util.py:60 设备AF8YVB1805003480执行按键操作：home

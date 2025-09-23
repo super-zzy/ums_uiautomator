@@ -1,0 +1,12 @@
+=== 任务2025092316212_8680 Allure报告生成日志 ===
+生成时间：2025-09-23 16:21:43
+生成耗时：3.51秒
+执行命令：allure generate D:\PyCharmProjects\ums_uiautomator\dist\result\2025092316212_8680\allure_raw -o D:\PyCharmProjects\ums_uiautomator\dist\result\2025092316212_8680\allure_html --clean --title report_2025092316212_8680
+
+=== 标准输出（stdout）===
+--title does not exist
+report_2025092316212_8680 does not exist
+Report successfully generated to D:\PyCharmProjects\ums_uiautomator\dist\result\2025092316212_8680\allure_html
+
+=== 错误输出（stderr）===
+无错误输出

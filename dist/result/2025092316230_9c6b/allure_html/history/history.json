@@ -1,0 +1,1 @@
+{"b4bf34a9849d985419f9bc8954a342aa":{"statistic":{"failed":0,"broken":1,"skipped":0,"passed":0,"unknown":0,"total":1},"items":[{"uid":"a97eb4e8f151726f","status":"broken","statusDetails":"AttributeError: 'Uiautomator' object has no attribute 'app_start'","time":{"start":1758615792703,"stop":1758615793238,"duration":535}}]}}
