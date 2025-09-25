@@ -4,6 +4,7 @@ import time
 import os
 from conf import GlobalConfig
 from util.log_util import TempLog
+import uiautomator2 as u2  # 导入uiautomator2库
 
 
 class Uiautomator:
@@ -12,6 +13,7 @@ class Uiautomator:
         self.log = log_util or TempLog()
         self.atx_version = GlobalConfig["device"]["atx_version"]  # 保留版本配置，用于后续校验
         self.initialized = False  # 初始化状态标记
+        self._device = None  # 用于存储uiautomator2的Device实例
         self._init_device()  # 初始化设备（失败则抛出异常）
 
     def _init_device(self) -> None:
@@ -32,8 +34,10 @@ class Uiautomator:
             # 3. 校验 atx-agent 版本（确保初始化结果符合预期）
             self._verify_atx_agent_version()
 
+            # 4. 连接设备并获取uiautomator2的Device实例
+            self._device = u2.connect(self.device_id)
             self.initialized = True
-            self.log.info(f"设备{self.device_id}初始化成功")
+            self.log.info(f"设备{self.device_id}初始化成功，已连接uiautomator2")
         except Exception as e:
             self.log.error(f"设备{self.device_id}初始化失败：{str(e)}", exc_info=True)
             raise  # 向上抛出异常，避免返回未初始化的实例
@@ -105,6 +109,14 @@ class Uiautomator:
         #         f"atx-agent 版本不匹配（期望：{self.atx_version}，实际：{actual_version}）"
         #     )
         # self.log.info(f"atx-agent 版本校验通过：{actual_version}")
+
+    # 代理方法：将未定义的方法转发给uiautomator2的Device实例
+    def __getattr__(self, name):
+        """当调用Uiautomator未定义的方法时，自动转发给self._device"""
+        if not self.initialized:
+            raise RuntimeError(f"设备{self.device_id}未初始化，无法调用方法：{name}")
+        # 从Device实例中获取对应方法
+        return getattr(self._device, name)
 
     # ------------------- 原有设备控制接口（完全保留，确保功能兼容） -------------------
     def screen_on(self) -> bool:

@@ -1,0 +1,11 @@
+=== 任务2025092511091_48d7 Pytest执行日志 ===
+执行时间：2025-09-25 11:09:31
+执行耗时：7.57秒
+执行命令：python -m pytest D:\PyCharmProjects\ums_uiautomator\dist\test_suite\demo.py --device_id=AF8YVB1805003480 --task_id=2025092511091_48d7 --alluredir=D:\PyCharmProjects\ums_uiautomator\dist\result\2025092511091_48d7\allure_raw -v --tb=short --timeout=3600
+返回码：1
+
+=== 标准输出（stdout）===
+无输出
+
+=== 错误输出（stderr）===
+无错误输出

@@ -21,6 +21,7 @@ a = Analysis(
         (os.path.join(PROJECT_ROOT, 'test_suite'), 'test_suite'),
         (os.path.join(PROJECT_ROOT, 'core'), 'core'),
         (os.path.join(PROJECT_ROOT, 'app', 'templates'), 'app/templates'),
+        (r'C:\Python313\Lib\site-packages\uiautomator2\assets\u2.jar', r'uiautomator2\assets')
     ],
     hiddenimports=[
         'yaml', 'flask', 'apscheduler', 'uiautomator2', 'pytest', 'allure_pytest', 'core', 'core.device_manager', 'core.uiautomator'
