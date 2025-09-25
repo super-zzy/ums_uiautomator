@@ -2,7 +2,25 @@
 # @Author   : zyli3
 # -*- coding: utf-8 -*-
 import os
+# filePath: ums_uiautomator/util/path_util.py
+import os
+from conf import GlobalConfig  # 假设GlobalConfig用于读取配置
 
+
+def get_report_root() -> str:
+    """获取报告根目录（result目录的绝对路径）"""
+    # 从全局配置中读取报告根目录（优先使用配置）
+    if "path" in GlobalConfig and "report_root_dir" in GlobalConfig["path"]:
+        report_root = GlobalConfig["path"]["report_root_dir"]
+    else:
+        # 配置未定义时，默认使用项目根目录下的result目录
+        # 注意：需根据实际项目结构调整相对路径
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        report_root = os.path.join(project_root, "result")
+
+    # 确保目录存在
+    os.makedirs(report_root, exist_ok=True)
+    return report_root
 
 def safe_join(base_dir: str, *paths: str) -> str:
     """
