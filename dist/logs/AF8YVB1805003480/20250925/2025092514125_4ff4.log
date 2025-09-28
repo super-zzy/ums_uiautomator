@@ -1,0 +1,39 @@
+[2025-09-25 14:12:50] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2025-09-25 14:12:51] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2025-09-25 14:12:51] [device_AF8YVB1805003480] [INFO] 执行初始化命令：python -m uiautomator2 init AF8YVB1805003480
+[2025-09-25 14:12:51] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:51,646 core:254 pid:9088] file u2.jar md5: 3564c56e4ef077f92c0fd32bcb42aea1
+[2025-09-25 14:12:51] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:51,728 core:243 pid:9088] file u2.jar already pushed
+[2025-09-25 14:12:51] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:51,729 core:111 pid:9088] http request GET /ping None
+[2025-09-25 14:12:51] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:51,760 core:71 pid:9088] launch uiautomator with cmd: CLASSPATH=/data/local/tmp/u2.jar app_process / com.wetest.uia2.Main
+[2025-09-25 14:12:51] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:51,783 core:111 pid:9088] http request GET /ping None
+[2025-09-25 14:12:52] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:52,313 core:111 pid:9088] http request GET /ping None
+[2025-09-25 14:12:52] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:52,432 core:39 pid:9088] MockAdbProcess: b'[server] INFO: [UiAutomator2Server] Starting Server\n'
+[2025-09-25 14:12:52] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:52,621 core:39 pid:9088] MockAdbProcess: b'SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".\nSLF4J: Defaulting to no-operation (NOP) logger implementation\nSLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.\n'
+[2025-09-25 14:12:52] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:52,688 core:39 pid:9088] MockAdbProcess: b'[server] INFO: clipboardManager inited\n'
+[2025-09-25 14:12:52] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:52,697 core:39 pid:9088] MockAdbProcess: b'[server] INFO: tmpdir is /data/local/tmp/u2\n'
+[2025-09-25 14:12:52] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:52,712 core:39 pid:9088] MockAdbProcess: b'[server] INFO: http server listening on *:9008\n'
+[2025-09-25 14:12:52] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:52,858 core:111 pid:9088] http request GET /ping None
+[2025-09-25 14:12:52] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:52,901 core:254 pid:9088] file u2.jar md5: 3564c56e4ef077f92c0fd32bcb42aea1
+[2025-09-25 14:12:52] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:52,974 core:243 pid:9088] file u2.jar already pushed
+[2025-09-25 14:12:53] [device_AF8YVB1805003480] [INFO] uiautomator2 init 命令执行完成
+[2025-09-25 14:12:55] [device_AF8YVB1805003480] [DEBUG] 执行 atx-agent 版本校验命令：adb -s AF8YVB1805003480 shell /data/local/tmp/atx-agent version
+[2025-09-25 14:12:56] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480初始化成功，已连接uiautomator2
+[2025-09-25 14:12:56] [task_2025092514125_4ff4] [INFO] 准备测试环境：D:\PyCharmProjects\ums_uiautomator\dist\result\2025092514125_4ff4
+[2025-09-25 14:12:56] [task_2025092514125_4ff4] [DEBUG] 创建目录成功：D:\PyCharmProjects\ums_uiautomator\dist\result\2025092514125_4ff4\allure_raw
+[2025-09-25 14:12:56] [task_2025092514125_4ff4] [DEBUG] 创建目录成功：D:\PyCharmProjects\ums_uiautomator\dist\result\2025092514125_4ff4\allure_html
+[2025-09-25 14:12:56] [task_2025092514125_4ff4] [INFO] 测试目录初始化完成：D:\PyCharmProjects\ums_uiautomator\dist\result\2025092514125_4ff4
+[2025-09-25 14:12:56] [task_2025092514125_4ff4] [INFO] 测试用例校验通过：D:\PyCharmProjects\ums_uiautomator\dist\test_suite\demo.py（文件大小：1.20KB）
+[2025-09-25 14:12:56] [task_2025092514125_4ff4] [INFO] 开始执行Pytest测试...
+[2025-09-25 14:12:57] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2025-09-25 14:12:57] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2025-09-25 14:12:57] [device_AF8YVB1805003480] [INFO] 执行初始化命令：python -m uiautomator2 init AF8YVB1805003480
+[2025-09-25 14:12:58] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:58,221 core:254 pid:38020] file u2.jar md5: 3564c56e4ef077f92c0fd32bcb42aea1
+[2025-09-25 14:12:58] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:58,290 core:243 pid:38020] file u2.jar already pushed
+[2025-09-25 14:12:58] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:58,290 core:111 pid:38020] http request GET /ping None
+[2025-09-25 14:12:58] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:58,321 core:254 pid:38020] file u2.jar md5: 3564c56e4ef077f92c0fd32bcb42aea1
+[2025-09-25 14:12:58] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 14:12:58,411 core:243 pid:38020] file u2.jar already pushed
+[2025-09-25 14:12:58] [device_AF8YVB1805003480] [INFO] uiautomator2 init 命令执行完成
+[2025-09-25 14:13:00] [device_AF8YVB1805003480] [DEBUG] 执行 atx-agent 版本校验命令：adb -s AF8YVB1805003480 shell /data/local/tmp/atx-agent version
+[2025-09-25 14:13:00] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480初始化成功，已连接uiautomator2
+[2025-09-25 14:13:01] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行亮屏操作
+[2025-09-25 14:13:07] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home

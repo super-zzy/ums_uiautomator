@@ -1,0 +1,33 @@
+[2025-09-25 11:36:11] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2025-09-25 11:36:11] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2025-09-25 11:36:11] [device_AF8YVB1805003480] [INFO] 执行初始化命令：python -m uiautomator2 init AF8YVB1805003480
+[2025-09-25 11:36:11] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 11:36:11,881 core:254 pid:36920] file u2.jar md5: 3564c56e4ef077f92c0fd32bcb42aea1
+[2025-09-25 11:36:11] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 11:36:11,951 core:243 pid:36920] file u2.jar already pushed
+[2025-09-25 11:36:11] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 11:36:11,951 core:111 pid:36920] http request GET /ping None
+[2025-09-25 11:36:11] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 11:36:11,983 core:71 pid:36920] launch uiautomator with cmd: CLASSPATH=/data/local/tmp/u2.jar app_process / com.wetest.uia2.Main
+[2025-09-25 11:36:12] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 11:36:12,004 core:111 pid:36920] http request GET /ping None
+[2025-09-25 11:36:12] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 11:36:12,535 core:111 pid:36920] http request GET /ping None
+[2025-09-25 11:36:12] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 11:36:12,649 core:39 pid:36920] MockAdbProcess: b'[server] INFO: [UiAutomator2Server] Starting Server\n'
+[2025-09-25 11:36:12] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 11:36:12,846 core:39 pid:36920] MockAdbProcess: b'SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".\nSLF4J: Defaulting to no-operation (NOP) logger implementation\nSLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.\n'
+[2025-09-25 11:36:12] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 11:36:12,912 core:39 pid:36920] MockAdbProcess: b'[server] INFO: clipboardManager inited\n'
+[2025-09-25 11:36:12] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 11:36:12,916 core:39 pid:36920] MockAdbProcess: b'[server] INFO: tmpdir is /data/local/tmp/u2\n'
+[2025-09-25 11:36:12] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 11:36:12,929 core:39 pid:36920] MockAdbProcess: b'[server] INFO: http server listening on *:9008\n'
+[2025-09-25 11:36:13] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 11:36:13,066 core:111 pid:36920] http request GET /ping None
+[2025-09-25 11:36:13] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 11:36:13,116 core:254 pid:36920] file u2.jar md5: 3564c56e4ef077f92c0fd32bcb42aea1
+[2025-09-25 11:36:13] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2025-09-25 11:36:13,188 core:243 pid:36920] file u2.jar already pushed
+[2025-09-25 11:36:13] [device_AF8YVB1805003480] [INFO] uiautomator2 init 命令执行完成
+[2025-09-25 11:36:15] [device_AF8YVB1805003480] [DEBUG] 执行 atx-agent 版本校验命令：adb -s AF8YVB1805003480 shell /data/local/tmp/atx-agent version
+[2025-09-25 11:36:15] [device_AF8YVB1805003480] [ERROR] 设备AF8YVB1805003480初始化失败：Resource assets/u2.jar not found in uiautomator2 package.
+Traceback (most recent call last):
+  File "D:\PyCharmProjects\ums_uiautomator\dist\core\uiautomator.py", line 38, in _init_device
+    self._device = u2.connect(self.device_id)
+                   ~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "uiautomator2\__init__.py", line 947, in connect
+  File "uiautomator2\__init__.py", line 963, in connect_usb
+  File "uiautomator2\base.py", line 38, in __init__
+  File "uiautomator2\core.py", line 212, in __init__
+  File "uiautomator2\core.py", line 231, in start_uiautomator
+  File "uiautomator2\core.py", line 240, in _setup_jar
+  File "contextlib.py", line 141, in __enter__
+  File "uiautomator2\utils.py", line 54, in with_package_resource
+FileNotFoundError: Resource assets/u2.jar not found in uiautomator2 package.

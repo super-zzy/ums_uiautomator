@@ -32,7 +32,7 @@ class Uiautomator:
             self._run_uiautomator2_init()
 
             # 3. 校验 atx-agent 版本（确保初始化结果符合预期）
-            self._verify_atx_agent_version()
+            # self._verify_atx_agent_version()
 
             # 4. 连接设备并获取uiautomator2的Device实例
             self._device = u2.connect(self.device_id)
