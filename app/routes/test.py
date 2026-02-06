@@ -463,3 +463,200 @@ def format_code():
             "msg": error_msg,
             "data": None
         })
+
+# 新增导入
+from core.exec_set_manager import ExecSetManager
+
+# ------------------- 执行集接口 -------------------
+@test_bp.get("/exec-sets")
+def get_exec_sets():
+    """获取所有执行集"""
+    try:
+        exec_sets = ExecSetManager.get_all_exec_sets()
+        return jsonify({
+            "code": 200,
+            "msg": f"获取执行集成功（共{len(exec_sets)}个）",
+            "data": exec_sets
+        })
+    except Exception as e:
+        error_msg = f"获取执行集失败：{str(e)}"
+        log.error(error_msg)
+        return jsonify({
+            "code": 400,
+            "msg": error_msg,
+            "data": []
+        })
+
+
+@test_bp.get("/exec-set/<exec_set_id>")
+def get_exec_set_detail(exec_set_id):
+    """获取执行集详情（含用例列表）"""
+    try:
+        exec_set = ExecSetManager.get_exec_set_by_id(exec_set_id)
+        if not exec_set:
+            return jsonify({"code": 404, "msg": "执行集不存在", "data": None})
+        return jsonify({
+            "code": 200,
+            "msg": "获取执行集详情成功",
+            "data": exec_set
+        })
+    except Exception as e:
+        error_msg = f"获取执行集详情失败：{str(e)}"
+        log.error(error_msg)
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+
+@test_bp.post("/exec-set")
+def create_exec_set():
+    """创建执行集"""
+    try:
+        req_data = request.get_json() or {}
+        name = req_data.get("name")
+        desc = req_data.get("description", "")
+
+        if not name:
+            return jsonify({"code": 400, "msg": "执行集名称不能为空", "data": None})
+
+        exec_set = ExecSetManager.create_exec_set(name, desc)
+        if not exec_set:
+            return jsonify({"code": 400, "msg": "执行集名称已存在", "data": None})
+
+        return jsonify({
+            "code": 200,
+            "msg": "创建执行集成功",
+            "data": exec_set
+        })
+    except Exception as e:
+        error_msg = f"创建执行集失败：{str(e)}"
+        log.error(error_msg)
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+
+@test_bp.put("/exec-set/<exec_set_id>")
+def update_exec_set(exec_set_id):
+    """更新执行集基本信息"""
+    try:
+        req_data = request.get_json() or {}
+        name = req_data.get("name")
+        desc = req_data.get("description")
+
+        success = ExecSetManager.update_exec_set(exec_set_id, name, desc)
+        if success:
+            return jsonify({"code": 200, "msg": "更新执行集成功", "data": None})
+        return jsonify({"code": 400, "msg": "更新失败（名称重复或执行集不存在）", "data": None})
+    except Exception as e:
+        error_msg = f"更新执行集失败：{str(e)}"
+        log.error(error_msg)
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+
+@test_bp.post("/exec-set/<exec_set_id>/cases")
+def add_cases_to_exec_set(exec_set_id):
+    """添加用例到执行集"""
+    try:
+        req_data = request.get_json() or {}
+        cases = req_data.get("cases", [])
+        if not isinstance(cases, list) or len(cases) == 0:
+            return jsonify({"code": 400, "msg": "请选择要添加的用例", "data": None})
+
+        success = ExecSetManager.add_cases_to_exec_set(exec_set_id, cases)
+        if success:
+            return jsonify({"code": 200, "msg": f"成功添加{len(cases)}个用例到执行集", "data": None})
+        return jsonify({"code": 404, "msg": "执行集不存在", "data": None})
+    except Exception as e:
+        error_msg = f"添加用例到执行集失败：{str(e)}"
+        log.error(error_msg)
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+
+@test_bp.delete("/exec-set/<exec_set_id>/case/<int:suite_id>")
+def remove_case_from_exec_set(exec_set_id, suite_id):
+    """从执行集中移除用例"""
+    try:
+        success = ExecSetManager.remove_case_from_exec_set(exec_set_id, suite_id)
+        if success:
+            return jsonify({"code": 200, "msg": "移除用例成功", "data": None})
+        return jsonify({"code": 404, "msg": "执行集或用例不存在", "data": None})
+    except Exception as e:
+        error_msg = f"移除执行集用例失败：{str(e)}"
+        log.error(error_msg)
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+
+@test_bp.delete("/exec-set/<exec_set_id>")
+def delete_exec_set(exec_set_id):
+    """删除执行集"""
+    try:
+        success = ExecSetManager.delete_exec_set(exec_set_id)
+        if success:
+            return jsonify({"code": 200, "msg": "删除执行集成功", "data": None})
+        return jsonify({"code": 404, "msg": "执行集不存在", "data": None})
+    except Exception as e:
+        error_msg = f"删除执行集失败：{str(e)}"
+        log.error(error_msg)
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+
+@test_bp.post("/start-exec-set")
+def start_exec_set_test():
+    """通过执行集启动测试（批量执行用例）"""
+    try:
+        # 1. 解析参数
+        req_data = request.get_json() or {}
+        device_id = req_data.get("device_id")
+        exec_set_id = req_data.get("exec_set_id")
+
+        if not device_id or not exec_set_id:
+            return jsonify({"code": 400, "msg": "请指定设备ID和执行集ID", "data": None})
+
+        # 2. 获取执行集详情
+        exec_set = ExecSetManager.get_exec_set_by_id(exec_set_id)
+        if not exec_set or len(exec_set["cases"]) == 0:
+            return jsonify({"code": 400, "msg": "执行集不存在或无可用用例", "data": None})
+
+        # 3. 生成批量任务ID（主任务ID + 子任务ID）
+        main_task_id = get_task_id()
+        sub_tasks = []
+
+        # 4. 批量创建子任务（每个用例一个子任务）
+        for case in exec_set["cases"]:
+            sub_task_id = get_task_id()
+            test_tasks[sub_task_id] = {
+                "task_id": sub_task_id,
+                "main_task_id": main_task_id,
+                "device_id": device_id,
+                "suite_info": case,
+                "status": "pending",
+                "create_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            # 后台启动子任务
+            Thread(
+                target=run_task_background,
+                args=(sub_task_id, device_id, case["abs_path"]),
+                daemon=True
+            ).start()
+            sub_tasks.append(sub_task_id)
+
+        # 5. 记录主任务
+        test_tasks[main_task_id] = {
+            "task_id": main_task_id,
+            "type": "exec_set",
+            "exec_set_id": exec_set_id,
+            "exec_set_name": exec_set["name"],
+            "device_id": device_id,
+            "sub_tasks": sub_tasks,
+            "status": "running",
+            "start_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "case_count": len(sub_tasks)
+        }
+
+        log.info(f"执行集任务{main_task_id}启动成功（设备：{device_id}，执行集：{exec_set['name']}，用例数：{len(sub_tasks)}）")
+        return jsonify({
+            "code": 200,
+            "msg": "执行集测试任务已启动",
+            "data": {"main_task_id": main_task_id, "sub_task_count": len(sub_tasks)}
+        })
+    except Exception as e:
+        error_msg = f"启动执行集测试失败：{str(e)}"
+        log.error(error_msg, exc_info=True)
+        return jsonify({"code": 400, "msg": error_msg, "data": None})

@@ -161,6 +161,138 @@
                     </button>
                 </div>
 
+                <!-- 执行集管理模块 -->
+<div class="bg-white rounded-lg p-5 card-shadow mb-6">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold flex items-center">
+            <i class="fa fa-list-alt text-primary mr-2"></i>执行集管理
+        </h2>
+        <button id="create-exec-set-btn" class="bg-primary text-white px-4 py-2 rounded-lg flex items-center btn-hover">
+            <i class="fa fa-plus mr-2"></i>新建执行集
+        </button>
+    </div>
+
+    <!-- 执行集列表 -->
+    <div class="overflow-x-auto mb-4">
+        <table class="w-full min-w-[640px]">
+            <thead>
+                <tr class="border-b border-gray-200">
+                    <th class="text-left py-3 px-4 text-sm font-medium text-light">执行集ID</th>
+                    <th class="text-left py-3 px-4 text-sm font-medium text-light">名称</th>
+                    <th class="text-left py-3 px-4 text-sm font-medium text-light">用例数</th>
+                    <th class="text-left py-3 px-4 text-sm font-medium text-light">创建时间</th>
+                    <th class="text-left py-3 px-4 text-sm font-medium text-light">操作</th>
+                </tr>
+            </thead>
+            <tbody id="exec-set-list">
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-light">加载执行集中...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 执行集选择 + 启动按钮 -->
+    <div class="flex flex-wrap gap-4">
+        <div class="relative w-64">
+            <select id="exec-set-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none appearance-none cursor-pointer">
+                <option value="" disabled selected>请选择执行集</option>
+            </select>
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-light">
+                <i class="fa fa-chevron-down"></i>
+            </div>
+        </div>
+        <button id="start-exec-set-btn" class="bg-success text-white px-6 py-2 rounded-lg flex items-center btn-hover disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+            <i class="fa fa-play mr-2"></i>启动执行集测试
+        </button>
+    </div>
+</div>
+
+<!-- 新建/编辑执行集模态框 -->
+<div id="exec-set-editor-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg w-11/12 max-w-4xl max-h-[90vh] flex flex-col">
+        <div class="p-4 border-b flex justify-between items-center">
+            <h3 class="text-lg font-bold" id="exec-set-editor-title">新建执行集</h3>
+            <button id="close-exec-set-editor-btn" class="text-gray-500 hover:text-gray-700">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="p-4 flex-grow overflow-hidden flex flex-col">
+            <!-- 执行集基本信息 -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">执行集名称 <span class="text-danger">*</span></label>
+                <input type="text" id="exec-set-name" class="w-full px-3 py-2 border rounded" placeholder="请输入执行集名称">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">执行集描述</label>
+                <textarea id="exec-set-desc" class="w-full px-3 py-2 border rounded" rows="2" placeholder="请输入执行集描述（选填）"></textarea>
+            </div>
+
+            <!-- 用例选择区域 -->
+            <div class="flex-grow overflow-hidden mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="text-sm font-medium">可选测试用例</h4>
+                    <button id="add-selected-cases-btn" class="text-primary text-sm hover:text-primary/80">
+                        <i class="fa fa-plus mr-1"></i>添加选中用例
+                    </button>
+                </div>
+                <div class="flex gap-4 h-[300px]">
+                    <!-- 左侧：所有用例 -->
+                    <div class="w-1/2 border rounded overflow-hidden flex flex-col">
+                        <div class="p-2 bg-gray-50 border-b">
+                            <input type="text" id="case-filter-input" class="w-full px-2 py-1 border rounded text-sm" placeholder="搜索用例...">
+                        </div>
+                        <div class="overflow-y-auto flex-grow">
+                            <table class="w-full" id="all-cases-list">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th class="w-8 text-center py-2 text-xs font-medium text-light">选择</th>
+                                        <th class="text-left py-2 px-2 text-xs font-medium text-light">用例名称</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="2" class="text-center py-4 text-light text-xs">加载用例中...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：已选用例 -->
+                    <div class="w-1/2 border rounded overflow-hidden flex flex-col">
+                        <div class="p-2 bg-gray-50 border-b flex justify-between items-center">
+                            <span class="text-xs font-medium">已选用例（<span id="selected-case-count">0</span>）</span>
+                            <button id="remove-selected-cases-btn" class="text-danger text-xs hover:text-danger/80">
+                                <i class="fa fa-trash mr-1"></i>移除选中
+                            </button>
+                        </div>
+                        <div class="overflow-y-auto flex-grow">
+                            <table class="w-full" id="selected-cases-list">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th class="w-8 text-center py-2 text-xs font-medium text-light">选择</th>
+                                        <th class="text-left py-2 px-2 text-xs font-medium text-light">用例名称</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="2" class="text-center py-4 text-light text-xs">暂无选中用例</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="p-4 border-t flex justify-end gap-2">
+            <button id="cancel-exec-set-btn" class="px-4 py-2 border rounded hover:bg-gray-100">取消</button>
+            <button id="save-exec-set-btn" class="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90">保存</button>
+        </div>
+    </div>
+</div>
+
                 <!-- 任务状态日志 -->
                 <div>
                     <h3 class="text-sm font-medium text-light mb-2">任务状态日志</h3>
@@ -1144,6 +1276,389 @@
                 console.error('删除用例错误:', error);
             }
         }
+
+        // ------------------- 执行集相关逻辑 -------------------
+// 元素引用
+const execSetElements = {
+    execSetList: document.getElementById('exec-set-list'),
+    createExecSetBtn: document.getElementById('create-exec-set-btn'),
+    execSetEditorModal: document.getElementById('exec-set-editor-modal'),
+    closeExecSetEditorBtn: document.getElementById('close-exec-set-editor-btn'),
+    cancelExecSetBtn: document.getElementById('cancel-exec-set-btn'),
+    saveExecSetBtn: document.getElementById('save-exec-set-btn'),
+    execSetEditorTitle: document.getElementById('exec-set-editor-title'),
+    execSetName: document.getElementById('exec-set-name'),
+    execSetDesc: document.getElementById('exec-set-desc'),
+    caseFilterInput: document.getElementById('case-filter-input'),
+    allCasesList: document.getElementById('all-cases-list').querySelector('tbody'),
+    selectedCasesList: document.getElementById('selected-cases-list').querySelector('tbody'),
+    addSelectedCasesBtn: document.getElementById('add-selected-cases-btn'),
+    removeSelectedCasesBtn: document.getElementById('remove-selected-cases-btn'),
+    selectedCaseCount: document.getElementById('selected-case-count'),
+    execSetSelect: document.getElementById('exec-set-select'),
+    startExecSetBtn: document.getElementById('start-exec-set-btn')
+};
+
+// 当前编辑的执行集ID
+let currentEditingExecSetId = null;
+// 已选用例列表
+let selectedCases = [];
+// 所有用例缓存
+let allCasesCache = [];
+
+// 加载所有执行集
+async function loadExecSets() {
+    try {
+        const response = await fetch('/api/test/exec-sets');
+        const data = await response.json();
+
+        if (data.code === 200 && Array.isArray(data.data)) {
+            const execSets = data.data;
+            // 渲染执行集列表
+            if (execSets.length === 0) {
+                execSetElements.execSetList.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-light">暂无执行集，请点击"新建执行集"创建</td>
+                    </tr>
+                `;
+            } else {
+                execSetElements.execSetList.innerHTML = execSets.map(es => `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-3 px-4 text-sm">${es.id}</td>
+                        <td class="py-3 px-4 text-sm">${es.name}</td>
+                        <td class="py-3 px-4 text-sm">${es.case_count}</td>
+                        <td class="py-3 px-4 text-sm text-light">${es.create_time}</td>
+                        <td class="py-3 px-4 text-sm">
+                            <button class="text-primary hover:text-primary/80 mr-2" onclick="editExecSet('${es.id}')">
+                                <i class="fa fa-edit"></i> 编辑
+                            </button>
+                            <button class="text-danger hover:text-danger/80 mr-2" onclick="deleteExecSet('${es.id}', '${es.name}')">
+                                <i class="fa fa-trash"></i> 删除
+                            </button>
+                            <button class="text-success hover:text-success/80" onclick="selectExecSet('${es.id}', '${es.name}')">
+                                <i class="fa fa-check"></i> 选择
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            // 渲染执行集下拉选择框
+            execSetElements.execSetSelect.innerHTML = `
+                <option value="" disabled selected>请选择执行集</option>
+                ${execSets.map(es => `
+                    <option value="${es.id}">${es.name}（${es.case_count}个用例）</option>
+                `).join('')}
+            `;
+        } else {
+            throw new Error(data.msg || '加载执行集失败');
+        }
+    } catch (error) {
+        execSetElements.execSetList.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center py-4 text-danger">加载失败：${error.message}</td>
+            </tr>
+        `;
+        console.error('加载执行集失败:', error);
+    }
+}
+
+// 加载所有用例（用于执行集编辑）
+async function loadAllCasesForExecSet() {
+    try {
+        const response = await fetch('/api/test/suites');
+        const data = await response.json();
+
+        if (data.code === 200 && Array.isArray(data.data)) {
+            allCasesCache = data.data;
+            // 渲染所有用例列表
+            execSetElements.allCasesList.innerHTML = allCasesCache.map(caseItem => `
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="py-2 px-2 text-center">
+                        <input type="checkbox" class="case-checkbox" value="${caseItem.id}" data-case='${JSON.stringify(caseItem)}'>
+                    </td>
+                    <td class="py-2 px-2 text-xs">${caseItem.name} (${caseItem.rel_path})</td>
+                </tr>
+            `).join('');
+        } else {
+            throw new Error(data.msg || '加载用例失败');
+        }
+    } catch (error) {
+        execSetElements.allCasesList.innerHTML = `
+            <tr>
+                <td colspan="2" class="text-center py-4 text-danger text-xs">加载失败：${error.message}</td>
+            </tr>
+        `;
+        console.error('加载用例失败:', error);
+    }
+}
+
+// 渲染已选用例列表
+function renderSelectedCases() {
+    execSetElements.selectedCaseCount.textContent = selectedCases.length;
+    if (selectedCases.length === 0) {
+        execSetElements.selectedCasesList.innerHTML = `
+            <tr>
+                <td colspan="2" class="text-center py-4 text-light text-xs">暂无选中用例</td>
+            </tr>
+        `;
+    } else {
+        execSetElements.selectedCasesList.innerHTML = selectedCases.map(caseItem => `
+            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                <td class="py-2 px-2 text-center">
+                    <input type="checkbox" class="selected-case-checkbox" value="${caseItem.suite_id}">
+                </td>
+                <td class="py-2 px-2 text-xs">${caseItem.name} (${caseItem.rel_path})</td>
+            </tr>
+        `).join('');
+    }
+}
+
+// 打开新建执行集模态框
+function openCreateExecSetModal() {
+    currentEditingExecSetId = null;
+    selectedCases = [];
+    execSetElements.execSetEditorTitle.textContent = '新建执行集';
+    execSetElements.execSetName.value = '';
+    execSetElements.execSetDesc.value = '';
+    renderSelectedCases();
+    loadAllCasesForExecSet();
+    execSetElements.execSetEditorModal.classList.remove('hidden');
+}
+
+// 编辑执行集
+async function editExecSet(execSetId) {
+    try {
+        const response = await fetch(`/api/test/exec-set/${execSetId}`);
+        const data = await response.json();
+
+        if (data.code === 200 && data.data) {
+            const execSet = data.data;
+            currentEditingExecSetId = execSetId;
+            selectedCases = execSet.cases || [];
+
+            // 填充表单
+            execSetElements.execSetEditorTitle.textContent = '编辑执行集';
+            execSetElements.execSetName.value = execSet.name;
+            execSetElements.execSetDesc.value = execSet.description;
+
+            // 渲染已选用例 + 加载所有用例
+            renderSelectedCases();
+            loadAllCasesForExecSet();
+
+            execSetElements.execSetEditorModal.classList.remove('hidden');
+        } else {
+            throw new Error(data.msg || '获取执行集详情失败');
+        }
+    } catch (error) {
+        addTaskLog(`[错误] 打开执行集编辑框失败：${error.message}`, 'danger');
+        console.error('编辑执行集失败:', error);
+    }
+}
+
+// 删除执行集
+async function deleteExecSet(execSetId, execSetName) {
+    if (!confirm(`确定要删除执行集"${execSetName}"吗？`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/test/exec-set/${execSetId}`, {
+            method: 'DELETE'
+        });
+        const data = await response.json();
+
+        if (data.code === 200) {
+            addTaskLog('[成功] 执行集删除成功', 'success');
+            loadExecSets();
+        } else {
+            throw new Error(data.msg || '删除执行集失败');
+        }
+    } catch (error) {
+        addTaskLog(`[错误] 删除执行集失败：${error.message}`, 'danger');
+        console.error('删除执行集失败:', error);
+    }
+}
+
+// 选择执行集（用于启动测试）
+function selectExecSet(execSetId, execSetName) {
+    execSetElements.execSetSelect.value = execSetId;
+    updateStartExecSetBtnStatus();
+    addTaskLog(`[信息] 已选择执行集：${execSetName}`, 'info');
+}
+
+// 更新执行集启动按钮状态
+function updateStartExecSetBtnStatus() {
+    const selectedDevice = document.querySelector('.device-item.border-primary');
+    const selectedExecSetId = execSetElements.execSetSelect.value;
+    execSetElements.startExecSetBtn.disabled = !selectedDevice || !selectedExecSetId;
+}
+
+// 添加选中用例到执行集
+function addSelectedCases() {
+    const checkedCheckboxes = document.querySelectorAll('.case-checkbox:checked');
+    const newCases = Array.from(checkedCheckboxes).map(checkbox => {
+        return JSON.parse(checkbox.dataset.case);
+    });
+
+    // 去重添加
+    const existingCaseIds = new Set(selectedCases.map(c => c.suite_id));
+    const filteredNewCases = newCases.filter(c => !existingCaseIds.has(c.suite_id));
+    selectedCases = [...selectedCases, ...filteredNewCases];
+
+    // 重置复选框 + 重新渲染
+    checkedCheckboxes.forEach(checkbox => checkbox.checked = false);
+    renderSelectedCases();
+}
+
+// 移除选中的已选用例
+function removeSelectedCases() {
+    const checkedCheckboxes = document.querySelectorAll('.selected-case-checkbox:checked');
+    const removeCaseIds = new Set(Array.from(checkedCheckboxes).map(checkbox => parseInt(checkbox.value)));
+
+    selectedCases = selectedCases.filter(c => !removeCaseIds.has(c.suite_id));
+    renderSelectedCases();
+}
+
+// 保存执行集
+async function saveExecSet() {
+    const name = execSetElements.execSetName.value.trim();
+    if (!name) {
+        addTaskLog('[错误] 执行集名称不能为空', 'danger');
+        return;
+    }
+
+    try {
+        let response;
+        if (currentEditingExecSetId) {
+            // 更新执行集基本信息
+            response = await fetch(`/api/test/exec-set/${currentEditingExecSetId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    description: execSetElements.execSetDesc.value.trim()
+                })
+            });
+            const updateData = await response.json();
+            if (updateData.code !== 200) {
+                throw new Error(updateData.msg || '更新执行集基本信息失败');
+            }
+
+            // 更新用例列表
+            if (selectedCases.length > 0) {
+                const caseResponse = await fetch(`/api/test/exec-set/${currentEditingExecSetId}/cases`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cases: selectedCases })
+                });
+                const caseData = await caseResponse.json();
+                if (caseData.code !== 200) {
+                    throw new Error(caseData.msg || '更新执行集用例失败');
+                }
+            }
+        } else {
+            // 创建新执行集
+            response = await fetch('/api/test/exec-set', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    description: execSetElements.execSetDesc.value.trim()
+                })
+            });
+            const createData = await response.json();
+            if (createData.code !== 200) {
+                throw new Error(createData.msg || '创建执行集失败');
+            }
+
+            // 添加用例（如果有）
+            if (selectedCases.length > 0) {
+                const caseResponse = await fetch(`/api/test/exec-set/${createData.data.id}/cases`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cases: selectedCases })
+                });
+                const caseData = await caseResponse.json();
+                if (caseData.code !== 200) {
+                    throw new Error(caseData.msg || '添加执行集用例失败');
+                }
+            }
+        }
+
+        addTaskLog(`[成功] ${currentEditingExecSetId ? '更新' : '创建'}执行集成功`, 'success');
+        closeExecSetEditorModal();
+        loadExecSets();
+    } catch (error) {
+        addTaskLog(`[错误] 保存执行集失败：${error.message}`, 'danger');
+        console.error('保存执行集失败:', error);
+    }
+}
+
+// 关闭执行集编辑模态框
+function closeExecSetEditorModal() {
+    execSetElements.execSetEditorModal.classList.add('hidden');
+    currentEditingExecSetId = null;
+    selectedCases = [];
+}
+
+// 启动执行集测试
+async function startExecSetTest() {
+    try {
+        // 获取选中的设备和执行集
+        const selectedDevice = document.querySelector('.device-item.border-primary');
+        const selectedExecSetId = execSetElements.execSetSelect.value;
+
+        if (!selectedDevice || !selectedExecSetId) {
+            addTaskLog('[错误] 请先选择设备和执行集', 'danger');
+            return;
+        }
+
+        const deviceId = selectedDevice.dataset.deviceId;
+        const execSetName = execSetElements.execSetSelect.options[execSetElements.execSetSelect.selectedIndex].text;
+
+        // 发送启动请求
+        addTaskLog(`[信息] 正在启动执行集测试（设备：${deviceId}，执行集：${execSetName}）`, 'info');
+
+        const response = await fetch('/api/test/start-exec-set', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                device_id: deviceId,
+                exec_set_id: selectedExecSetId
+            })
+        });
+
+        const data = await response.json();
+        if (data.code === 200) {
+            addTaskLog(`[成功] 执行集测试任务已启动（主任务ID：${data.data.main_task_id}，子任务数：${data.data.sub_task_count}）`, 'success');
+        } else {
+            throw new Error(data.msg || '启动执行集测试失败');
+        }
+    } catch (error) {
+        addTaskLog(`[错误] 启动执行集测试失败：${error.message}`, 'danger');
+        console.error('启动执行集测试失败:', error);
+    }
+}
+
+// 执行集相关事件监听
+execSetElements.createExecSetBtn.addEventListener('click', openCreateExecSetModal);
+execSetElements.closeExecSetEditorBtn.addEventListener('click', closeExecSetEditorModal);
+execSetElements.cancelExecSetBtn.addEventListener('click', closeExecSetEditorModal);
+execSetElements.saveExecSetBtn.addEventListener('click', saveExecSet);
+execSetElements.addSelectedCasesBtn.addEventListener('click', addSelectedCases);
+execSetElements.removeSelectedCasesBtn.addEventListener('click', removeSelectedCases);
+execSetElements.execSetSelect.addEventListener('change', updateStartExecSetBtnStatus);
+execSetElements.startExecSetBtn.addEventListener('click', startExecSetTest);
+
+// 页面加载时加载执行集
+window.addEventListener('load', () => {
+    loadExecSets();
+    // 监听设备选择变化，更新执行集启动按钮状态
+    document.querySelectorAll('.device-item').forEach(item => {
+        item.addEventListener('click', updateStartExecSetBtnStatus);
+    });
+});
     </script>
 </body>
 </html>
