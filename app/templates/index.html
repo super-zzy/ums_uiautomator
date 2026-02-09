@@ -1521,78 +1521,64 @@ function removeSelectedCases() {
 }
 
 // 保存执行集
+// 修改后的 saveExecSet 函数
 async function saveExecSet() {
-    const name = execSetElements.execSetName.value.trim();
-    if (!name) {
-        addTaskLog('[错误] 执行集名称不能为空', 'danger');
+    // 1. 获取页面上的核心数据（执行集ID、选中的用例列表）
+    const execSetId = "26dafe02"; // 可根据实际场景动态获取（比如从输入框/页面参数）
+    const selectedCases = getSelectedCases(); // 你的原有方法，获取选中的用例列表
+
+    // 2. 校验：确保有选中的用例（避免空数据提交）
+    if (!selectedCases || selectedCases.length === 0) {
+        alert("请先选择要添加的用例！");
         return;
     }
 
     try {
-        let response;
-        if (currentEditingExecSetId) {
-            // 更新执行集基本信息
-            response = await fetch(`/api/test/exec-set/${currentEditingExecSetId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: name,
-                    description: execSetElements.execSetDesc.value.trim()
-                })
-            });
-            const updateData = await response.json();
-            if (updateData.code !== 200) {
-                throw new Error(updateData.msg || '更新执行集基本信息失败');
-            }
+        // 3. 核心修改：构建符合接口要求的请求体
+        // 提取suite_id（选第一个用例的id作为suite_id，也可根据业务选其他字段如abs_path）
+        const suite_id = selectedCases[0].id.toString();
+        // 提取case_ids（用例标识，这里选用例的name，也可选用abs_path/rel_path）
+        const case_ids = selectedCases.map(caseItem => caseItem.name);
 
-            // 更新用例列表
-            if (selectedCases.length > 0) {
-                const caseResponse = await fetch(`/api/test/exec-set/${currentEditingExecSetId}/cases`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ cases: selectedCases })
-                });
-                const caseData = await caseResponse.json();
-                if (caseData.code !== 200) {
-                    throw new Error(caseData.msg || '更新执行集用例失败');
-                }
-            }
+        // 4. 发送POST请求（请求体改为包含suite_id和case_ids的对象）
+        const response = await fetch(`/api/test/exec-set/${execSetId}/cases`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json", // 必须指定JSON格式
+            },
+            // 关键修改：不再直接传selectedCases，而是传重构后的对象
+            body: JSON.stringify({
+                suite_id: suite_id,
+                case_ids: case_ids
+            })
+        });
+
+        // 5. 处理响应
+        const result = await response.json();
+        if (result.code === 200) {
+            alert(`执行集保存成功！共添加 ${case_ids.length} 个用例`);
+            console.log("保存成功：", result);
         } else {
-            // 创建新执行集
-            response = await fetch('/api/test/exec-set', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: name,
-                    description: execSetElements.execSetDesc.value.trim()
-                })
-            });
-            const createData = await response.json();
-            if (createData.code !== 200) {
-                throw new Error(createData.msg || '创建执行集失败');
-            }
-
-            // 添加用例（如果有）
-            if (selectedCases.length > 0) {
-                const caseResponse = await fetch(`/api/test/exec-set/${createData.data.id}/cases`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ cases: selectedCases })
-                });
-                const caseData = await caseResponse.json();
-                if (caseData.code !== 200) {
-                    throw new Error(caseData.msg || '添加执行集用例失败');
-                }
-            }
+            alert(`保存失败：${result.msg}`);
+            console.error("接口返回错误：", result);
         }
-
-        addTaskLog(`[成功] ${currentEditingExecSetId ? '更新' : '创建'}执行集成功`, 'success');
-        closeExecSetEditorModal();
-        loadExecSets();
     } catch (error) {
-        addTaskLog(`[错误] 保存执行集失败：${error.message}`, 'danger');
-        console.error('保存执行集失败:', error);
+        console.error("保存执行集出错（网络/解析错误）：", error);
+        alert("保存执行集时发生网络错误，请检查接口是否正常！");
     }
+}
+
+// 辅助函数：模拟获取选中的用例（你可保留自己的getSelectedCases方法）
+function getSelectedCases() {
+    // 示例：返回你之前测试的用例列表
+    return [
+        {
+            "abs_path": "D:\\PycharmProjects\\ums_uiautomator\\test_suite\\demo.py",
+            "id": 0,
+            "name": "demo.py",
+            "rel_path": "demo.py"
+        }
+    ];
 }
 
 // 关闭执行集编辑模态框
