@@ -354,3 +354,237 @@ class TestExecutor:
             "pytest_returncode": -1,
             "report_generate_duration": 0
         }
+
+    # ums_uiautomator/core/test_executor.py
+    # 新增导入
+    from core.exec_set_manager import ExecSetManager
+    from typing import List
+
+    # 新增执行集执行方法
+    class TestExecutor:
+        # ... 原有代码保持不变 ...
+
+        def run_exec_set(self, exec_set_id: int) -> Dict:
+            """执行整个执行集的用例（顺序执行）
+            :param exec_set_id: 执行集ID
+            :return: 执行结果汇总
+            """
+            self.log.info(f"开始执行执行集：ID={exec_set_id}")
+
+            # 1. 获取执行集信息
+            exec_set_manager = ExecSetManager()
+            exec_set = exec_set_manager.get_exec_set_by_id(exec_set_id)
+            if not exec_set:
+                self.log.error(f"执行集不存在：ID={exec_set_id}")
+                raise ValueError(f"执行集ID{exec_set_id}不存在")
+
+            case_ids = exec_set.get("case_ids", [])
+            if not case_ids:
+                self.log.warning(f"执行集无可用用例：ID={exec_set_id}，名称={exec_set.get('name')}")
+                return {
+                    "exec_set_id": exec_set_id,
+                    "exec_set_name": exec_set.get("name"),
+                    "total_cases": 0,
+                    "success_cases": 0,
+                    "failed_cases": 0,
+                    "skipped_cases": 0,
+                    "case_results": []
+                }
+
+            self.log.info(
+                f"执行集信息：ID={exec_set_id}，名称={exec_set.get('name')}，用例数={len(case_ids)}，用例IDs={case_ids}")
+
+            # 2. 准备测试环境（复用原有prepare逻辑）
+            self.prepare()
+
+            # 3. 顺序执行每个用例
+            case_results = []
+            total_cases = len(case_ids)
+            success_cases = 0
+            failed_cases = 0
+            skipped_cases = 0
+
+            for case_id in case_ids:
+                self.log.info(f"开始执行执行集用例：执行集ID={exec_set_id}，用例ID={case_id}")
+
+                # 假设通过用例ID获取用例文件路径（需根据实际用例管理逻辑调整）
+                case_file_path = self._get_case_file_path_by_id(case_id)
+                if not case_file_path:
+                    self.log.error(f"用例文件不存在：ID={case_id}")
+                    failed_cases += 1
+                    case_results.append({
+                        "case_id": case_id,
+                        "case_path": case_file_path,
+                        "status": "failed",
+                        "reason": "用例文件不存在",
+                        "duration": 0
+                    })
+                    continue
+
+                # 更新当前要执行的用例路径
+                self.suite_abs_path = case_file_path
+
+                try:
+                    # 执行单个用例
+                    start_time = time.time()
+                    return_code, stdout, stderr = self.run_pytest()
+                    duration = round(time.time() - start_time, 2)
+
+                    # 统计结果
+                    if return_code == 0:
+                        success_cases += 1
+                        status = "passed"
+                        reason = "执行成功"
+                    else:
+                        # 解析stderr/stdout判断是否是跳过
+                        if "Skipped:" in stderr or "Skipped:" in stdout:
+                            skipped_cases += 1
+                            status = "skipped"
+                            reason = "用例跳过"
+                        else:
+                            failed_cases += 1
+                            status = "failed"
+                            reason = f"返回码={return_code}"
+
+                    case_results.append({
+                        "case_id": case_id,
+                        "case_path": case_file_path,
+                        "status": status,
+                        "reason": reason,
+                        "duration": duration,
+                        "stdout": stdout[:500],  # 截断日志，避免过大
+                        "stderr": stderr[:500]
+                    })
+
+                    self.log.info(
+                        f"执行集用例执行完成：执行集ID={exec_set_id}，用例ID={case_id}，状态={status}，耗时={duration}秒")
+
+                except Exception as e:
+                    failed_cases += 1
+                    duration = round(time.time() - start_time, 2) if 'start_time' in locals() else 0
+                    case_results.append({
+                        "case_id": case_id,
+                        "case_path": case_file_path,
+                        "status": "failed",
+                        "reason": str(e)[:200],
+                        "duration": duration
+                    })
+                    self.log.error(f"执行集用例执行异常：执行集ID={exec_set_id}，用例ID={case_id}，错误={str(e)}")
+
+            # 4. 生成整合的Allure报告
+            self.log.info(f"开始生成执行集Allure报告：ID={exec_set_id}")
+            allure_result = self.generate_allure_report()
+
+            # 5. 构造执行结果汇总
+            result_summary = {
+                "exec_set_id": exec_set_id,
+                "exec_set_name": exec_set.get("name"),
+                "total_cases": total_cases,
+                "success_cases": success_cases,
+                "failed_cases": failed_cases,
+                "skipped_cases": skipped_cases,
+                "case_results": case_results,
+                "allure_report_path": self.allure_html_dir,
+                "allure_raw_path": self.allure_raw_dir,
+                "exec_duration": round(sum([case.get("duration", 0) for case in case_results]), 2),
+                "generate_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+
+            # 保存执行集元数据
+            self._save_exec_set_meta(result_summary)
+
+            self.log.info(
+                f"执行集执行完成：ID={exec_set_id}，总计{total_cases}用例，成功{success_cases}，失败{failed_cases}，跳过{skipped_cases}")
+            return result_summary
+
+        def _get_case_file_path_by_id(self, case_id: int) -> Optional[str]:
+            """根据用例ID获取用例文件绝对路径（需根据实际用例管理逻辑实现）
+            :param case_id: 用例ID
+            :return: 用例文件路径，不存在返回None
+            """
+            # 此处为示例逻辑，需根据实际项目的用例存储规则调整
+            try:
+                # 假设用例存储在test_suite目录下，用例ID对应文件名规则：case_{id}.py
+                case_file = f"case_{case_id}.py"
+                case_path = safe_join(os.path.dirname(os.path.dirname(__file__)), "test_suite", case_file)
+
+                if os.path.exists(case_path) and os.path.isfile(case_path):
+                    self.log.debug(f"用例文件路径：ID={case_id}，路径={case_path}")
+                    return case_path
+                else:
+                    self.log.warning(f"用例文件不存在：ID={case_id}，路径={case_path}")
+                    return None
+            except Exception as e:
+                self.log.error(f"获取用例路径失败：ID={case_id}，错误={str(e)}")
+                return None
+
+        def _save_exec_set_meta(self, summary: Dict) -> None:
+            """保存执行集执行元数据"""
+            meta_path = safe_join(self.task_report_dir, f"exec_set_{summary['exec_set_id']}_meta.json")
+            try:
+                with open(meta_path, "w", encoding="utf-8") as f:
+                    json.dump(summary, f, ensure_ascii=False, indent=2)
+                self.log.info(f"执行集元数据已保存：{meta_path}")
+            except Exception as e:
+                self.log.error(f"执行集元数据保存失败：{str(e)}，路径={meta_path}")
+
+        # 完善generate_allure_report方法（补全原有未完成的代码）
+        def generate_allure_report(self) -> Dict:
+            """生成Allure HTML报告"""
+            self.log.info("开始生成Allure HTML报告...")
+
+            if not os.listdir(self.allure_raw_dir):
+                self.log.warning("Allure原始数据为空，跳过报告生成")
+                return {"status": "skipped", "reason": "原始数据为空"}
+
+            # 构建Allure命令
+            allure_cmd = self._generate_allure_cmd()
+            start_time = time.time()
+
+            try:
+                # 执行Allure生成命令
+                result = subprocess.run(
+                    allure_cmd,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    timeout=self.allure_config["generate_timeout"]
+                )
+                gen_duration = round(time.time() - start_time, 2)
+
+                # 保存Allure执行日志
+                self._save_allure_log(allure_cmd, result.stdout, result.stderr, gen_duration)
+
+                # 校验HTML报告是否生成
+                if not os.path.exists(self.allure_html_dir) or not os.listdir(self.allure_html_dir):
+                    self.log.error("Allure HTML报告生成失败：目录为空")
+                    raise RuntimeError("HTML报告目录为空")
+
+                # 压缩报告（如果配置开启）
+                compress_path = self._compress_html_report()
+
+                # 保存报告元数据
+                report_info = {
+                    "status": "success",
+                    "generate_duration": gen_duration,
+                    "return_code": result.returncode,
+                    "html_dir_size": round(get_file_size(self.allure_html_dir), 2),
+                    "compress_path": compress_path,
+                    "compress_size": round(get_file_size(compress_path), 2) if compress_path else 0
+                }
+                self._save_report_meta(report_info)
+
+                self.log.info(f"Allure报告生成完成：耗时{gen_duration}秒，路径={self.allure_html_dir}")
+                return report_info
+
+            except subprocess.TimeoutExpired as e:
+                gen_duration = round(time.time() - start_time, 2)
+                self.log.error(
+                    f"Allure报告生成超时：耗时{gen_duration}秒，超过{self.allure_config['generate_timeout']}秒")
+                self._save_allure_log(allure_cmd, "", f"TimeoutExpired: {str(e)}", gen_duration)
+                raise
+            except Exception as e:
+                gen_duration = round(time.time() - start_time, 2)
+                self.log.error(f"Allure报告生成失败：{str(e)}，耗时{gen_duration}秒")
+                self._save_allure_log(allure_cmd, "", str(e), gen_duration)
+                raise

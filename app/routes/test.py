@@ -717,3 +717,66 @@ def start_exec_set_test():
         error_msg = f"启动执行集测试失败：{str(e)}"
         log.error(error_msg, exc_info=True)
         return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+    # ums_uiautomator/app/routes/test.py
+    # 新增导入
+    from core.test_executor import TestExecutor
+    from core.exec_set_manager import ExecSetManager
+    from conf import GlobalConfig
+
+    # 新增执行集测试执行接口
+    @test_bp.post("/exec_sets/<int:exec_set_id>/run")
+    def run_exec_set_test(exec_set_id):
+        """执行执行集自动化测试"""
+        try:
+            # 获取请求参数
+            req_data = request.get_json() or {}
+            device_id = req_data.get("device_id")
+            task_id = req_data.get("task_id", f"exec_set_{exec_set_id}_{int(time.time())}")
+
+            if not device_id:
+                return jsonify({
+                    "code": 400,
+                    "msg": "device_id不能为空",
+                    "data": None
+                })
+
+            # 校验执行集是否存在
+            exec_set_manager = ExecSetManager()
+            exec_set = exec_set_manager.get_exec_set_by_id(exec_set_id)
+            if not exec_set:
+                return jsonify({
+                    "code": 404,
+                    "msg": f"执行集ID{exec_set_id}不存在",
+                    "data": None
+                })
+
+            # 初始化执行器（用例路径先传空，后续在run_exec_set中动态替换）
+            # 注意：此处suite_abs_path传空，需确保prepare方法兼容，或调整prepare逻辑
+            test_executor = TestExecutor(
+                task_id=task_id,
+                device_id=device_id,
+                suite_abs_path=""  # 执行集模式下，用例路径动态获取
+            )
+
+            # 执行执行集测试
+            result = test_executor.run_exec_set(exec_set_id)
+
+            return jsonify({
+                "code": 200,
+                "msg": "执行集测试启动成功",
+                "data": {
+                    "task_id": task_id,
+                    "exec_set_id": exec_set_id,
+                    "exec_set_name": exec_set.get("name"),
+                    "report_path": result.get("allure_report_path"),
+                    "summary": result
+                }
+            })
+        except Exception as e:
+            logger.error(f"执行集测试执行失败：ID={exec_set_id}，错误={str(e)}")
+            return jsonify({
+                "code": 500,
+                "msg": f"执行失败：{str(e)}",
+                "data": None
+            })
