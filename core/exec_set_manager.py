@@ -6,7 +6,7 @@ from util.log_util import LogUtil
 from util.path_util import safe_join, read_json_file, write_json_file
 
 # 初始化日志
-logger = LogUtil("exec_set_manager").get_logger()
+logger = LogUtil("exec_set_manager", task_id=None).logger
 
 # 执行集JSON文件路径
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

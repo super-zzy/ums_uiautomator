@@ -5,7 +5,7 @@ import os
 # filePath: ums_uiautomator/util/path_util.py
 import os
 from conf import GlobalConfig  # 假设GlobalConfig用于读取配置
-
+import json
 
 def get_report_root() -> str:
     """获取报告根目录（result目录的绝对路径）"""
@@ -68,3 +68,32 @@ def get_file_size(path: str, unit: str = "KB") -> float:
     if unit not in unit_map:
         unit = "KB"
     return round(total_size / unit_map[unit], 2)
+
+
+def read_json_file(file_path: str) -> dict:
+    """
+    读取JSON文件并返回字典
+    :param file_path: JSON文件路径
+    :return: 解析后的字典
+    :raises FileNotFoundError: 文件不存在
+    :raises json.JSONDecodeError: JSON格式错误
+    """
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"JSON文件不存在：{file_path}")
+
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        raise json.JSONDecodeError(f"解析JSON文件 {file_path} 失败：{str(e)}", e.doc, e.pos) from e
+
+
+def write_json_file(data: dict, file_path: str, indent: int = 4) -> None:
+    """
+    （可选）将字典写入JSON文件（补充通用能力）
+    :param data: 要写入的字典
+    :param file_path: 目标文件路径
+    :param indent: 缩进空格数
+    """
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=indent)
