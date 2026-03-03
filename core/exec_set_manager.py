@@ -152,7 +152,7 @@ class ExecSetManager:
         logger.error(f"查询执行集失败：ID={exec_set_id} 不存在（现有ID：{existing_ids}）")
         return None
 
-    def get_all_exec_sets(self, filter_enabled: bool = None) -> List[Dict]:
+    def get_all_exec_sets(filter_enabled: bool = None) -> List[Dict]:
         """
         查询所有执行集
         :param filter_enabled: 过滤是否启用（None：不过滤；True：仅启用；False：仅禁用）

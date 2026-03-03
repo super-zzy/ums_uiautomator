@@ -9,12 +9,14 @@ from datetime import datetime
 from threading import Thread
 from core.test_executor import TestExecutor
 from core.device_manager import DeviceManager
-from util.log_util import TempLog
+from util.log_util import LogUtil
 from util.path_util import safe_join
+from core.exec_set_manager import ExecSetManager
 
 test_bp = Blueprint("test", __name__)
 test_tasks = {}  # 全局任务状态缓存（task_id: 任务信息）
-log = TempLog()
+
+log = LogUtil("test", task_id=None).logger
 
 
 # ------------------- 工具函数 -------------------
@@ -464,9 +466,6 @@ def format_code():
             "data": None
         })
 
-# 新增导入
-from core.exec_set_manager import ExecSetManager
-
 # ------------------- 执行集接口 -------------------
 @test_bp.get("/exec-sets")
 def get_exec_sets():
@@ -553,77 +552,29 @@ def update_exec_set(exec_set_id):
 @test_bp.post("/exec-set/<exec_set_id>/cases")
 def add_cases_to_exec_set(exec_set_id):
     """
-    向指定执行集添加用例
-    请求体格式：
-    {
-        "suite_id": "852684384d7291eb03595237dba8603c",  # 必须：测试套件ID
-        "case_ids": ["test_case01", "test_case04"]      # 必须：要添加的用例ID列表
-    }
+    为执行集添加测试用例
+    :param exec_set_id: 执行集ID
+    :return: JSON响应
     """
     try:
-        # 1. 解析请求体（修复核心：确保正确提取suite_id）
-        req_data = request.get_json()
-        if not req_data:
-            return jsonify({
-                "code": 400,
-                "msg": "请求体不能为空（需传suite_id和case_ids）"
-            }), 400
+        # 接收请求参数（示例：用例ID列表）
+        data = request.get_json()
+        case_ids = data.get("case_ids", [])
 
-        # 2. 校验suite_id参数（修复核心：显式校验+异常提示）
-        suite_id = req_data.get("suite_id")
-        if not suite_id:
-            return jsonify({
-                "code": 400,
-                "msg": "添加用例到执行集失败：缺少必填参数'suite_id'"
-            }), 400
+        if not case_ids:
+            return jsonify({"code": 400, "msg": "用例ID列表不能为空"}), 400
 
-        case_ids = req_data.get("case_ids", [])
-        if not isinstance(case_ids, list) or len(case_ids) == 0:
-            return jsonify({
-                "code": 400,
-                "msg": "case_ids必须为非空列表"
-            }), 400
+        # 调用核心层方法处理exec_sets.json
+        ExecSetManager.add_exec_set(exec_set_id, case_ids)
 
-        # 3. 业务逻辑：添加用例到执行集（示例逻辑，需适配你的执行集存储方式）
-        # 【替换为你的真实逻辑】如：数据库写入、执行集文件更新等
-        log.info(f"执行集[{exec_set_id}]添加用例：suite_id={suite_id}, case_ids={case_ids}")
+        return jsonify({"code": 200, "msg": "用例添加成功", "data": {"exec_set_id": exec_set_id}}), 200
 
-        # 示例：模拟执行集存储（你需替换为真实的DB/缓存操作）
-        exec_set_cache = current_app.config.get("EXEC_SET_CACHE", {})
-        if exec_set_id not in exec_set_cache:
-            exec_set_cache[exec_set_id] = {"suite_id": "", "cases": []}
-
-        exec_set_cache[exec_set_id]["suite_id"] = suite_id  # 确保suite_id被赋值
-        exec_set_cache[exec_set_id]["cases"].extend([
-            case_id for case_id in case_ids
-            if case_id not in exec_set_cache[exec_set_id]["cases"]
-        ])
-        current_app.config["EXEC_SET_CACHE"] = exec_set_cache
-
-        # 4. 返回成功响应
-        return jsonify({
-            "code": 200,
-            "msg": "用例添加成功",
-            "data": {
-                "exec_set_id": exec_set_id,
-                "suite_id": suite_id,
-                "case_count": len(exec_set_cache[exec_set_id]["cases"])
-            }
-        }), 200
-
-    except KeyError as e:
-        # 捕获缺失参数的异常（兜底）
-        log.error(f"添加用例到执行集失败：缺失参数 {str(e)}", exc_info=True)
-        return jsonify({
-            "code": 500,
-            "msg": f"添加用例到执行集失败：'{str(e)}'"
-        }), 500
+    except FileNotFoundError:
+        log.error(f"执行集配置文件exec_sets.json不存在")
+        return jsonify({"code": 500, "msg": "执行集配置文件不存在"}), 500
     except Exception as e:
-        log.error(f"添加用例到执行集异常：{str(e)}", exc_info=True)
-        return jsonify({
-            "code": 500,
-            "msg": f"添加用例到执行集失败：{str(e)}"
-        }), 500
+        log.error(f"添加用例到执行集失败：{str(e)}")
+        return jsonify({"code": 500, "msg": f"添加失败：{str(e)}"}), 500
 
 
 @test_bp.delete("/exec-set/<exec_set_id>/case/<int:suite_id>")
@@ -774,7 +725,7 @@ def start_exec_set_test():
                 }
             })
         except Exception as e:
-            logger.error(f"执行集测试执行失败：ID={exec_set_id}，错误={str(e)}")
+            log.error(f"执行集测试执行失败：ID={exec_set_id}，错误={str(e)}")
             return jsonify({
                 "code": 500,
                 "msg": f"执行失败：{str(e)}",

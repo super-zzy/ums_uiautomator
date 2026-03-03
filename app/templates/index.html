@@ -1356,7 +1356,7 @@ async function loadExecSets() {
     } catch (error) {
         execSetElements.execSetList.innerHTML = `
             <tr>
-                <td colspan="5" class="text-center py-4 text-danger">加载失败：${error.message}</td>
+                <td colspan="5" class="text-center py-4 text-danger">${error.message}</td>
             </tr>
         `;
         console.error('加载执行集失败:', error);
