@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>执行集管理</title>
+    <!-- 引入Bootstrap样式和jQuery -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        /* 简单样式优化 */
+        .container {
+            margin-top: 20px;
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .table th {
+            text-align: center;
+        }
+        .table td {
+            vertical-align: middle;
+            text-align: center;
+        }
+        .btn-group-sm > .btn {
+            margin: 0 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="mb-4">执行集管理</h2>
+
+        <!-- 新增执行集按钮 -->
+        <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addExecSetModal">
+            <i class="bi bi-plus-circle"></i> 新增执行集
+        </button>
+
+        <!-- 执行集列表 -->
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-bordered table-hover" id="execSetTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>执行集名称</th>
+                            <th>关联用例ID</th>
+                            <th>描述</th>
+                            <th>创建人</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="execSetTableBody">
+                        <!-- 列表数据通过JS动态渲染 -->
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">加载中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1. 新增执行集弹窗 -->
+    <div class="modal fade" id="addExecSetModal" tabindex="-1" aria-labelledby="addExecSetModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="addExecSetModalLabel">新增执行集</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addExecSetForm">
+                        <div class="mb-3">
+                            <label for="execSetName" class="form-label">执行集名称 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="execSetName" name="name" required
+                                   placeholder="请输入执行集名称（如：测试执行集1）">
+                        </div>
+                        <div class="mb-3">
+                            <label for="execSetCaseIds" class="form-label">关联用例ID <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="execSetCaseIds" name="case_ids" required
+                                   placeholder="多个用例ID用逗号分隔（如：101,102）">
+                        </div>
+                        <div class="mb-3">
+                            <label for="execSetDesc" class="form-label">执行集描述</label>
+                            <textarea class="form-control" id="execSetDesc" name="desc" rows="3"
+                                      placeholder="请输入执行集描述（可选）"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="execSetCreator" class="form-label">创建人 <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="execSetCreator" name="creator" required
+                                   placeholder="请输入创建人（如：test）">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="addExecSet()">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 给执行集添加用例弹窗 -->
+    <div class="modal fade" id="addCasesToExecSetModal" tabindex="-1" aria-labelledby="addCasesToExecSetModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="addCasesToExecSetModalLabel">添加用例到执行集</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="targetExecSetId">
+                    <div class="mb-3">
+                        <label for="addCaseIds" class="form-label">新增用例ID <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="addCaseIds" required
+                               placeholder="多个用例ID用逗号分隔（如：103,104）">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-warning" onclick="addCasesToExecSet()">提交</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 修改执行集弹窗 -->
+    <div class="modal fade" id="editExecSetModal" tabindex="-1" aria-labelledby="editExecSetModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="editExecSetModalLabel">修改执行集</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editExecSetId">
+                    <div class="mb-3">
+                        <label for="editExecSetName" class="form-label">执行集名称</label>
+                        <input type="text" class="form-control" id="editExecSetName" placeholder="请输入修改后的名称">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">执行集状态</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="editIsEnabled" id="editEnabled" value="true" checked>
+                            <label class="form-check-label" for="editEnabled">启用</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="editIsEnabled" id="editDisabled" value="false">
+                            <label class="form-check-label" for="editDisabled">禁用</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-info" onclick="updateExecSet()">提交修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载完成后自动加载执行集列表
+        $(document).ready(function() {
+            loadAllExecSets();
+        });
+
+        // ************************ 核心功能函数 ************************
+        /**
+         * 加载所有执行集列表
+         */
+        function loadAllExecSets() {
+            // 清空列表并显示加载状态
+            $('#execSetTableBody').html('<tr><td colspan="7" class="text-center text-muted">加载中...</td></tr>');
+
+            // 调用后端接口查询所有执行集
+            fetch('/api/exec_set/list', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('接口请求失败');
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const execSets = data.data || [];
+                    let tableHtml = '';
+
+                    if (execSets.length === 0) {
+                        tableHtml = '<tr><td colspan="7" class="text-center text-muted">暂无执行集数据</td></tr>';
+                    } else {
+                        execSets.forEach(set => {
+                            tableHtml += `
+                                <tr>
+                                    <td>${set.id || '-'}</td>
+                                    <td>${set.name || '-'}</td>
+                                    <td>${Array.isArray(set.case_ids) ? set.case_ids.join(',') : '-'}</td>
+                                    <td>${set.desc || '-'}</td>
+                                    <td>${set.creator || '-'}</td>
+                                    <td>${set.is_enabled ? '<span class="badge bg-success">启用</span>' : '<span class="badge bg-danger">禁用</span>'}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-info" onclick="getExecSetById(${set.id})">查看</button>
+                                            <button class="btn btn-warning" onclick="openAddCasesModal(${set.id})">添加用例</button>
+                                            <button class="btn btn-secondary" onclick="openEditModal(${set.id})">修改</button>
+                                            <button class="btn btn-danger" onclick="deleteExecSet(${set.id})">删除</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    }
+                    $('#execSetTableBody').html(tableHtml);
+                } else {
+                    $('#execSetTableBody').html(`<tr><td colspan="7" class="text-center text-danger">加载失败：${data.msg || '未知错误'}</td></tr>`);
+                }
+            })
+            .catch(error => {
+                console.error('加载执行集列表失败：', error);
+                $('#execSetTableBody').html(`<tr><td colspan="7" class="text-center text-danger">加载失败：${error.message}</td></tr>`);
+            });
+        }
+
+        /**
+         * 新增执行集
+         */
+        function addExecSet() {
+            // 获取表单数据并格式化
+            const form = document.getElementById('addExecSetForm');
+            const formData = {
+                name: form.name.value.trim(),
+                case_ids: form.case_ids.value.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id)),
+                desc: form.desc.value.trim(),
+                creator: form.creator.value.trim()
+            };
+
+            // 表单校验
+            if (!formData.name) {
+                alert('请输入执行集名称！');
+                return;
+            }
+            if (formData.case_ids.length === 0) {
+                alert('请输入有效的用例ID（多个用逗号分隔）！');
+                return;
+            }
+            if (!formData.creator) {
+                alert('请输入创建人！');
+                return;
+            }
+
+            // 调用新增接口
+            fetch('/api/exec_set/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('接口请求失败');
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert('新增执行集成功！ID：' + data.data.id);
+                    // 关闭弹窗并重置表单
+                    $('#addExecSetModal').modal('hide');
+                    form.reset();
+                    // 刷新列表
+                    loadAllExecSets();
+                } else {
+                    alert('新增失败：' + data.msg || '未知错误');
+                }
+            })
+            .catch(error => {
+                console.error('新增执行集失败：', error);
+                alert('新增执行集失败：' + error.message);
+            });
+        }
+
+        /**
+         * 打开添加用例弹窗（传递执行集ID）
+         * @param {number} execSetId 执行集ID
+         */
+        function openAddCasesModal(execSetId) {
+            $('#targetExecSetId').val(execSetId);
+            $('#addCasesToExecSetModal').modal('show');
+        }
+
+        /**
+         * 给执行集添加用例
+         */
+        function addCasesToExecSet() {
+            const execSetId = parseInt($('#targetExecSetId').val());
+            const caseIds = $('#addCaseIds').val().split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+
+            // 校验
+            if (caseIds.length === 0) {
+                alert('请输入有效的用例ID！');
+                return;
+            }
+
+            // 调用添加用例接口
+            fetch(`/api/exec_set/${execSetId}/add_cases`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ case_ids: caseIds })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('接口请求失败');
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert('添加用例成功！');
+                    $('#addCasesToExecSetModal').modal('hide');
+                    $('#addCaseIds').val('');
+                    loadAllExecSets();
+                } else {
+                    alert('添加失败：' + data.msg || '未知错误');
+                }
+            })
+            .catch(error => {
+                console.error('添加用例失败：', error);
+                alert('添加用例失败：' + error.message);
+            });
+        }
+
+        /**
+         * 打开修改执行集弹窗（先查询详情）
+         * @param {number} execSetId 执行集ID
+         */
+        function openEditModal(execSetId) {
+            // 查询执行集详情
+            fetch(`/api/exec_set/${execSetId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('接口请求失败');
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const set = data.data;
+                    // 填充表单
+                    $('#editExecSetId').val(set.id);
+                    $('#editExecSetName').val(set.name);
+                    // 设置状态单选框
+                    if (set.is_enabled) {
+                        $('#editEnabled').prop('checked', true);
+                    } else {
+                        $('#editDisabled').prop('checked', true);
+                    }
+                    // 打开弹窗
+                    $('#editExecSetModal').modal('show');
+                } else {
+                    alert('查询执行集详情失败：' + data.msg || '未知错误');
+                }
+            })
+            .catch(error => {
+                console.error('查询执行集详情失败：', error);
+                alert('查询执行集详情失败：' + error.message);
+            });
+        }
+
+        /**
+         * 修改执行集
+         */
+        function updateExecSet() {
+            const execSetId = parseInt($('#editExecSetId').val());
+            const updateData = {
+                name: $('#editExecSetName').val().trim(),
+                is_enabled: $('input[name="editIsEnabled"]:checked').val() === 'true'
+            };
+
+            // 校验
+            if (!updateData.name) {
+                alert('请输入修改后的执行集名称！');
+                return;
+            }
+
+            // 调用修改接口
+            fetch(`/api/exec_set/${execSetId}/update`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updateData)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('接口请求失败');
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert('修改执行集成功！');
+                    $('#editExecSetModal').modal('hide');
+                    loadAllExecSets();
+                } else {
+                    alert('修改失败：' + data.msg || '未知错误');
+                }
+            })
+            .catch(error => {
+                console.error('修改执行集失败：', error);
+                alert('修改执行集失败：' + error.message);
+            });
+        }
+
+        /**
+         * 查询单个执行集详情
+         * @param {number} execSetId 执行集ID
+         */
+        function getExecSetById(execSetId) {
+            fetch(`/api/exec_set/${execSetId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('接口请求失败');
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const set = data.data;
+                    const detail = `
+执行集详情：
+ID：${set.id}
+名称：${set.name}
+关联用例ID：${Array.isArray(set.case_ids) ? set.case_ids.join(',') : '-'}
+描述：${set.desc || '-'}
+创建人：${set.creator || '-'}
+状态：${set.is_enabled ? '启用' : '禁用'}
+                    `;
+                    alert(detail);
+                } else {
+                    alert('查询失败：' + data.msg || '未知错误');
+                }
+            })
+            .catch(error => {
+                console.error('查询执行集详情失败：', error);
+                alert('查询执行集详情失败：' + error.message);
+            });
+        }
+
+        /**
+         * 删除执行集
+         * @param {number} execSetId 执行集ID
+         */
+        function deleteExecSet(execSetId) {
+            if (!confirm(`确认删除执行集 [ID: ${execSetId}] 吗？此操作不可恢复！`)) {
+                return;
+            }
+
+            fetch(`/api/exec_set/${execSetId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('接口请求失败');
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert('删除执行集成功！');
+                    loadAllExecSets();
+                } else {
+                    alert('删除失败：' + data.msg || '未知错误');
+                }
+            })
+            .catch(error => {
+                console.error('删除执行集失败：', error);
+                alert('删除执行集失败：' + error.message);
+            });
+        }
+    </script>
+</body>
+</html>

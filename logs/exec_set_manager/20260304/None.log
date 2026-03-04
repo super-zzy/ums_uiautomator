@@ -1,0 +1,72 @@
+[2026-03-04 14:40:28] [automation] [INFO] 新增执行集成功：ID=1，名称=测试执行集1
+[2026-03-04 14:40:28] [automation] [DEBUG] 尝试查询执行集：ID=1，类型=<class 'int'>
+[2026-03-04 14:40:28] [automation] [DEBUG] 当前JSON文件中的执行集ID列表：[1]
+[2026-03-04 14:40:28] [automation] [DEBUG] 查询执行集成功：ID=1
+[2026-03-04 14:40:28] [automation] [DEBUG] 尝试查询执行集：ID=1，类型=<class 'int'>
+[2026-03-04 14:40:28] [automation] [DEBUG] 当前JSON文件中的执行集ID列表：[1]
+[2026-03-04 14:40:28] [automation] [DEBUG] 查询执行集成功：ID=1
+[2026-03-04 14:40:28] [automation] [DEBUG] 尝试查询执行集：ID=1，类型=<class 'int'>
+[2026-03-04 14:40:28] [automation] [DEBUG] 当前JSON文件中的执行集ID列表：[1]
+[2026-03-04 14:40:28] [automation] [DEBUG] 查询执行集成功：ID=1
+[2026-03-04 14:40:28] [automation] [INFO] 修改执行集成功：ID=1，更新字段=['case_ids']
+[2026-03-04 14:40:28] [automation] [INFO] 给执行集添加用例成功：ID=1，新增用例数=2，总用例数=4
+[2026-03-04 14:40:28] [automation] [DEBUG] 尝试查询执行集：ID=1，类型=<class 'int'>
+[2026-03-04 14:40:28] [automation] [DEBUG] 当前JSON文件中的执行集ID列表：[1]
+[2026-03-04 14:40:28] [automation] [DEBUG] 查询执行集成功：ID=1
+[2026-03-04 14:40:28] [automation] [INFO] 修改执行集成功：ID=1，更新字段=['name', 'is_enabled']
+[2026-03-04 14:40:28] [automation] [INFO] 查询执行集列表成功：总数=0
+[2026-03-04 14:40:28] [automation] [INFO] 删除执行集成功：ID=1
+[2026-03-04 14:41:25] [automation] [INFO] 新增执行集成功：ID=1，名称=测试执行集1
+[2026-03-04 14:41:49] [automation] [DEBUG] 尝试查询执行集：ID=1，类型=<class 'int'>
+[2026-03-04 14:41:49] [automation] [DEBUG] 当前JSON文件中的执行集ID列表：[1]
+[2026-03-04 14:41:49] [automation] [DEBUG] 查询执行集成功：ID=1
+[2026-03-04 14:42:11] [automation] [DEBUG] 尝试查询执行集：ID=1，类型=<class 'int'>
+[2026-03-04 14:42:11] [automation] [DEBUG] 当前JSON文件中的执行集ID列表：[1]
+[2026-03-04 14:42:11] [automation] [DEBUG] 查询执行集成功：ID=1
+[2026-03-04 14:42:11] [automation] [DEBUG] 尝试查询执行集：ID=1，类型=<class 'int'>
+[2026-03-04 14:42:11] [automation] [DEBUG] 当前JSON文件中的执行集ID列表：[1]
+[2026-03-04 14:42:11] [automation] [DEBUG] 查询执行集成功：ID=1
+[2026-03-04 14:42:11] [automation] [INFO] 修改执行集成功：ID=1，更新字段=['case_ids']
+[2026-03-04 14:42:11] [automation] [INFO] 给执行集添加用例成功：ID=1，新增用例数=2，总用例数=4
+[2026-03-04 14:42:15] [automation] [DEBUG] 尝试查询执行集：ID=1，类型=<class 'int'>
+[2026-03-04 14:42:15] [automation] [DEBUG] 当前JSON文件中的执行集ID列表：[1]
+[2026-03-04 14:42:15] [automation] [DEBUG] 查询执行集成功：ID=1
+[2026-03-04 14:42:15] [automation] [INFO] 修改执行集成功：ID=1，更新字段=['name', 'is_enabled']
+[2026-03-04 14:42:21] [automation] [INFO] 查询执行集列表成功：总数=0
+[2026-03-04 14:42:30] [automation] [INFO] 删除执行集成功：ID=1
+[2026-03-04 14:42:48] [automation] [INFO] 新增执行集成功：ID=1，名称=测试执行集1
+[2026-03-04 14:42:48] [automation] [DEBUG] 尝试查询执行集：ID=1，类型=<class 'int'>
+[2026-03-04 14:42:48] [automation] [DEBUG] 当前JSON文件中的执行集ID列表：[1]
+[2026-03-04 14:42:48] [automation] [DEBUG] 查询执行集成功：ID=1
+[2026-03-04 14:42:48] [automation] [DEBUG] 尝试查询执行集：ID=1，类型=<class 'int'>
+[2026-03-04 14:42:48] [automation] [DEBUG] 当前JSON文件中的执行集ID列表：[1]
+[2026-03-04 14:42:48] [automation] [DEBUG] 查询执行集成功：ID=1
+[2026-03-04 14:42:48] [automation] [DEBUG] 尝试查询执行集：ID=1，类型=<class 'int'>
+[2026-03-04 14:42:48] [automation] [DEBUG] 当前JSON文件中的执行集ID列表：[1]
+[2026-03-04 14:42:48] [automation] [DEBUG] 查询执行集成功：ID=1
+[2026-03-04 14:42:48] [automation] [INFO] 修改执行集成功：ID=1，更新字段=['case_ids']
+[2026-03-04 14:42:48] [automation] [INFO] 给执行集添加用例成功：ID=1，新增用例数=2，总用例数=4
+[2026-03-04 14:42:48] [automation] [DEBUG] 尝试查询执行集：ID=1，类型=<class 'int'>
+[2026-03-04 14:42:48] [automation] [DEBUG] 当前JSON文件中的执行集ID列表：[1]
+[2026-03-04 14:42:48] [automation] [DEBUG] 查询执行集成功：ID=1
+[2026-03-04 14:42:48] [automation] [INFO] 修改执行集成功：ID=1，更新字段=['name', 'is_enabled']
+[2026-03-04 14:42:48] [automation] [INFO] 查询执行集列表成功：总数=0
+[2026-03-04 14:42:48] [automation] [INFO] 删除执行集成功：ID=1
+[2026-03-04 15:06:18] [automation] [INFO] 新增执行集成功：ID=1，名称=测试执行集1
+[2026-03-04 15:06:18] [automation] [DEBUG] 尝试查询执行集：ID=1，类型=<class 'int'>
+[2026-03-04 15:06:18] [automation] [DEBUG] 当前JSON文件中的执行集ID列表：[1]
+[2026-03-04 15:06:18] [automation] [DEBUG] 查询执行集成功：ID=1
+[2026-03-04 15:06:18] [automation] [DEBUG] 尝试查询执行集：ID=1，类型=<class 'int'>
+[2026-03-04 15:06:18] [automation] [DEBUG] 当前JSON文件中的执行集ID列表：[1]
+[2026-03-04 15:06:18] [automation] [DEBUG] 查询执行集成功：ID=1
+[2026-03-04 15:06:18] [automation] [DEBUG] 尝试查询执行集：ID=1，类型=<class 'int'>
+[2026-03-04 15:06:18] [automation] [DEBUG] 当前JSON文件中的执行集ID列表：[1]
+[2026-03-04 15:06:18] [automation] [DEBUG] 查询执行集成功：ID=1
+[2026-03-04 15:06:18] [automation] [INFO] 修改执行集成功：ID=1，更新字段=['case_ids']
+[2026-03-04 15:06:18] [automation] [INFO] 给执行集添加用例成功：ID=1，新增用例数=2，总用例数=4
+[2026-03-04 15:06:18] [automation] [DEBUG] 尝试查询执行集：ID=1，类型=<class 'int'>
+[2026-03-04 15:06:18] [automation] [DEBUG] 当前JSON文件中的执行集ID列表：[1]
+[2026-03-04 15:06:18] [automation] [DEBUG] 查询执行集成功：ID=1
+[2026-03-04 15:06:18] [automation] [INFO] 修改执行集成功：ID=1，更新字段=['name', 'is_enabled']
+[2026-03-04 15:06:18] [automation] [INFO] 查询执行集列表成功：总数=0
+[2026-03-04 15:06:18] [automation] [INFO] 删除执行集成功：ID=1

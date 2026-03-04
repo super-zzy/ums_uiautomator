@@ -88,7 +88,7 @@ def read_json_file(file_path: str) -> dict:
         raise json.JSONDecodeError(f"解析JSON文件 {file_path} 失败：{str(e)}", e.doc, e.pos) from e
 
 
-def write_json_file(data: dict, file_path: str, indent: int = 4) -> None:
+def write_json_file(file_path: str, data: dict, indent: int = 4) -> None:
     """
     （可选）将字典写入JSON文件（补充通用能力）
     :param data: 要写入的字典

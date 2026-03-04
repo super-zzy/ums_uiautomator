@@ -1,0 +1,47 @@
+[2026-03-04 15:06:31] [automation] [INFO] 收到测试用例列表查询请求
+[2026-03-04 15:06:31] [automation] [INFO] 开始获取测试用例，目录：D:\PycharmProjects\ums_uiautomator\test_suite
+[2026-03-04 15:06:31] [automation] [INFO] 获取用例完成，共5个可用用例
+[2026-03-04 15:06:32] [automation] [INFO] 查询执行集列表成功：总数=0
+[2026-03-04 15:06:38] [automation] [INFO] 收到测试用例列表查询请求
+[2026-03-04 15:06:38] [automation] [INFO] 开始获取测试用例，目录：D:\PycharmProjects\ums_uiautomator\test_suite
+[2026-03-04 15:06:38] [automation] [INFO] 获取用例完成，共5个可用用例
+[2026-03-04 15:06:42] [automation] [INFO] 收到测试用例列表查询请求
+[2026-03-04 15:06:42] [automation] [INFO] 开始获取测试用例，目录：D:\PycharmProjects\ums_uiautomator\test_suite
+[2026-03-04 15:06:42] [automation] [INFO] 获取用例完成，共5个可用用例
+[2026-03-04 15:06:47] [automation] [ERROR] 添加用例到执行集失败：'list' object has no attribute 'get'
+[2026-03-04 15:06:54] [automation] [ERROR] 添加用例到执行集失败：'list' object has no attribute 'get'
+[2026-03-04 15:09:49] [automation] [INFO] 收到测试用例列表查询请求
+[2026-03-04 15:09:49] [automation] [INFO] 开始获取测试用例，目录：D:\PycharmProjects\ums_uiautomator\test_suite
+[2026-03-04 15:09:49] [automation] [INFO] 获取用例完成，共5个可用用例
+[2026-03-04 15:09:50] [automation] [INFO] 查询执行集列表成功：总数=0
+[2026-03-04 15:09:52] [automation] [INFO] 收到测试用例列表查询请求
+[2026-03-04 15:09:52] [automation] [INFO] 开始获取测试用例，目录：D:\PycharmProjects\ums_uiautomator\test_suite
+[2026-03-04 15:09:52] [automation] [INFO] 获取用例完成，共5个可用用例
+[2026-03-04 15:10:00] [automation] [ERROR] 添加用例到执行集失败：'list' object has no attribute 'get'
+[2026-03-04 15:34:52] [automation] [INFO] 收到测试用例列表查询请求
+[2026-03-04 15:34:52] [automation] [INFO] 开始获取测试用例，目录：D:\PycharmProjects\ums_uiautomator\test_suite
+[2026-03-04 15:34:52] [automation] [INFO] 获取用例完成，共5个可用用例
+[2026-03-04 15:35:07] [automation] [INFO] 收到测试用例列表查询请求
+[2026-03-04 15:35:07] [automation] [INFO] 开始获取测试用例，目录：D:\PycharmProjects\ums_uiautomator\test_suite
+[2026-03-04 15:35:07] [automation] [INFO] 获取用例完成，共5个可用用例
+[2026-03-04 15:40:40] [automation] [INFO] 收到测试用例列表查询请求
+[2026-03-04 15:40:40] [automation] [INFO] 开始获取测试用例，目录：D:\PycharmProjects\ums_uiautomator\test_suite
+[2026-03-04 15:40:40] [automation] [INFO] 获取用例完成，共5个可用用例
+[2026-03-04 15:41:52] [automation] [INFO] 收到测试用例列表查询请求
+[2026-03-04 15:41:52] [automation] [INFO] 开始获取测试用例，目录：D:\PycharmProjects\ums_uiautomator\test_suite
+[2026-03-04 15:41:52] [automation] [INFO] 获取用例完成，共5个可用用例
+[2026-03-04 15:43:06] [automation] [INFO] 收到测试用例列表查询请求
+[2026-03-04 15:43:06] [automation] [INFO] 开始获取测试用例，目录：D:\PycharmProjects\ums_uiautomator\test_suite
+[2026-03-04 15:43:06] [automation] [INFO] 获取用例完成，共5个可用用例
+[2026-03-04 15:44:42] [automation] [INFO] 收到测试用例列表查询请求
+[2026-03-04 15:44:42] [automation] [INFO] 开始获取测试用例，目录：D:\PycharmProjects\ums_uiautomator\test_suite
+[2026-03-04 15:44:42] [automation] [INFO] 获取用例完成，共5个可用用例
+[2026-03-04 15:45:33] [automation] [INFO] 收到测试用例列表查询请求
+[2026-03-04 15:45:33] [automation] [INFO] 开始获取测试用例，目录：D:\PycharmProjects\ums_uiautomator\test_suite
+[2026-03-04 15:45:33] [automation] [INFO] 获取用例完成，共5个可用用例
+[2026-03-04 15:48:51] [automation] [INFO] 收到测试用例列表查询请求
+[2026-03-04 15:48:51] [automation] [INFO] 开始获取测试用例，目录：D:\PycharmProjects\ums_uiautomator\test_suite
+[2026-03-04 15:48:51] [automation] [INFO] 获取用例完成，共5个可用用例
+[2026-03-04 15:49:13] [automation] [INFO] 收到测试用例列表查询请求
+[2026-03-04 15:49:13] [automation] [INFO] 开始获取测试用例，目录：D:\PycharmProjects\ums_uiautomator\test_suite
+[2026-03-04 15:49:13] [automation] [INFO] 获取用例完成，共5个可用用例
