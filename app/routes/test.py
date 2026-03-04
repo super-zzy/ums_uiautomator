@@ -4,13 +4,16 @@
 import os
 import traceback
 import uuid
+import time
+import shutil
+import json
 from flask import Blueprint, jsonify, request, current_app
 from datetime import datetime
 from threading import Thread
 from core.test_executor import TestExecutor
 from core.device_manager import DeviceManager
 from util.log_util import TempLog
-from util.path_util import safe_join
+from util.path_util import safe_join, ensure_dir_exists, get_report_root
 
 test_bp = Blueprint("test", __name__)
 test_tasks = {}  # 全局任务状态缓存（task_id: 任务信息）
@@ -77,6 +80,126 @@ def run_task_background(task_id: str, device_id: str, suite_abs_path: str) -> No
     finally:
         # 4. 释放设备实例（无论成功失败）
         DeviceManager.release_device(device_id)
+
+
+def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: list[str]) -> None:
+    """
+    监控执行集内所有子任务，全部结束后汇总Allure原始数据并生成一份执行集报告。
+    报告目录：与单任务一致，位于 report_root/<main_task_id>/allure_html
+    """
+    try:
+        log.info(f"执行集主任务{main_task_id}开始监控子任务：{sub_task_ids}")
+
+        # 等待所有子任务结束（pending/running -> 结束状态）
+        while True:
+            all_done = True
+            for sid in sub_task_ids:
+                task = test_tasks.get(sid)
+                if not task or task.get("status") in ("pending", "running"):
+                    all_done = False
+                    break
+            if all_done:
+                break
+            time.sleep(2)
+
+        # 若没有任何子任务，直接标记失败
+        if not sub_task_ids:
+            log.warning(f"执行集主任务{main_task_id}无子任务，无法生成报告")
+            main_task = test_tasks.get(main_task_id, {})
+            main_task.update(
+                {
+                    "status": "failed",
+                    "end_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "report_error_msg": "执行集无子任务，未生成报告",
+                }
+            )
+            test_tasks[main_task_id] = main_task
+            return
+
+        first_sub_task = test_tasks.get(sub_task_ids[0])
+        if not first_sub_task or "suite_info" not in first_sub_task:
+            log.error(f"执行集主任务{main_task_id}无法获取首个子任务信息，跳过报告生成")
+            return
+
+        first_suite = first_sub_task["suite_info"]
+        executor = TestExecutor(main_task_id, device_id, first_suite["abs_path"])
+
+        # 准备主任务的报告目录结构（不执行pytest，只做报告）
+        ensure_dir_exists(executor.task_report_dir)
+        ensure_dir_exists(executor.allure_raw_dir)
+        ensure_dir_exists(executor.allure_html_dir)
+
+        # 汇总所有子任务的Allure原始数据
+        merged_count = 0
+        for sid in sub_task_ids:
+            sub_raw_dir = safe_join(executor.report_root, sid, "allure_raw")
+            if not os.path.exists(sub_raw_dir):
+                log.warning(f"子任务{sub_task_ids}的Allure原始目录不存在：{sub_raw_dir}")
+                continue
+            for name in os.listdir(sub_raw_dir):
+                src = safe_join(sub_raw_dir, name)
+                if not os.path.isfile(src):
+                    continue
+                dst_name = f"{sid}_{name}"
+                dst = safe_join(executor.allure_raw_dir, dst_name)
+                shutil.copy2(src, dst)
+                merged_count += 1
+
+        if merged_count == 0:
+            log.warning(f"执行集主任务{main_task_id}未汇总到任何Allure原始数据，跳过报告生成")
+            main_task = test_tasks.get(main_task_id, {})
+            main_task.update(
+                {
+                    "status": "failed",
+                    "end_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "report_error_msg": "未找到子任务Allure原始数据，未生成报告",
+                }
+            )
+            test_tasks[main_task_id] = main_task
+            return
+
+        log.info(
+            f"执行集主任务{main_task_id}开始生成汇总报告，合并原始事件文件数：{merged_count}"
+        )
+        report_result = executor.generate_allure_report()
+
+        # 汇总整体状态：只要有子任务失败，则标记为failed，否则success
+        any_failed = any(
+            "failed" in (test_tasks.get(sid, {}).get("status") or "")
+            for sid in sub_task_ids
+        )
+        overall_status = (
+            "success" if (report_result["status"] == "success" and not any_failed) else "failed"
+        )
+
+        main_task = test_tasks.get(main_task_id, {})
+        main_task.update(
+            {
+                "status": overall_status,
+                "end_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "report_path": executor.allure_html_dir,
+                "report_index_path": report_result.get("index_path"),
+                "report_meta_path": executor.report_meta_path,
+                "report_generate_duration": report_result.get("generate_duration", 0),
+                "report_error_msg": report_result.get("error_msg"),
+            }
+        )
+        test_tasks[main_task_id] = main_task
+
+        log.info(
+            f"执行集主任务{main_task_id}汇总报告生成完成，状态：{overall_status}，入口：{report_result.get('index_path')}"
+        )
+    except Exception as e:
+        log.error(f"执行集主任务{main_task_id}生成汇总报告失败：{str(e)}", exc_info=True)
+        main_task = test_tasks.get(main_task_id, {})
+        main_task.update(
+            {
+                "status": "failed",
+                "end_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "report_error_msg": f"执行集报告生成异常：{str(e)}",
+            }
+        )
+        test_tasks[main_task_id] = main_task
 
 
 # ------------------- 接口定义 -------------------
@@ -159,23 +282,62 @@ def start_test():
 def get_task_status(task_id: str):
     """查询测试任务状态接口"""
     try:
-        task = test_tasks.get(task_id)
-        if not task:
-            return jsonify({
-                "code": 404,
-                "msg": f"任务{task_id}不存在",
-                "data": None
-            })
+        task = test_tasks.get(task_id) or {}
 
-        # 补充报告访问URL（若任务成功）
-        if "report_path" in task and task["report_path"]:
+        # 优先尝试从 report_meta.json 恢复/补充任务信息（兼容服务重启后的情况）
+        report_root = get_report_root()
+        try:
+            report_meta_path = safe_join(report_root, task_id, "report_meta.json")
+        except ValueError:
+            report_meta_path = None
+
+        if report_meta_path and os.path.exists(report_meta_path):
+            try:
+                with open(report_meta_path, "r", encoding="utf-8") as f:
+                    meta = json.load(f)
+
+                report_info = meta.get("report_info") or {}
+                index_path = report_info.get("index_path")
+                report_dir = os.path.dirname(index_path) if index_path else None
+
+                status = "success" if report_info.get("status") == "success" else "failed"
+
+                # 用元数据补齐/覆盖任务信息
+                task.update(
+                    {
+                        "task_id": meta.get("task_id", task_id),
+                        "device_id": meta.get("device_id"),
+                        "status": status,
+                        "end_time": meta.get("generate_time"),
+                        "report_path": report_dir,
+                        "report_index_path": index_path,
+                        "report_meta_path": report_meta_path,
+                    }
+                )
+            except Exception as e:
+                log.error(f"读取任务{task_id}报告元数据失败：{str(e)}", exc_info=True)
+
+        # 若内存和磁盘都查不到任何信息，则认为任务不存在
+        if not task:
+            return jsonify(
+                {
+                    "code": 404,
+                    "msg": f"任务{task_id}不存在",
+                    "data": None,
+                }
+            )
+
+        # 补充报告访问URL（若有报告目录）
+        if task.get("report_path"):
             task["report_url"] = f"/api/report/files/{task_id}/index.html"
 
-        return jsonify({
-            "code": 200,
-            "msg": "查询任务状态成功",
-            "data": task
-        })
+        return jsonify(
+            {
+                "code": 200,
+                "msg": "查询任务状态成功",
+                "data": task,
+            }
+        )
     except Exception as e:
         error_msg = f"查询任务{task_id}状态失败：{str(e)}"
         log.error(error_msg)
@@ -553,77 +715,97 @@ def update_exec_set(exec_set_id):
 @test_bp.post("/exec-set/<exec_set_id>/cases")
 def add_cases_to_exec_set(exec_set_id):
     """
-    向指定执行集添加用例
-    请求体格式：
+    覆盖设置指定执行集中的用例列表（按测试用例文件维度）
+
+    请求体格式示例：
     {
-        "suite_id": "852684384d7291eb03595237dba8603c",  # 必须：测试套件ID
-        "case_ids": ["test_case01", "test_case04"]      # 必须：要添加的用例ID列表
+        "suite_ids": [0, 1, 2]  # 必填：测试用例ID列表（对应 /api/test/suites 返回的 id）
     }
     """
     try:
-        # 1. 解析请求体（修复核心：确保正确提取suite_id）
-        req_data = request.get_json()
-        if not req_data:
-            return jsonify({
-                "code": 400,
-                "msg": "请求体不能为空（需传suite_id和case_ids）"
-            }), 400
+        req_data = request.get_json() or {}
+        suite_ids = req_data.get("suite_ids")
 
-        # 2. 校验suite_id参数（修复核心：显式校验+异常提示）
-        suite_id = req_data.get("suite_id")
-        if not suite_id:
-            return jsonify({
-                "code": 400,
-                "msg": "添加用例到执行集失败：缺少必填参数'suite_id'"
-            }), 400
+        if not isinstance(suite_ids, list) or not suite_ids:
+            return jsonify(
+                {
+                    "code": 400,
+                    "msg": "suite_ids 必须为非空列表（元素为用例ID，整数）",
+                    "data": None,
+                }
+            )
 
-        case_ids = req_data.get("case_ids", [])
-        if not isinstance(case_ids, list) or len(case_ids) == 0:
-            return jsonify({
-                "code": 400,
-                "msg": "case_ids必须为非空列表"
-            }), 400
+        # 将所有ID转为整数，避免类型问题
+        try:
+            suite_ids_int = {int(sid) for sid in suite_ids}
+        except (TypeError, ValueError):
+            return jsonify(
+                {
+                    "code": 400,
+                    "msg": "suite_ids 中包含非法ID（必须为整数）",
+                    "data": None,
+                }
+            )
 
-        # 3. 业务逻辑：添加用例到执行集（示例逻辑，需适配你的执行集存储方式）
-        # 【替换为你的真实逻辑】如：数据库写入、执行集文件更新等
-        log.info(f"执行集[{exec_set_id}]添加用例：suite_id={suite_id}, case_ids={case_ids}")
+        # 基于当前用例列表构建要写入执行集的用例信息
+        all_suites = get_test_suites()
+        suite_map = {s["id"]: s for s in all_suites}
 
-        # 示例：模拟执行集存储（你需替换为真实的DB/缓存操作）
-        exec_set_cache = current_app.config.get("EXEC_SET_CACHE", {})
-        if exec_set_id not in exec_set_cache:
-            exec_set_cache[exec_set_id] = {"suite_id": "", "cases": []}
+        missing_ids = [sid for sid in suite_ids_int if sid not in suite_map]
+        if missing_ids:
+            return jsonify(
+                {
+                    "code": 404,
+                    "msg": f"以下用例ID不存在：{missing_ids}",
+                    "data": None,
+                }
+            )
 
-        exec_set_cache[exec_set_id]["suite_id"] = suite_id  # 确保suite_id被赋值
-        exec_set_cache[exec_set_id]["cases"].extend([
-            case_id for case_id in case_ids
-            if case_id not in exec_set_cache[exec_set_id]["cases"]
-        ])
-        current_app.config["EXEC_SET_CACHE"] = exec_set_cache
+        cases = []
+        for sid in suite_ids_int:
+            s = suite_map[sid]
+            cases.append(
+                {
+                    "suite_id": s["id"],
+                    "abs_path": s["abs_path"],
+                    "name": s.get("name"),
+                    "rel_path": s.get("rel_path"),
+                }
+            )
 
-        # 4. 返回成功响应
-        return jsonify({
-            "code": 200,
-            "msg": "用例添加成功",
-            "data": {
-                "exec_set_id": exec_set_id,
-                "suite_id": suite_id,
-                "case_count": len(exec_set_cache[exec_set_id]["cases"])
+        success = ExecSetManager.set_cases_for_exec_set(exec_set_id, cases)
+        if not success:
+            return jsonify(
+                {
+                    "code": 404,
+                    "msg": "执行集不存在，或更新失败",
+                    "data": None,
+                }
+            )
+
+        log.info(
+            f"执行集[{exec_set_id}]用例列表已更新：suite_ids={sorted(list(suite_ids_int))}"
+        )
+
+        return jsonify(
+            {
+                "code": 200,
+                "msg": "执行集用例列表更新成功",
+                "data": {
+                    "exec_set_id": exec_set_id,
+                    "case_count": len(cases),
+                },
             }
-        }), 200
-
-    except KeyError as e:
-        # 捕获缺失参数的异常（兜底）
-        log.error(f"添加用例到执行集失败：缺失参数 {str(e)}", exc_info=True)
-        return jsonify({
-            "code": 500,
-            "msg": f"添加用例到执行集失败：'{str(e)}'"
-        }), 500
+        )
     except Exception as e:
-        log.error(f"添加用例到执行集异常：{str(e)}", exc_info=True)
-        return jsonify({
-            "code": 500,
-            "msg": f"添加用例到执行集失败：{str(e)}"
-        }), 500
+        log.error(f"设置执行集用例失败：{str(e)}", exc_info=True)
+        return jsonify(
+            {
+                "code": 500,
+                "msg": f"设置执行集用例失败：{str(e)}",
+                "data": None,
+            }
+        )
 
 
 @test_bp.delete("/exec-set/<exec_set_id>/case/<int:suite_id>")
@@ -707,11 +889,22 @@ def start_exec_set_test():
             "case_count": len(sub_tasks)
         }
 
+        # 6. 后台启动执行集报告汇总线程
+        Thread(
+            target=monitor_exec_set_report,
+            args=(main_task_id, device_id, sub_tasks),
+            daemon=True,
+        ).start()
+
         log.info(f"执行集任务{main_task_id}启动成功（设备：{device_id}，执行集：{exec_set['name']}，用例数：{len(sub_tasks)}）")
         return jsonify({
             "code": 200,
             "msg": "执行集测试任务已启动",
-            "data": {"main_task_id": main_task_id, "sub_task_count": len(sub_tasks)}
+            "data": {
+                "main_task_id": main_task_id,
+                "sub_task_count": len(sub_tasks),
+                "exec_set_name": exec_set["name"]
+            }
         })
     except Exception as e:
         error_msg = f"启动执行集测试失败：{str(e)}"

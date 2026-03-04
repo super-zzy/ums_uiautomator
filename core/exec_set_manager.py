@@ -118,6 +118,37 @@ class ExecSetManager:
         return False
 
     @classmethod
+    def set_cases_for_exec_set(cls, exec_set_id: str, cases: List[Dict]) -> bool:
+        """
+        覆盖设置执行集内的用例列表
+        cases元素格式示例：
+        {
+            "suite_id": 0,
+            "abs_path": "/xxx/test_demo.py",
+            "name": "test_demo.py",
+            "rel_path": "test_demo.py"
+        }
+        """
+        exec_sets = cls._load_exec_sets()
+        for es in exec_sets:
+            if es["id"] == exec_set_id:
+                # 根据suite_id去重，确保不会有重复用例
+                uniq_cases = {}
+                for c in cases:
+                    suite_id = c.get("suite_id")
+                    if suite_id is None:
+                        continue
+                    uniq_cases[suite_id] = c
+                es["cases"] = list(uniq_cases.values())
+                es["update_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                log.info(
+                    f"执行集{exec_set_id}用例列表已更新，共{len(es['cases'])}个用例"
+                )
+                return cls._save_exec_sets(exec_sets)
+        log.warning(f"尝试更新不存在的执行集：{exec_set_id}")
+        return False
+
+    @classmethod
     def remove_case_from_exec_set(cls, exec_set_id: str, suite_id: int) -> bool:
         """从执行集中移除单个用例"""
         exec_sets = cls._load_exec_sets()

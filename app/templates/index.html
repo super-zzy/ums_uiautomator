@@ -328,7 +328,7 @@
             </div>
         </div>
 
-        <!-- 任务历史记录 -->
+        <!-- 任务历史记录（拆分为两个 Tab） -->
         <div class="bg-white rounded-lg p-5 card-shadow">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-semibold flex items-center">
@@ -338,7 +338,27 @@
                     <i class="fa fa-trash mr-1"></i>清空历史
                 </button>
             </div>
-            <div class="overflow-x-auto">
+
+            <!-- Tabs -->
+            <div class="border-b border-gray-200 mb-4 flex">
+                <button
+                    id="history-tab-single"
+                    class="px-4 py-2 text-sm font-medium border-b-2 border-primary text-primary"
+                    data-tab="single"
+                >
+                    单用例执行历史
+                </button>
+                <button
+                    id="history-tab-exec-set"
+                    class="ml-2 px-4 py-2 text-sm font-medium border-b-2 border-transparent text-light hover:text-primary hover:border-primary/50"
+                    data-tab="exec_set"
+                >
+                    执行集执行历史
+                </button>
+            </div>
+
+            <!-- 单用例任务历史 -->
+            <div id="history-panel-single" class="overflow-x-auto">
                 <table class="w-full min-w-[640px]">
                     <thead>
                         <tr class="border-b border-gray-200">
@@ -350,12 +370,35 @@
                             <th class="text-left py-3 px-4 text-sm font-medium text-light">操作</th>
                         </tr>
                     </thead>
-                    <tbody id="task-history-table">
-                        <!-- 任务历史将通过JS动态渲染 -->
+                    <tbody id="task-history-table-single">
                         <tr>
                             <td colspan="6" class="text-center py-8 text-light">
                                 <i class="fa fa-history text-2xl mb-2"></i>
                                 <p>暂无任务历史记录</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 执行集任务历史 -->
+            <div id="history-panel-exec-set" class="overflow-x-auto hidden">
+                <table class="w-full min-w-[640px]">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-3 px-4 text-sm font-medium text-light">执行集任务ID</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-light">设备ID</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-light">执行集名称</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-light">状态</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-light">开始时间</th>
+                            <th class="text-left py-3 px-4 text-sm font-medium text-light">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="task-history-table-exec-set">
+                        <tr>
+                            <td colspan="6" class="text-center py-8 text-light">
+                                <i class="fa fa-history text-2xl mb-2"></i>
+                                <p>暂无执行集历史记录</p>
                             </td>
                         </tr>
                     </tbody>
@@ -398,7 +441,12 @@
             taskLog: document.getElementById('task-log'),
 
             // 任务历史
-            taskHistoryTable: document.getElementById('task-history-table'),
+            taskHistoryTableSingle: document.getElementById('task-history-table-single'),
+            taskHistoryTableExecSet: document.getElementById('task-history-table-exec-set'),
+            historyTabSingle: document.getElementById('history-tab-single'),
+            historyTabExecSet: document.getElementById('history-tab-exec-set'),
+            historyPanelSingle: document.getElementById('history-panel-single'),
+            historyPanelExecSet: document.getElementById('history-panel-exec-set'),
             clearHistoryBtn: document.getElementById('clear-history-btn'),
 
             // 刷新按钮
@@ -1074,12 +1122,47 @@
 
             renderTaskHistory();
             elements.viewReportBtn.disabled = taskHistory.length === 0;
+
+            // 绑定历史 Tab 切换
+            elements.historyTabSingle.addEventListener('click', () => {
+                elements.historyTabSingle.classList.add('border-primary', 'text-primary');
+                elements.historyTabSingle.classList.remove('text-light');
+                elements.historyTabExecSet.classList.remove('border-primary', 'text-primary');
+                elements.historyTabExecSet.classList.add('text-light');
+
+                elements.historyPanelSingle.classList.remove('hidden');
+                elements.historyPanelExecSet.classList.add('hidden');
+            });
+
+            elements.historyTabExecSet.addEventListener('click', () => {
+                elements.historyTabExecSet.classList.add('border-primary', 'text-primary');
+                elements.historyTabExecSet.classList.remove('text-light');
+                elements.historyTabSingle.classList.remove('border-primary', 'text-primary');
+                elements.historyTabSingle.classList.add('text-light');
+
+                elements.historyPanelExecSet.classList.remove('hidden');
+                elements.historyPanelSingle.classList.add('hidden');
+            });
+
+            // 页面初始化时，若存在“运行中”的执行集任务，恢复轮询，避免刷新后状态卡死
+            const runningExecSetTasks = taskHistory.filter(
+                t => t.type === 'exec_set' && t.status === '运行中'
+            );
+            runningExecSetTasks.forEach(t => {
+                if (t.id) {
+                    pollExecSetStatus(t.id);
+                }
+            });
         }
 
         // 渲染任务历史
         function renderTaskHistory() {
-            if (taskHistory.length === 0) {
-                elements.taskHistoryTable.innerHTML = `
+            const singleTasks = taskHistory.filter(t => !t.type || t.type === 'single');
+            const execSetTasks = taskHistory.filter(t => t.type === 'exec_set');
+
+            // 单用例历史
+            if (singleTasks.length === 0) {
+                elements.taskHistoryTableSingle.innerHTML = `
                     <tr>
                         <td colspan="6" class="text-center py-8 text-light">
                             <i class="fa fa-history text-2xl mb-2"></i>
@@ -1087,34 +1170,75 @@
                         </td>
                     </tr>
                 `;
-                return;
+            } else {
+                elements.taskHistoryTableSingle.innerHTML = singleTasks.map(task => `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-3 px-4">${task.id}</td>
+                        <td class="py-3 px-4">${task.device}</td>
+                        <td class="py-3 px-4">${task.suite}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 rounded-full text-xs ${
+                                task.status === '成功' ? 'bg-success/10 text-success'
+                                : task.status === '失败' ? 'bg-danger/10 text-danger'
+                                : 'bg-warning/10 text-warning'
+                            }">
+                                ${task.status}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">${task.time}</td>
+                        <td class="py-3 px-4">
+                            ${task.reportUrl ? `
+                                <button class="text-primary hover:text-primary/80 text-sm"
+                                        onclick="window.open('${task.reportUrl}', '_blank')">
+                                    <i class="fa fa-file-text-o mr-1"></i>查看报告
+                                </button>
+                            ` : `
+                                <span class="text-light text-sm">无报告</span>
+                            `}
+                        </td>
+                    </tr>
+                `).join('');
             }
 
-            elements.taskHistoryTable.innerHTML = taskHistory.map(task => `
-                <tr class="border-b border-gray-100 hover:bg-gray-50">
-                    <td class="py-3 px-4">${task.id}</td>
-                    <td class="py-3 px-4">${task.device}</td>
-                    <td class="py-3 px-4">${task.suite}</td>
-                    <td class="py-3 px-4">
-                        <span class="px-2 py-1 rounded-full text-xs ${
-                            task.status === '成功' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
-                        }">
-                            ${task.status}
-                        </span>
-                    </td>
-                    <td class="py-3 px-4">${task.time}</td>
-                    <td class="py-3 px-4">
-                        ${task.reportUrl ? `
-                            <button class="text-primary hover:text-primary/80 text-sm"
-                                    onclick="window.open('${task.reportUrl}', '_blank')">
-                                <i class="fa fa-file-text-o mr-1"></i>查看报告
-                            </button>
-                        ` : `
-                            <span class="text-light text-sm">无报告</span>
-                        `}
-                    </td>
-                </tr>
-            `).join('');
+            // 执行集历史
+            if (execSetTasks.length === 0) {
+                elements.taskHistoryTableExecSet.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-8 text-light">
+                            <i class="fa fa-history text-2xl mb-2"></i>
+                            <p>暂无执行集历史记录</p>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                elements.taskHistoryTableExecSet.innerHTML = execSetTasks.map(task => `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-3 px-4">${task.id}</td>
+                        <td class="py-3 px-4">${task.device}</td>
+                        <td class="py-3 px-4">${task.execSetName || '-'}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 rounded-full text-xs ${
+                                task.status === '成功' ? 'bg-success/10 text-success'
+                                : task.status === '失败' ? 'bg-danger/10 text-danger'
+                                : 'bg-warning/10 text-warning'
+                            }">
+                                ${task.status}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">${task.time}</td>
+                        <td class="py-3 px-4">
+                            ${task.reportUrl ? `
+                                <button class="text-primary hover:text-primary/80 text-sm"
+                                        onclick="window.open('${task.reportUrl}', '_blank')">
+                                    <i class="fa fa-file-text-o mr-1"></i>查看报告
+                                </button>
+                            ` : `
+                                <span class="text-light text-sm">无报告</span>
+                            `}
+                        </td>
+                    </tr>
+                `).join('');
+            }
         }
 
         // 元素引用
@@ -1301,9 +1425,9 @@ const execSetElements = {
 
 // 当前编辑的执行集ID
 let currentEditingExecSetId = null;
-// 已选用例列表
-let selectedCases = [];
-// 所有用例缓存
+// 已选用例ID列表（与 /api/test/suites 返回的 id 对应）
+let selectedCaseIds = [];
+// 所有用例缓存（来源于 /api/test/suites）
 let allCasesCache = [];
 
 // 加载所有执行集
@@ -1375,7 +1499,7 @@ async function loadAllCasesForExecSet() {
             execSetElements.allCasesList.innerHTML = allCasesCache.map(caseItem => `
                 <tr class="border-b border-gray-100 hover:bg-gray-50">
                     <td class="py-2 px-2 text-center">
-                        <input type="checkbox" class="case-checkbox" value="${caseItem.id}" data-case='${JSON.stringify(caseItem)}'>
+                        <input type="checkbox" class="case-checkbox" value="${caseItem.id}">
                     </td>
                     <td class="py-2 px-2 text-xs">${caseItem.name} (${caseItem.rel_path})</td>
                 </tr>
@@ -1395,29 +1519,38 @@ async function loadAllCasesForExecSet() {
 
 // 渲染已选用例列表
 function renderSelectedCases() {
-    execSetElements.selectedCaseCount.textContent = selectedCases.length;
-    if (selectedCases.length === 0) {
+    execSetElements.selectedCaseCount.textContent = selectedCaseIds.length;
+    if (selectedCaseIds.length === 0) {
         execSetElements.selectedCasesList.innerHTML = `
             <tr>
                 <td colspan="2" class="text-center py-4 text-light text-xs">暂无选中用例</td>
             </tr>
         `;
     } else {
-        execSetElements.selectedCasesList.innerHTML = selectedCases.map(caseItem => `
+        // 按ID在缓存中查找用例详情
+        const caseMap = {};
+        allCasesCache.forEach(c => {
+            caseMap[c.id] = c;
+        });
+
+        execSetElements.selectedCasesList.innerHTML = selectedCaseIds.map(id => {
+            const caseItem = caseMap[id] || { name: `ID=${id}`, rel_path: '' };
+            return `
             <tr class="border-b border-gray-100 hover:bg-gray-50">
                 <td class="py-2 px-2 text-center">
-                    <input type="checkbox" class="selected-case-checkbox" value="${caseItem.suite_id}">
+                    <input type="checkbox" class="selected-case-checkbox" value="${id}">
                 </td>
                 <td class="py-2 px-2 text-xs">${caseItem.name} (${caseItem.rel_path})</td>
             </tr>
-        `).join('');
+        `;
+        }).join('');
     }
 }
 
 // 打开新建执行集模态框
 function openCreateExecSetModal() {
     currentEditingExecSetId = null;
-    selectedCases = [];
+    selectedCaseIds = [];
     execSetElements.execSetEditorTitle.textContent = '新建执行集';
     execSetElements.execSetName.value = '';
     execSetElements.execSetDesc.value = '';
@@ -1435,7 +1568,12 @@ async function editExecSet(execSetId) {
         if (data.code === 200 && data.data) {
             const execSet = data.data;
             currentEditingExecSetId = execSetId;
-            selectedCases = execSet.cases || [];
+            // 后端返回的cases中包含suite_id，转换为ID列表
+            const cases = execSet.cases || [];
+            selectedCaseIds = cases
+                .map(c => c.suite_id)
+                .filter(id => typeof id === 'number' || typeof id === 'string')
+                .map(id => parseInt(id, 10));
 
             // 填充表单
             execSetElements.execSetEditorTitle.textContent = '编辑执行集';
@@ -1497,95 +1635,120 @@ function updateStartExecSetBtnStatus() {
 // 添加选中用例到执行集
 function addSelectedCases() {
     const checkedCheckboxes = document.querySelectorAll('.case-checkbox:checked');
-    const newCases = Array.from(checkedCheckboxes).map(checkbox => {
-        return JSON.parse(checkbox.dataset.case);
+    const newIds = Array.from(checkedCheckboxes).map(checkbox =>
+        parseInt(checkbox.value, 10)
+    );
+
+    const existingIds = new Set(selectedCaseIds);
+    newIds.forEach(id => {
+        if (!existingIds.has(id)) {
+            selectedCaseIds.push(id);
+        }
     });
 
-    // 去重添加
-    const existingCaseIds = new Set(selectedCases.map(c => c.suite_id));
-    const filteredNewCases = newCases.filter(c => !existingCaseIds.has(c.suite_id));
-    selectedCases = [...selectedCases, ...filteredNewCases];
-
     // 重置复选框 + 重新渲染
-    checkedCheckboxes.forEach(checkbox => checkbox.checked = false);
+    checkedCheckboxes.forEach(checkbox => (checkbox.checked = false));
     renderSelectedCases();
 }
 
 // 移除选中的已选用例
 function removeSelectedCases() {
     const checkedCheckboxes = document.querySelectorAll('.selected-case-checkbox:checked');
-    const removeCaseIds = new Set(Array.from(checkedCheckboxes).map(checkbox => parseInt(checkbox.value)));
+    const removeIds = new Set(
+        Array.from(checkedCheckboxes).map(checkbox =>
+            parseInt(checkbox.value, 10)
+        )
+    );
 
-    selectedCases = selectedCases.filter(c => !removeCaseIds.has(c.suite_id));
+    selectedCaseIds = selectedCaseIds.filter(id => !removeIds.has(id));
     renderSelectedCases();
 }
 
-// 保存执行集
-// 修改后的 saveExecSet 函数
+// 保存执行集（新建 / 编辑）
 async function saveExecSet() {
-    // 1. 获取页面上的核心数据（执行集ID、选中的用例列表）
-    const execSetId = "26dafe02"; // 可根据实际场景动态获取（比如从输入框/页面参数）
-    const selectedCases = getSelectedCases(); // 你的原有方法，获取选中的用例列表
+    const name = execSetElements.execSetName.value.trim();
+    const desc = execSetElements.execSetDesc.value.trim();
 
-    // 2. 校验：确保有选中的用例（避免空数据提交）
-    if (!selectedCases || selectedCases.length === 0) {
-        alert("请先选择要添加的用例！");
+    if (!name) {
+        alert("执行集名称不能为空");
         return;
     }
 
-    try {
-        // 3. 核心修改：构建符合接口要求的请求体
-        // 提取suite_id（选第一个用例的id作为suite_id，也可根据业务选其他字段如abs_path）
-        const suite_id = selectedCases[0].id.toString();
-        // 提取case_ids（用例标识，这里选用例的name，也可选用abs_path/rel_path）
-        const case_ids = selectedCases.map(caseItem => caseItem.name);
+    if (!Array.isArray(selectedCaseIds) || selectedCaseIds.length === 0) {
+        if (!confirm("当前执行集未选择任何用例，确定要继续保存吗？")) {
+            return;
+        }
+    }
 
-        // 4. 发送POST请求（请求体改为包含suite_id和case_ids的对象）
-        const response = await fetch(`/api/test/exec-set/${execSetId}/cases`, {
+    try {
+        let execSetId = currentEditingExecSetId;
+
+        // 1）新建执行集：先创建基本信息
+        if (!execSetId) {
+            const createResp = await fetch("/api/test/exec-set", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: name,
+                    description: desc
+                })
+            });
+            const createData = await createResp.json();
+            if (createData.code !== 200 || !createData.data?.id) {
+                alert(`创建执行集失败：${createData.msg || "未知错误"}`);
+                return;
+            }
+            execSetId = createData.data.id;
+        } else {
+            // 2）编辑执行集：更新基本信息
+            const updateResp = await fetch(`/api/test/exec-set/${execSetId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: name,
+                    description: desc
+                })
+            });
+            const updateData = await updateResp.json();
+            if (updateData.code !== 200) {
+                alert(`更新执行集信息失败：${updateData.msg || "未知错误"}`);
+                return;
+            }
+        }
+
+        // 3）无论新建/编辑，都覆盖更新执行集中的用例列表
+        const casesResp = await fetch(`/api/test/exec-set/${execSetId}/cases`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json", // 必须指定JSON格式
-            },
-            // 关键修改：不再直接传selectedCases，而是传重构后的对象
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                suite_id: suite_id,
-                case_ids: case_ids
+                suite_ids: selectedCaseIds
             })
         });
-
-        // 5. 处理响应
-        const result = await response.json();
-        if (result.code === 200) {
-            alert(`执行集保存成功！共添加 ${case_ids.length} 个用例`);
-            console.log("保存成功：", result);
-        } else {
-            alert(`保存失败：${result.msg}`);
-            console.error("接口返回错误：", result);
+        const casesData = await casesResp.json();
+        if (casesData.code !== 200) {
+            alert(`保存执行集用例失败：${casesData.msg || "未知错误"}`);
+            return;
         }
+
+        addTaskLog(
+            `[成功] 执行集保存成功（ID：${execSetId}，用例数：${casesData.data.case_count}）`,
+            "success"
+        );
+
+        // 关闭弹窗并刷新列表
+        closeExecSetEditorModal();
+        loadExecSets();
     } catch (error) {
-        console.error("保存执行集出错（网络/解析错误）：", error);
-        alert("保存执行集时发生网络错误，请检查接口是否正常！");
+        console.error("保存执行集出错：", error);
+        alert(`保存执行集时发生错误：${error.message}`);
     }
-}
-
-// 辅助函数：模拟获取选中的用例（你可保留自己的getSelectedCases方法）
-function getSelectedCases() {
-    // 示例：返回你之前测试的用例列表
-    return [
-        {
-            "abs_path": "D:\\PycharmProjects\\ums_uiautomator\\test_suite\\demo.py",
-            "id": 0,
-            "name": "demo.py",
-            "rel_path": "demo.py"
-        }
-    ];
 }
 
 // 关闭执行集编辑模态框
 function closeExecSetEditorModal() {
     execSetElements.execSetEditorModal.classList.add('hidden');
     currentEditingExecSetId = null;
-    selectedCases = [];
+    selectedCaseIds = [];
 }
 
 // 启动执行集测试
@@ -1617,13 +1780,97 @@ async function startExecSetTest() {
 
         const data = await response.json();
         if (data.code === 200) {
-            addTaskLog(`[成功] 执行集测试任务已启动（主任务ID：${data.data.main_task_id}，子任务数：${data.data.sub_task_count}）`, 'success');
+            const mainTaskId = data.data.main_task_id;
+            addTaskLog(
+                `[成功] 执行集测试任务已启动（主任务ID：${mainTaskId}，子任务数：${data.data.sub_task_count}）`,
+                'success'
+            );
+
+            // 记录到任务历史（执行集 Tab）
+            const newTask = {
+                id: mainTaskId,
+                device: deviceId,
+                execSetName: data.data.exec_set_name || execSetName,
+                suite: execSetName,
+                type: 'exec_set',
+                status: '运行中',
+                time: new Date().toLocaleString('zh-CN'),
+                reportUrl: ''  // 汇总报告生成完成后由轮询更新
+            };
+            taskHistory.unshift(newTask);
+            localStorage.setItem('taskHistory', JSON.stringify(taskHistory));
+            renderTaskHistory();
+
+            // 启动执行集任务状态轮询，直到生成汇总报告
+            pollExecSetStatus(mainTaskId);
         } else {
             throw new Error(data.msg || '启动执行集测试失败');
         }
     } catch (error) {
         addTaskLog(`[错误] 启动执行集测试失败：${error.message}`, 'danger');
         console.error('启动执行集测试失败:', error);
+    }
+}
+
+// 轮询执行集主任务状态，直到结束并生成汇总报告
+async function pollExecSetStatus(mainTaskId, errorRetry = 0) {
+    const maxErrorRetry = 10; // 网络错误最多重试 10 次
+    const url = `/api/test/status/${encodeURIComponent(mainTaskId)}`;
+    try {
+        const resp = await fetch(url);
+        if (!resp.ok) {
+            if (errorRetry < maxErrorRetry) {
+                setTimeout(() => pollExecSetStatus(mainTaskId, errorRetry + 1), 3000);
+            } else {
+                addTaskLog(`[错误] 多次重试后仍无法获取执行集任务状态（HTTP错误），请稍后手动刷新页面。`, 'danger');
+            }
+            return;
+        }
+
+        const data = await resp.json();
+        if (data.code !== 200 || !data.data) {
+            if (errorRetry < maxErrorRetry) {
+                setTimeout(() => pollExecSetStatus(mainTaskId, errorRetry + 1), 3000);
+            } else {
+                addTaskLog(`[错误] 多次重试后仍无法获取执行集任务状态（后端错误），请稍后手动刷新页面。`, 'danger');
+            }
+            return;
+        }
+        const task = data.data;
+
+        // 仍在执行中，继续轮询（这是正常情况，不计入 errorRetry）
+        if (task.status === 'running' || task.status === 'pending') {
+            setTimeout(() => pollExecSetStatus(mainTaskId, 0), 3000);
+            return;
+        }
+
+        // 已结束：根据状态判断成功/失败
+        const statusText = task.status && task.status.toString().includes('success')
+            ? '成功'
+            : '失败';
+        const reportUrl = task.report_url || '';
+
+        const idx = taskHistory.findIndex(t => t.id === mainTaskId);
+        if (idx !== -1) {
+            taskHistory[idx].status = statusText;
+            if (reportUrl) {
+                taskHistory[idx].reportUrl = reportUrl;
+            }
+            localStorage.setItem('taskHistory', JSON.stringify(taskHistory));
+            renderTaskHistory();
+        }
+
+        addTaskLog(
+            `[信息] 执行集任务 ${mainTaskId} 已结束，状态：${statusText}${reportUrl ? '，汇总报告已生成' : ''}`,
+            statusText === '成功' ? 'success' : 'danger'
+        );
+    } catch (error) {
+        console.error('轮询执行集任务状态失败:', error, 'url:', url);
+        if (errorRetry < maxErrorRetry) {
+            setTimeout(() => pollExecSetStatus(mainTaskId, errorRetry + 1), 3000);
+        } else {
+            addTaskLog(`[错误] 多次重试后仍无法获取执行集任务状态（网络异常），请稍后手动刷新页面。`, 'danger');
+        }
     }
 }
 
