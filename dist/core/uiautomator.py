@@ -32,7 +32,8 @@ class Uiautomator:
             try:
                 self.log.debug(f"尝试直接连接已存在的 uiautomator2 会话：{self.device_id}")
                 dev = u2.connect(self.device_id)
-                _ = dev.info
+                # 调用一个轻量接口验证连接是否可用
+                _ = dev.info  # 若连接异常会抛错
                 self._device = dev
                 self.initialized = True
                 self.log.info(f"设备{self.device_id}已存在可用的 uiautomator2 会话，跳过 init")
@@ -70,14 +71,15 @@ class Uiautomator:
             "-m",
             "uiautomator2",
             "init",
-            self.device_id,
+            self.device_id,  # 指定目标设备ID
         ]
         self.log.info(f"执行初始化命令：{' '.join(init_cmd)}")
 
+        # 使用二进制模式读取输出，手动解码，避免Windows下非UTF-8输出导致的UnicodeDecodeError
         process = subprocess.Popen(
             init_cmd,
             stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
+            stderr=subprocess.STDOUT,  # 合并 stdout 和 stderr
         )
 
         collected_output = []
@@ -88,7 +90,9 @@ class Uiautomator:
             raw_line = process.stdout.readline()
             if not raw_line and process.poll() is not None:
                 break
+
             if raw_line:
+                # 优先按 utf-8 解码，失败则退回 gbk 并忽略非法字符
                 try:
                     line = raw_line.decode("utf-8", errors="strict")
                 except UnicodeDecodeError:
@@ -103,6 +107,7 @@ class Uiautomator:
         process.wait()
 
         if process.returncode != 0:
+            # 将部分输出记录为警告，但不阻断流程——后续由连接/实际操作来验证是否真正可用
             tail_logs = "\n".join(collected_output[-20:]) if collected_output else ""
             self.log.warning(
                 f"uiautomator2 init 退出码为{process.returncode}（忽略为非致命错误），输出：\n{tail_logs}"

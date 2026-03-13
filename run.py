@@ -2,6 +2,11 @@
 import os
 import sys  # 必须最先导入 sys 模块
 
+# 在打包后的环境中，确保当前工作目录是可执行文件所在目录
+if getattr(sys, "frozen", False):
+    exe_dir = os.path.dirname(sys.executable)
+    os.chdir(exe_dir)
+
 # 第一步：强制将项目根目录加入 sys.path（重中之重！）
 # 作用：确保后续导入 app 时，app/__init__.py 能找到上层的 conf 模块
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))  # 获取 run.py 所在目录（项目根目录）

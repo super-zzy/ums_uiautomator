@@ -1,0 +1,1 @@
+{"total":2,"items":[{"uid":"a17c5f7b7269d1c1d6327dc70647f101","name":"功能测试","statistic":{"failed":1,"broken":0,"skipped":1,"passed":0,"unknown":0,"total":2}},{"uid":"ba71a2b3cb339e9bc73b76d46280767f","name":"API测试","statistic":{"failed":0,"broken":0,"skipped":0,"passed":2,"unknown":0,"total":2}}]}

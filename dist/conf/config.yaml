@@ -1,9 +1,9 @@
 author: zyli3
 env: dev  # 环境（dev/prod/test）
 path:
-  test_suite_dir: "D:\\PyCharmProjects\\ums_uiautomator\\dist\\test_suite"  # 测试用例目录
-  report_root_dir: "D:\\PyCharmProjects\\ums_uiautomator\\dist\\result"     # 报告根目录
-  log_root_dir: "D:\\PyCharmProjects\\ums_uiautomator\\dist\\logs"          # 日志根目录
+  test_suite_dir: "./test_suite"  # 测试用例目录
+  report_root_dir: "./result"     # 报告根目录
+  log_root_dir: "./logs"          # 日志根目录
 device:
   adb_path: "adb"  # ADB路径（默认系统环境变量）
   atx_version: "0.10.0"  # 期望atx-agent版本

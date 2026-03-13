@@ -1,0 +1,68 @@
+[2026-03-13 15:22:48] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-13 15:22:48] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-13 15:22:48] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-13 15:22:48] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-13 15:22:48] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-13 15:22:48] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-13 15:22:49] [device_AF8YVB1805003480] [DEBUG] 直接连接现有 uiautomator2 会话失败，将执行 init 重新拉起：Resource assets/u2.jar not found in uiautomator2 package.
+[2026-03-13 15:22:49] [device_AF8YVB1805003480] [INFO] 执行初始化命令：python -m uiautomator2 init AF8YVB1805003480
+[2026-03-13 15:22:49] [device_AF8YVB1805003480] [DEBUG] 直接连接现有 uiautomator2 会话失败，将执行 init 重新拉起：Resource assets/u2.jar not found in uiautomator2 package.
+[2026-03-13 15:22:49] [device_AF8YVB1805003480] [INFO] 执行初始化命令：python -m uiautomator2 init AF8YVB1805003480
+[2026-03-13 15:22:49] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:49,748 core:254 pid:14016] file u2.jar md5: 3564c56e4ef077f92c0fd32bcb42aea1
+[2026-03-13 15:22:49] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:49,782 core:254 pid:33404] file u2.jar md5: 3564c56e4ef077f92c0fd32bcb42aea1
+[2026-03-13 15:22:49] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:49,821 core:243 pid:14016] file u2.jar already pushed
+[2026-03-13 15:22:49] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:49,821 core:111 pid:14016] http request GET /ping None
+[2026-03-13 15:22:49] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:49,852 core:71 pid:14016] launch uiautomator with cmd: CLASSPATH=/data/local/tmp/u2.jar app_process / com.wetest.uia2.Main
+[2026-03-13 15:22:49] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:49,858 core:243 pid:33404] file u2.jar already pushed
+[2026-03-13 15:22:49] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:49,858 core:111 pid:33404] http request GET /ping None
+[2026-03-13 15:22:49] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:49,874 core:111 pid:14016] http request GET /ping None
+[2026-03-13 15:22:49] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:49,889 core:71 pid:33404] launch uiautomator with cmd: CLASSPATH=/data/local/tmp/u2.jar app_process / com.wetest.uia2.Main
+[2026-03-13 15:22:49] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:49,912 core:111 pid:33404] http request GET /ping None
+[2026-03-13 15:22:50] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:50,407 core:111 pid:14016] http request GET /ping None
+[2026-03-13 15:22:50] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:50,443 core:111 pid:33404] http request GET /ping None
+[2026-03-13 15:22:50] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:50,696 core:39 pid:14016] MockAdbProcess: b'[server] INFO: [UiAutomator2Server] Starting Server\n'
+[2026-03-13 15:22:50] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:50,899 core:39 pid:33404] MockAdbProcess: b'[server] INFO: [UiAutomator2Server] Starting Server\n'
+[2026-03-13 15:22:50] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:50,903 core:39 pid:14016] MockAdbProcess: b'SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".\nSLF4J: Defaulting to no-operation (NOP) logger implementation\nSLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.\n'
+[2026-03-13 15:22:50] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:50,946 core:111 pid:14016] http request GET /ping None
+[2026-03-13 15:22:50] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:50,969 core:39 pid:14016] MockAdbProcess: b'[server] INFO: clipboardManager inited\n'
+[2026-03-13 15:22:50] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:50,972 core:39 pid:14016] MockAdbProcess: b'[server] INFO: tmpdir is /data/local/tmp/u2\n'
+[2026-03-13 15:22:50] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:50,978 core:111 pid:33404] http request GET /ping None
+[2026-03-13 15:22:50] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:50,986 core:39 pid:14016] MockAdbProcess: b'[server] INFO: http server listening on *:9008\n'
+[2026-03-13 15:22:51] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:51,027 core:254 pid:33404] file u2.jar md5: 3564c56e4ef077f92c0fd32bcb42aea1
+[2026-03-13 15:22:51] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:51,050 core:39 pid:33404] MockAdbProcess: b'java.lang.IllegalStateException: UiAutomationService android.accessibilityservice.IAccessibilityServiceClient$Stub$Proxy@a51fa3calready registered!\n\tat android.os.Parcel.createException(Parcel.java:2091)\n\tat android.os.Parcel.readException(Parcel.java:2051)\n\tat android.os.Parcel.readException(Parcel.java:1999)\n\tat android.view.accessibility.IAccessibilityManager$Stub$Proxy.registerUiTestAutomationService(IAccessibilityManager.java:642)\n\tat android.app.UiAutomationConnection.registerUiTestAutomationServiceLocked(UiAutomationConnection.java:451)\n\tat android.app.UiAutomationConnection.connect(UiAutomationConnection.java:101)\n\tat android.app.UiAutomation.connect(UiAutomation.java:241)\n\tat java.lang.reflect.Method.invoke(Native Method)\n\tat mirror.RefMethod.call(RefMethod.java:63)\n\tat uiautomator.InstrumentShellWrapper.getUiAutomation(InstrumentShellWrapper.java:97)\n\tat androidx.test.uiautomator.UiDevice$Api24Impl.getUiAutomationWithRetry(UiDevice.java:1545)\n\tat androidx.test.uiautomator.UiDevice.getUiAutomation(Ui'
+[2026-03-13 15:22:51] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:51,050 core:39 pid:33404] MockAdbProcess: b'Device.java:1468)\n\tat androidx.test.uiautomator.QueryController.<init>(QueryController.java:95)\n\tat androidx.test.uiautomator.UiDevice.<init>(UiDevice.java:115)\n\tat androidx.test.uiautomator.UiDevice.getInstance(UiDevice.java:296)\n\tat com.wetest.uia2.Main.runServer(Main.java:50)\n\tat com.wetest.uia2.Main.main(Main.java:30)\n\tat com.android.internal.os.RuntimeInit.nativeFinishInit(Native Method)\n\tat com.android.internal.os.RuntimeInit.main(RuntimeInit.java:359)\nCaused by: android.os.RemoteException: Remote stack trace:\n\tat com.android.server.accessibility.UiAutomationManager.registerUiTestAutomationServiceLocked(UiAutomationManager.java:102)\n\tat com.android.server.accessibility.AccessibilityManagerService.registerUiTestAutomationService(AccessibilityManagerService.java:911)\n\tat android.view.accessibility.IAccessibilityManager$Stub.onTransact(IAccessibilityManager.java:332)\n\tat android.os.Binder.execTransactInternal(Binder.java:1028)\n\tat android.os.Binder.execTransact(Binder.java:1001)\ncallee: null 1467/12012\n\n'
+[2026-03-13 15:22:51] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:51,051 core:39 pid:33404] MockAdbProcess: b'java.lang.IllegalStateException: UiAutomation not connected!\n\tat android.app.UiAutomation.throwIfNotConnectedLocked(UiAutomation.java:1198)\n\tat android.app.UiAutomation.getServiceInfo(UiAutomation.java:495)\n\tat androidx.test.uiautomator.UiDevice.getUiAutomation(UiDevice.java:1482)\n\tat androidx.test.uiautomator.QueryController.<init>(QueryController.java:95)\n\tat androidx.test.uiautomator.UiDevice.<init>(UiDevice.java:115)\n\tat androidx.test.uiautomator.UiDevice.getInstance(UiDevice.java:296)\n\tat com.wetest.uia2.Main.runServer(Main.java:50)\n\tat com.wetest.uia2.Main.main(Main.java:30)\n\tat com.android.internal.os.RuntimeInit.nativeFinishInit(Native Method)\n\tat com.android.internal.os.RuntimeInit.main(RuntimeInit.java:359)\n'
+[2026-03-13 15:22:51] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:51,087 core:243 pid:33404] file u2.jar already pushed
+[2026-03-13 15:22:51] [device_AF8YVB1805003480] [INFO] uiautomator2 init 命令执行完成
+[2026-03-13 15:22:51] [device_AF8YVB1805003480] [ERROR] 设备AF8YVB1805003480初始化失败：Resource assets/u2.jar not found in uiautomator2 package.
+Traceback (most recent call last):
+  File "D:\cursor\ums_uiautomator\dist\core\uiautomator.py", line 50, in _init_device
+    self._device = u2.connect(self.device_id)
+                   ~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "uiautomator2\__init__.py", line 947, in connect
+  File "uiautomator2\__init__.py", line 963, in connect_usb
+  File "uiautomator2\base.py", line 38, in __init__
+  File "uiautomator2\core.py", line 212, in __init__
+  File "uiautomator2\core.py", line 231, in start_uiautomator
+  File "uiautomator2\core.py", line 240, in _setup_jar
+  File "contextlib.py", line 141, in __enter__
+  File "uiautomator2\utils.py", line 54, in with_package_resource
+FileNotFoundError: Resource assets/u2.jar not found in uiautomator2 package.
+[2026-03-13 15:22:51] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:51,475 core:111 pid:14016] http request GET /ping None
+[2026-03-13 15:22:51] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:51,517 core:254 pid:14016] file u2.jar md5: 3564c56e4ef077f92c0fd32bcb42aea1
+[2026-03-13 15:22:51] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:22:51,589 core:243 pid:14016] file u2.jar already pushed
+[2026-03-13 15:22:51] [device_AF8YVB1805003480] [INFO] uiautomator2 init 命令执行完成
+[2026-03-13 15:22:51] [device_AF8YVB1805003480] [ERROR] 设备AF8YVB1805003480初始化失败：Resource assets/u2.jar not found in uiautomator2 package.
+Traceback (most recent call last):
+  File "D:\cursor\ums_uiautomator\dist\core\uiautomator.py", line 50, in _init_device
+    self._device = u2.connect(self.device_id)
+                   ~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "uiautomator2\__init__.py", line 947, in connect
+  File "uiautomator2\__init__.py", line 963, in connect_usb
+  File "uiautomator2\base.py", line 38, in __init__
+  File "uiautomator2\core.py", line 212, in __init__
+  File "uiautomator2\core.py", line 231, in start_uiautomator
+  File "uiautomator2\core.py", line 240, in _setup_jar
+  File "contextlib.py", line 141, in __enter__
+  File "uiautomator2\utils.py", line 54, in with_package_resource
+FileNotFoundError: Resource assets/u2.jar not found in uiautomator2 package.

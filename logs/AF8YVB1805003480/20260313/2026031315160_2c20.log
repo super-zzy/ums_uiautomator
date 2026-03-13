@@ -1,0 +1,4 @@
+[2026-03-13 15:16:59] [task_2026031315160_2c20] [INFO] 开始生成Allure HTML报告...
+[2026-03-13 15:16:59] [task_2026031315160_2c20] [DEBUG] Allure生成命令包含--clean参数
+[2026-03-13 15:16:59] [task_2026031315160_2c20] [DEBUG] Allure报告标题：report_2026031315160_2c20
+[2026-03-13 15:16:59] [task_2026031315160_2c20] [DEBUG] Allure生成命令：allure generate d:\cursor\ums_uiautomator\result\2026031315160_2c20\allure_raw -o d:\cursor\ums_uiautomator\result\2026031315160_2c20\allure_html --clean --title report_2026031315160_2c20

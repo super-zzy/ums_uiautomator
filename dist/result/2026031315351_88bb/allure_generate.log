@@ -1,0 +1,12 @@
+=== 任务2026031315351_88bb Allure报告生成日志 ===
+生成时间：2026-03-13 15:35:37
+生成耗时：3.98秒
+执行命令：allure generate D:\cursor\ums_uiautomator\dist\result\2026031315351_88bb\allure_raw -o D:\cursor\ums_uiautomator\dist\result\2026031315351_88bb\allure_html --clean --title report_2026031315351_88bb
+
+=== 标准输出（stdout）===
+--title does not exist
+report_2026031315351_88bb does not exist
+Report successfully generated to D:\cursor\ums_uiautomator\dist\result\2026031315351_88bb\allure_html
+
+=== 错误输出（stderr）===
+无错误输出

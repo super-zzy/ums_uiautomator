@@ -1,0 +1,12 @@
+INFO     device_AF8YVB1805003480:log_util.py:60 开始初始化设备：AF8YVB1805003480
+DEBUG    device_AF8YVB1805003480:log_util.py:57 设备AF8YVB1805003480在线状态：True
+DEBUG    device_AF8YVB1805003480:log_util.py:57 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+INFO     device_AF8YVB1805003480:log_util.py:60 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+INFO     device_AF8YVB1805003480:log_util.py:60 设备AF8YVB1805003480执行亮屏操作
+ERROR    device_AF8YVB1805003480:log_util.py:66 设备AF8YVB1805003480检查文本'相机'失败：[Errno 2] No such file or directory: '/tmp/window_dump.xml'
+Traceback (most recent call last):
+  File "D:\cursor\ums_uiautomator\dist\core\uiautomator.py", line 200, in check_text_exists
+    with open("/tmp/window_dump.xml", "r", encoding="utf-8") as f:
+         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/window_dump.xml'
+INFO     device_AF8YVB1805003480:log_util.py:60 设备AF8YVB1805003480执行按键操作：home

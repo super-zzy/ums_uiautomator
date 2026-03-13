@@ -1,0 +1,3 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"测试打开微信应用并验证主界面","10621","test_case02","test_suite","Fri Mar 13 15:35:22 CST 2026","passed","Fri Mar 13 15:35:33 CST 2026","","demo","",""
+"测试屏幕向左、向右滑动操作","7113","test_case01","test_suite","Fri Mar 13 15:35:14 CST 2026","passed","Fri Mar 13 15:35:21 CST 2026","","demo","",""

@@ -1,0 +1,2 @@
+INFO     device_AF8YVB1805003480:log_util.py:60 设备AF8YVB1805003480执行亮屏操作
+INFO     device_AF8YVB1805003480:log_util.py:60 设备AF8YVB1805003480执行按键操作：home

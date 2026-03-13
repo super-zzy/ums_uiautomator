@@ -1,0 +1,51 @@
+[2026-03-13 15:16:07] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-13 15:16:07] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-13 15:16:07] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-13 15:16:07] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-13 15:16:07] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-13 15:16:07] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-13 15:16:07] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-13 15:16:07] [task_2026031315160_ff2f] [INFO] 准备测试环境：d:\cursor\ums_uiautomator\result\2026031315160_ff2f
+[2026-03-13 15:16:07] [task_2026031315160_ff2f] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031315160_ff2f\allure_raw
+[2026-03-13 15:16:07] [task_2026031315160_ff2f] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031315160_ff2f\allure_html
+[2026-03-13 15:16:07] [task_2026031315160_ff2f] [INFO] 测试目录初始化完成：d:\cursor\ums_uiautomator\result\2026031315160_ff2f
+[2026-03-13 15:16:07] [task_2026031315160_ff2f] [INFO] 测试用例校验通过：d:\cursor\ums_uiautomator\test_suite\test.py（文件大小：1.52KB）
+[2026-03-13 15:16:07] [task_2026031315160_ff2f] [INFO] 开始执行Pytest测试...
+[2026-03-13 15:16:08] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-13 15:16:09] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-13 15:16:09] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-13 15:16:09] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-13 15:16:09] [device_AF8YVB1805003480] [DEBUG] 直接连接现有 uiautomator2 会话失败，将执行 init 重新拉起：Push not complete, expect pushed 3746525, actually pushed 1839104
+[2026-03-13 15:16:09] [device_AF8YVB1805003480] [INFO] 执行初始化命令：python -m uiautomator2 init AF8YVB1805003480
+[2026-03-13 15:16:10] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:16:10,572 core:254 pid:34508] file u2.jar md5: 3564c56e4ef077f92c0fd32bcb42aea1
+[2026-03-13 15:16:10] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:16:10,634 core:243 pid:34508] file u2.jar already pushed
+[2026-03-13 15:16:10] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:16:10,634 core:111 pid:34508] http request GET /ping None
+[2026-03-13 15:16:10] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:16:10,666 core:254 pid:34508] file u2.jar md5: 3564c56e4ef077f92c0fd32bcb42aea1
+[2026-03-13 15:16:10] [device_AF8YVB1805003480] [DEBUG] uiautomator2 init 输出：[D 2026-03-13 15:16:10,771 core:243 pid:34508] file u2.jar already pushed
+[2026-03-13 15:16:10] [device_AF8YVB1805003480] [INFO] uiautomator2 init 命令执行完成
+[2026-03-13 15:16:10] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480初始化成功，已连接uiautomator2
+[2026-03-13 15:16:11] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行亮屏操作
+[2026-03-13 15:16:12] [device_AF8YVB1805003480] [ERROR] 设备AF8YVB1805003480检查文本'相机'失败：[Errno 2] No such file or directory: '/tmp/window_dump.xml'
+Traceback (most recent call last):
+  File "D:\cursor\ums_uiautomator\core\uiautomator.py", line 200, in check_text_exists
+    with open("/tmp/window_dump.xml", "r", encoding="utf-8") as f:
+         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/window_dump.xml'
+[2026-03-13 15:16:13] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-13 15:16:13] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行亮屏操作
+[2026-03-13 15:16:14] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-13 15:16:14] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行亮屏操作
+[2026-03-13 15:16:15] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480点击坐标：(100, 100)
+[2026-03-13 15:16:15] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480点击坐标：(200, 200)
+[2026-03-13 15:16:15] [device_AF8YVB1805003480] [INFO] 两次点击操作完成，测试通过
+[2026-03-13 15:16:16] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-13 15:16:16] [task_2026031315160_ff2f] [INFO] Pytest执行完成（耗时：8.61秒，返回码：1）
+[2026-03-13 15:16:16] [task_2026031315160_ff2f] [INFO] Pytest日志已保存：d:\cursor\ums_uiautomator\result\2026031315160_ff2f\task_2026031315160_ff2f.log（大小：0.45KB）
+[2026-03-13 15:16:16] [task_2026031315160_ff2f] [INFO] 开始生成Allure HTML报告...
+[2026-03-13 15:16:16] [task_2026031315160_ff2f] [DEBUG] Allure生成命令包含--clean参数
+[2026-03-13 15:16:16] [task_2026031315160_ff2f] [DEBUG] Allure报告标题：report_2026031315160_ff2f
+[2026-03-13 15:16:16] [task_2026031315160_ff2f] [DEBUG] Allure生成命令：allure generate d:\cursor\ums_uiautomator\result\2026031315160_ff2f\allure_raw -o d:\cursor\ums_uiautomator\result\2026031315160_ff2f\allure_html --clean --title report_2026031315160_ff2f
+[2026-03-13 15:16:46] [task_2026031315160_ff2f] [INFO] Allure生成日志已保存：d:\cursor\ums_uiautomator\result\2026031315160_ff2f\allure_generate.log
+[2026-03-13 15:16:46] [task_2026031315160_ff2f] [DEBUG] 报告压缩功能已禁用
+[2026-03-13 15:16:46] [task_2026031315160_ff2f] [INFO] Allure报告生成成功：d:\cursor\ums_uiautomator\result\2026031315160_ff2f\allure_html\index.html（目录大小：2450.93MB，耗时：30.08秒）
+[2026-03-13 15:16:46] [task_2026031315160_ff2f] [INFO] 报告元数据已保存：d:\cursor\ums_uiautomator\result\2026031315160_ff2f\report_meta.json
