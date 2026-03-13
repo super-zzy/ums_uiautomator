@@ -17,18 +17,12 @@ a = Analysis(
     ['run.py'],
     pathex=[PROJECT_ROOT],
     binaries=[],
-    # 重点：确保 conf 目录下的所有文件（包括 config.yaml）被打包
     datas=[
-        # 方式1：打包整个 conf 目录（推荐，包含所有配置文件）
+        # 项目自身的配置和资源目录
         (os.path.join(PROJECT_ROOT, 'conf'), 'conf'),
-        # 其他必要目录...
         (os.path.join(PROJECT_ROOT, 'test_suite'), 'test_suite'),
         (os.path.join(PROJECT_ROOT, 'core'), 'core'),
         (os.path.join(PROJECT_ROOT, 'app', 'templates'), 'app/templates'),
-        # 按当前运行环境动态获取第三方库路径，避免硬编码 Python 安装目录
-        (os.path.dirname(uiautomator2.__file__), 'uiautomator2'),
-        (os.path.dirname(yaml.__file__), 'yaml'),
-        (os.path.dirname(pytest_timeout.__file__), 'pytest-timeout'),
     ],
     hiddenimports=[
         'yaml', 'flask', 'apscheduler', 'uiautomator2', 'yaml', 'pytest-timeout', 'pytest', 'allure_pytest', 'core', 'core.device_manager', 'core.uiautomator'
