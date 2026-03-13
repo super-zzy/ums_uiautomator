@@ -282,29 +282,23 @@ def start_test():
 def get_task_status(task_id: str):
     """查询测试任务状态接口"""
     try:
-        task = test_tasks.get(task_id) or {}
-
-        # 优先尝试从 report_meta.json 恢复/补充任务信息（兼容服务重启后的情况）
-        report_root = get_report_root()
-        try:
-            report_meta_path = safe_join(report_root, task_id, "report_meta.json")
-        except ValueError:
-            report_meta_path = None
-
-        if report_meta_path and os.path.exists(report_meta_path):
+        task = test_tasks.get(task_id)
+        if not task:
+            # 兼容：服务重启/内存丢失时，从 report_meta.json 恢复已完成任务状态
             try:
-                with open(report_meta_path, "r", encoding="utf-8") as f:
-                    meta = json.load(f)
+                report_root = get_report_root()
+                report_meta_path = safe_join(report_root, task_id, "report_meta.json")
+                if os.path.exists(report_meta_path):
+                    with open(report_meta_path, "r", encoding="utf-8") as f:
+                        meta = json.load(f)
 
-                report_info = meta.get("report_info") or {}
-                index_path = report_info.get("index_path")
-                report_dir = os.path.dirname(index_path) if index_path else None
+                    report_info = meta.get("report_info") or {}
+                    index_path = report_info.get("index_path")
+                    report_dir = os.path.dirname(index_path) if index_path else None
 
-                status = "success" if report_info.get("status") == "success" else "failed"
+                    status = "success" if report_info.get("status") == "success" else "failed"
 
-                # 用元数据补齐/覆盖任务信息
-                task.update(
-                    {
+                    restored_task = {
                         "task_id": meta.get("task_id", task_id),
                         "device_id": meta.get("device_id"),
                         "status": status,
@@ -313,12 +307,19 @@ def get_task_status(task_id: str):
                         "report_index_path": index_path,
                         "report_meta_path": report_meta_path,
                     }
-                )
-            except Exception as e:
-                log.error(f"读取任务{task_id}报告元数据失败：{str(e)}", exc_info=True)
+                    if restored_task.get("report_path"):
+                        restored_task["report_url"] = f"/api/report/files/{task_id}/index.html"
 
-        # 若内存和磁盘都查不到任何信息，则认为任务不存在
-        if not task:
+                    return jsonify(
+                        {
+                            "code": 200,
+                            "msg": "查询任务状态成功（已从报告元数据恢复）",
+                            "data": restored_task,
+                        }
+                    )
+            except Exception as e:
+                log.error(f"从报告元数据恢复任务{task_id}失败：{str(e)}", exc_info=True)
+
             return jsonify(
                 {
                     "code": 404,
@@ -327,17 +328,15 @@ def get_task_status(task_id: str):
                 }
             )
 
-        # 补充报告访问URL（若有报告目录）
-        if task.get("report_path"):
+        # 补充报告访问URL（若任务成功）
+        if "report_path" in task and task["report_path"]:
             task["report_url"] = f"/api/report/files/{task_id}/index.html"
 
-        return jsonify(
-            {
-                "code": 200,
-                "msg": "查询任务状态成功",
-                "data": task,
-            }
-        )
+        return jsonify({
+            "code": 200,
+            "msg": "查询任务状态成功",
+            "data": task
+        })
     except Exception as e:
         error_msg = f"查询任务{task_id}状态失败：{str(e)}"
         log.error(error_msg)

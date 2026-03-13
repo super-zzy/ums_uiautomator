@@ -1,6 +1,10 @@
 # -*- mode: python ; coding: utf-8 -*-
 import os
 import sys
+
+import uiautomator2
+import yaml
+import pytest_timeout
 from PyInstaller.building.api import EXE, PYZ
 from PyInstaller.building.build_main import Analysis
 from PyInstaller.building.datastruct import Tree
@@ -21,9 +25,10 @@ a = Analysis(
         (os.path.join(PROJECT_ROOT, 'test_suite'), 'test_suite'),
         (os.path.join(PROJECT_ROOT, 'core'), 'core'),
         (os.path.join(PROJECT_ROOT, 'app', 'templates'), 'app/templates'),
-        (r'C:\Python313\Lib\site-packages\uiautomator2', r'uiautomator2')
-        (r'C:\Python313\Lib\site-packages\yaml', r'yaml')
-        (r'C:\Python313\Lib\site-packages\pytest-timeout', r'pytest-timeout')
+        # 按当前运行环境动态获取第三方库路径，避免硬编码 Python 安装目录
+        (os.path.dirname(uiautomator2.__file__), 'uiautomator2'),
+        (os.path.dirname(yaml.__file__), 'yaml'),
+        (os.path.dirname(pytest_timeout.__file__), 'pytest-timeout'),
     ],
     hiddenimports=[
         'yaml', 'flask', 'apscheduler', 'uiautomator2', 'yaml', 'pytest-timeout', 'pytest', 'allure_pytest', 'core', 'core.device_manager', 'core.uiautomator'

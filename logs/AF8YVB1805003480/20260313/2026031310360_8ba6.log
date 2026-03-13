@@ -1,0 +1,37 @@
+[2026-03-13 10:36:02] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-13 10:36:02] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-13 10:36:02] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-13 10:36:03] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-13 10:36:03] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-13 10:36:03] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-13 10:36:03] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-13 10:36:03] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-13 10:36:03] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-13 10:36:03] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-13 10:36:03] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-13 10:36:03] [task_2026031310360_8ba6] [INFO] 准备测试环境：d:\cursor\ums_uiautomator\result\2026031310360_8ba6
+[2026-03-13 10:36:03] [task_2026031310360_8ba6] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031310360_8ba6\allure_raw
+[2026-03-13 10:36:03] [task_2026031310360_8ba6] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031310360_8ba6\allure_html
+[2026-03-13 10:36:03] [task_2026031310360_8ba6] [INFO] 测试目录初始化完成：d:\cursor\ums_uiautomator\result\2026031310360_8ba6
+[2026-03-13 10:36:03] [task_2026031310360_8ba6] [INFO] 测试用例校验通过：d:\cursor\ums_uiautomator\test_suite\demo.py（文件大小：1.20KB）
+[2026-03-13 10:36:03] [task_2026031310360_8ba6] [INFO] 开始执行Pytest测试...
+[2026-03-13 10:36:03] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-13 10:36:04] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-13 10:36:04] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-13 10:36:04] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-13 10:36:05] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-13 10:36:05] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行亮屏操作
+[2026-03-13 10:36:10] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-13 10:36:11] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行亮屏操作
+[2026-03-13 10:36:11] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-13 10:36:22] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-13 10:36:22] [task_2026031310360_8ba6] [INFO] Pytest执行完成（耗时：18.77秒，返回码：1）
+[2026-03-13 10:36:22] [task_2026031310360_8ba6] [INFO] Pytest日志已保存：d:\cursor\ums_uiautomator\result\2026031310360_8ba6\task_2026031310360_8ba6.log（大小：0.45KB）
+[2026-03-13 10:36:22] [task_2026031310360_8ba6] [INFO] 开始生成Allure HTML报告...
+[2026-03-13 10:36:22] [task_2026031310360_8ba6] [DEBUG] Allure生成命令包含--clean参数
+[2026-03-13 10:36:22] [task_2026031310360_8ba6] [DEBUG] Allure报告标题：report_2026031310360_8ba6
+[2026-03-13 10:36:22] [task_2026031310360_8ba6] [DEBUG] Allure生成命令：allure generate d:\cursor\ums_uiautomator\result\2026031310360_8ba6\allure_raw -o d:\cursor\ums_uiautomator\result\2026031310360_8ba6\allure_html --clean --title report_2026031310360_8ba6
+[2026-03-13 10:36:52] [task_2026031310360_8ba6] [INFO] Allure生成日志已保存：d:\cursor\ums_uiautomator\result\2026031310360_8ba6\allure_generate.log
+[2026-03-13 10:36:52] [task_2026031310360_8ba6] [DEBUG] 报告压缩功能已禁用
+[2026-03-13 10:36:52] [task_2026031310360_8ba6] [INFO] Allure报告生成成功：d:\cursor\ums_uiautomator\result\2026031310360_8ba6\allure_html\index.html（目录大小：2436.84MB，耗时：29.85秒）
+[2026-03-13 10:36:52] [task_2026031310360_8ba6] [INFO] 报告元数据已保存：d:\cursor\ums_uiautomator\result\2026031310360_8ba6\report_meta.json

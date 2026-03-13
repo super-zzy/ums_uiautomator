@@ -1,0 +1,8 @@
+[2026-03-13 10:36:53] [task_2026031310360_9aee] [INFO] 开始生成Allure HTML报告...
+[2026-03-13 10:36:53] [task_2026031310360_9aee] [DEBUG] Allure生成命令包含--clean参数
+[2026-03-13 10:36:53] [task_2026031310360_9aee] [DEBUG] Allure报告标题：report_2026031310360_9aee
+[2026-03-13 10:36:53] [task_2026031310360_9aee] [DEBUG] Allure生成命令：allure generate d:\cursor\ums_uiautomator\result\2026031310360_9aee\allure_raw -o d:\cursor\ums_uiautomator\result\2026031310360_9aee\allure_html --clean --title report_2026031310360_9aee
+[2026-03-13 10:37:22] [task_2026031310360_9aee] [INFO] Allure生成日志已保存：d:\cursor\ums_uiautomator\result\2026031310360_9aee\allure_generate.log
+[2026-03-13 10:37:22] [task_2026031310360_9aee] [DEBUG] 报告压缩功能已禁用
+[2026-03-13 10:37:22] [task_2026031310360_9aee] [INFO] Allure报告生成成功：d:\cursor\ums_uiautomator\result\2026031310360_9aee\allure_html\index.html（目录大小：2469.24MB，耗时：29.63秒）
+[2026-03-13 10:37:22] [task_2026031310360_9aee] [INFO] 报告元数据已保存：d:\cursor\ums_uiautomator\result\2026031310360_9aee\report_meta.json

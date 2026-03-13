@@ -28,11 +28,22 @@ class Uiautomator:
             if not self._is_device_online():
                 raise ConnectionError(f"设备{self.device_id}未在线（请检查ADB连接）")
 
-            # 2. 执行 uiautomator2 init 命令（核心初始化逻辑）
-            self._run_uiautomator2_init()
+            # 2. 尝试直接连接已存在的 uiautomator2 会话，若成功则跳过 init
+            try:
+                self.log.debug(f"尝试直接连接已存在的 uiautomator2 会话：{self.device_id}")
+                dev = u2.connect(self.device_id)
+                _ = dev.info
+                self._device = dev
+                self.initialized = True
+                self.log.info(f"设备{self.device_id}已存在可用的 uiautomator2 会话，跳过 init")
+                return
+            except Exception as e:
+                self.log.debug(
+                    f"直接连接现有 uiautomator2 会话失败，将执行 init 重新拉起：{str(e)}"
+                )
 
-            # 3. 校验 atx-agent 版本（确保初始化结果符合预期）
-            # self._verify_atx_agent_version()
+            # 3. 执行 uiautomator2 init 命令（核心初始化逻辑）
+            self._run_uiautomator2_init()
 
             # 4. 连接设备并获取uiautomator2的Device实例
             self._device = u2.connect(self.device_id)
@@ -53,35 +64,51 @@ class Uiautomator:
         return online
 
     def _run_uiautomator2_init(self) -> None:
-        """执行 `python -m uiautomator2 init` 命令，捕获输出日志"""
+        """执行 `python -m uiautomator2 init` 命令，捕获输出日志（兼容非 UTF-8 编码）"""
         init_cmd = [
-            "python", "-m", "uiautomator2", "init",
-            self.device_id  # 指定目标设备ID
+            "python",
+            "-m",
+            "uiautomator2",
+            "init",
+            self.device_id,
         ]
         self.log.info(f"执行初始化命令：{' '.join(init_cmd)}")
 
-        # 执行命令并捕获实时输出（避免缓冲区阻塞，同时打印日志）
         process = subprocess.Popen(
             init_cmd,
             stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,  # 合并 stdout 和 stderr
-            text=True,
-            encoding="utf-8"
+            stderr=subprocess.STDOUT,
         )
 
-        # 实时读取输出并记录日志
-        while process.poll() is None:
-            if process.stdout:
-                line = process.stdout.readline()
-                if line:
-                    self.log.debug(f"uiautomator2 init 输出：{line.strip()}")
+        collected_output = []
 
-        # 检查命令执行结果
+        while True:
+            if process.stdout is None:
+                break
+            raw_line = process.stdout.readline()
+            if not raw_line and process.poll() is not None:
+                break
+            if raw_line:
+                try:
+                    line = raw_line.decode("utf-8", errors="strict")
+                except UnicodeDecodeError:
+                    try:
+                        line = raw_line.decode("gbk", errors="ignore")
+                    except Exception:
+                        line = raw_line.decode("utf-8", errors="ignore")
+                line = line.rstrip("\r\n")
+                collected_output.append(line)
+                self.log.debug(f"uiautomator2 init 输出：{line}")
+
+        process.wait()
+
         if process.returncode != 0:
-            raise RuntimeError(
-                f"uiautomator2 init 执行失败（返回码：{process.returncode}）"
+            tail_logs = "\n".join(collected_output[-20:]) if collected_output else ""
+            self.log.warning(
+                f"uiautomator2 init 退出码为{process.returncode}（忽略为非致命错误），输出：\n{tail_logs}"
             )
-        self.log.info("uiautomator2 init 命令执行完成")
+        else:
+            self.log.info("uiautomator2 init 命令执行完成")
 
     def _verify_atx_agent_version(self) -> None:
         """校验 atx-agent 版本（复用原有逻辑，确保版本符合配置）"""
