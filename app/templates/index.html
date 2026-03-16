@@ -104,7 +104,7 @@
         </div>
 
         <!-- 测试配置区 -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-4">
             <!-- 设备选择卡片 -->
             <div class="lg:col-span-1 bg-white rounded-lg p-5 card-shadow">
                 <div class="flex justify-between items-center mb-4">
@@ -225,10 +225,10 @@
                         <table class="w-full min-w-[640px]">
                             <thead>
                                 <tr class="border-b border-gray-200">
-                                    <th class="w-12 text-center py-3 px-2 text-sm font-medium text-light">选择</th>
                                     <th class="text-left py-3 px-4 text-sm font-medium text-light">用例ID</th>
                                     <th class="text-left py-3 px-4 text-sm font-medium text-light">名称</th>
                                     <th class="text-left py-3 px-4 text-sm font-medium text-light">路径</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-light">操作</th>
                                 </tr>
                             </thead>
                             <tbody id="case-list-tbody">
@@ -255,7 +255,7 @@
                 <div class="bg-white rounded-lg p-5 card-shadow mb-4">
     <div class="flex flex-wrap gap-4 mb-4">
         <button id="create-exec-set-btn" class="bg-primary text-white px-4 py-2 rounded-lg flex items-center btn-hover">
-            <i class="fa fa-plus mr-2"></i>新建执行集
+            <i class="fa fa-plus mr-2"></i>新建
         </button>
     </div>
 
@@ -393,13 +393,16 @@
     </div>
 </div>
 
-                <!-- 任务状态日志 -->
-                <div>
-                    <h3 class="text-sm font-medium text-light mb-2">任务状态日志</h3>
-                    <div id="task-log" class="w-full h-[200px] border border-gray-200 rounded-lg p-3 overflow-y-auto bg-gray-50 text-sm">
-                        <p class="text-light italic">等待测试任务启动...</p>
-                    </div>
-                </div>
+            </div>
+        </div>
+
+        <!-- 任务状态日志（位于在线设备/任务管理/测试配置下方，历史任务记录上方） -->
+        <div class="bg-white rounded-lg p-5 card-shadow mb-4">
+            <h2 class="text-lg font-semibold flex items-center mb-3">
+                <i class="fa fa-commenting text-primary mr-2"></i>任务状态日志
+            </h2>
+            <div id="task-log" class="w-full h-[200px] border border-gray-200 rounded-lg p-3 overflow-y-auto bg-gray-50 text-sm">
+                <p class="text-light italic">等待测试任务启动...</p>
             </div>
         </div>
 
@@ -519,6 +522,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
     <script src="/static/js/common.js"></script>
+    <script src="/static/js/task_log.js"></script>
     <script src="/static/js/banner.js"></script>
     <script src="/static/js/devices.js"></script>
     <script src="/static/js/history.js"></script>

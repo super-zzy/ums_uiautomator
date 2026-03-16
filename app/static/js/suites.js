@@ -63,12 +63,17 @@
       .map(
         (s) => `
       <tr class="border-b border-gray-100 hover:bg-gray-50">
-        <td class="py-2 px-2 text-center">
-          <input type="radio" name="case-select-radio" value="${s.id}">
-        </td>
         <td class="py-2 px-4 text-xs">${s.id}</td>
         <td class="py-2 px-4 text-xs">${s.name}</td>
         <td class="py-2 px-4 text-xs">${s.rel_path}</td>
+        <td class="py-2 px-4 text-xs">
+          <button class="text-primary hover:text-primary/80 mr-2" data-action="edit" data-id="${s.id}">
+            <i class="fa fa-edit"></i> 编辑
+          </button>
+          <button class="text-danger hover:text-danger/80" data-action="delete" data-id="${s.id}" data-name="${s.name}">
+            <i class="fa fa-trash"></i> 删除
+          </button>
+        </td>
       </tr>
     `
       )
@@ -417,21 +422,39 @@
 
     // 用例列表行选择 -> 同步到隐藏下拉框，以复用现有逻辑
     if (caseListTbody && suiteSelectEl) {
-      caseListTbody.addEventListener("change", (e) => {
-        const target = e.target;
-        if (target && target.name === "case-select-radio") {
-          const val = target.value;
-          suiteSelectEl.value = val;
+      // 行内编辑/删除按钮事件委托
+      if (!caseListTbody._boundClick) {
+        caseListTbody.addEventListener("click", (e) => {
+          const btn = e.target.closest("button[data-action]");
+          if (!btn) return;
+          const action = btn.dataset.action;
+          const id = btn.dataset.id;
+          const name = btn.dataset.name;
+          if (!id) return;
+
+          // 同步隐藏下拉框的选中项，复用原有逻辑
+          suiteSelectEl.value = id;
           updateStartBtnStatus();
-          const hasValue = !!val;
+          const hasValue = !!id;
           if (editSuiteBtnEl) {
             editSuiteBtnEl.disabled = !hasValue;
           }
           if (deleteSuiteBtnEl) {
             deleteSuiteBtnEl.disabled = !hasValue;
           }
-        }
-      });
+
+          if (action === "edit" && editSuiteBtnEl && !editSuiteBtnEl.disabled) {
+            editSuiteBtnEl.click();
+          } else if (
+            action === "delete" &&
+            deleteSuiteBtnEl &&
+            !deleteSuiteBtnEl.disabled
+          ) {
+            deleteSuiteBtnEl.click();
+          }
+        });
+        caseListTbody._boundClick = true;
+      }
     }
 
     // 用例列表分页按钮

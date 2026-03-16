@@ -115,24 +115,11 @@ async function apiPost(url, body) {
   return resp.json();
 }
 
-// 任务日志输出
+// 任务日志输出（委托给独立的 TaskLog 模块）
 function addTaskLog(message, type = "info") {
-  const { taskLog } = Elements;
-  if (!taskLog) return;
-
-  const logTypes = {
-    info: "text-dark",
-    success: "text-success",
-    warning: "text-warning",
-    danger: "text-danger",
-  };
-
-  const logElement = document.createElement("p");
-  logElement.className = `${logTypes[type] || "text-dark"} mb-1`;
-  logElement.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
-
-  taskLog.appendChild(logElement);
-  taskLog.scrollTop = taskLog.scrollHeight;
+  if (window.TaskLog && typeof window.TaskLog.addLog === "function") {
+    window.TaskLog.addLog(message, type);
+  }
 }
 
 // 任务历史存取（统一使用 automation_test_task_history）

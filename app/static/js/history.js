@@ -29,9 +29,9 @@
     }
     taskHistoryTableSingle.innerHTML = singleTasks
       .map(
-        (task) => `
+        (task, index) => `
       <tr class="border-b border-gray-100 hover:bg-gray-50">
-        <td class="py-3 px-4">${task.id}</td>
+        <td class="py-3 px-4">${index + 1}</td>
         <td class="py-3 px-4">${task.device}</td>
         <td class="py-3 px-4">${task.suite}</td>
         <td class="py-3 px-4">
@@ -77,9 +77,9 @@
     }
     taskHistoryTableExecSet.innerHTML = execSetTasks
       .map(
-        (task) => `
+        (task, index) => `
       <tr class="border-b border-gray-100 hover:bg-gray-50">
-        <td class="py-3 px-4">${task.id}</td>
+        <td class="py-3 px-4">${index + 1}</td>
         <td class="py-3 px-4">${task.device}</td>
         <td class="py-3 px-4">${task.execSetName || "-"}</td>
         <td class="py-3 px-4">
