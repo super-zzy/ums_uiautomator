@@ -1,0 +1,1 @@
+{"uuid": "73756810-59ff-4e1a-9b4f-5b4e8b476f03", "children": ["1bd2df9c-67ca-45da-ac56-ae3966173baf", "c7539b97-9e9e-4472-b4f0-54ab0e43c9b2"], "befores": [{"name": "uiautomator_instance", "status": "passed", "start": 1773642057066, "stop": 1773642057400}], "start": 1773642057066, "stop": 1773642077274}

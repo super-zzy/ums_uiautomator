@@ -1,0 +1,29 @@
+[2026-03-16 14:17:21] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-16 14:17:21] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-16 14:17:21] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-16 14:17:22] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-16 14:17:22] [task_2026031614172_dd4e] [INFO] 准备测试环境：d:\cursor\ums_uiautomator\result\2026031614172_dd4e
+[2026-03-16 14:17:22] [task_2026031614172_dd4e] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031614172_dd4e\allure_raw
+[2026-03-16 14:17:22] [task_2026031614172_dd4e] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031614172_dd4e\allure_html
+[2026-03-16 14:17:22] [task_2026031614172_dd4e] [INFO] 测试目录初始化完成：d:\cursor\ums_uiautomator\result\2026031614172_dd4e
+[2026-03-16 14:17:22] [task_2026031614172_dd4e] [INFO] 测试用例校验通过：d:\cursor\ums_uiautomator\test_suite\demo.py（文件大小：1.20KB）
+[2026-03-16 14:17:22] [task_2026031614172_dd4e] [INFO] 开始执行Pytest测试...
+[2026-03-16 14:17:23] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-16 14:17:23] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-16 14:17:23] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-16 14:17:24] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-16 14:17:24] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行亮屏操作
+[2026-03-16 14:17:32] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-16 14:17:33] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行亮屏操作
+[2026-03-16 14:17:33] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-16 14:17:44] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-16 14:17:44] [task_2026031614172_dd4e] [INFO] Pytest执行完成（耗时：21.94秒，返回码：0）
+[2026-03-16 14:17:44] [task_2026031614172_dd4e] [INFO] Pytest日志已保存：d:\cursor\ums_uiautomator\result\2026031614172_dd4e\task_2026031614172_dd4e.log（大小：1.07KB）
+[2026-03-16 14:17:44] [task_2026031614172_dd4e] [INFO] 开始生成Allure HTML报告...
+[2026-03-16 14:17:44] [task_2026031614172_dd4e] [DEBUG] Allure生成命令包含--clean参数
+[2026-03-16 14:17:44] [task_2026031614172_dd4e] [DEBUG] Allure报告标题：report_2026031614172_dd4e
+[2026-03-16 14:17:44] [task_2026031614172_dd4e] [DEBUG] Allure生成命令：allure generate d:\cursor\ums_uiautomator\result\2026031614172_dd4e\allure_raw -o d:\cursor\ums_uiautomator\result\2026031614172_dd4e\allure_html --clean --title report_2026031614172_dd4e
+[2026-03-16 14:18:14] [task_2026031614172_dd4e] [INFO] Allure生成日志已保存：d:\cursor\ums_uiautomator\result\2026031614172_dd4e\allure_generate.log
+[2026-03-16 14:18:14] [task_2026031614172_dd4e] [DEBUG] 报告压缩功能已禁用
+[2026-03-16 14:18:14] [task_2026031614172_dd4e] [INFO] Allure报告生成成功：d:\cursor\ums_uiautomator\result\2026031614172_dd4e\allure_html\index.html（目录大小：2433.19MB，耗时：29.88秒）
+[2026-03-16 14:18:14] [task_2026031614172_dd4e] [INFO] 报告元数据已保存：d:\cursor\ums_uiautomator\result\2026031614172_dd4e\report_meta.json

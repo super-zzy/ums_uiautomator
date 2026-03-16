@@ -1,0 +1,6 @@
+INFO     device_AF8YVB1805003480:log_util.py:60 开始初始化设备：AF8YVB1805003480
+DEBUG    device_AF8YVB1805003480:log_util.py:57 设备AF8YVB1805003480在线状态：True
+DEBUG    device_AF8YVB1805003480:log_util.py:57 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+INFO     device_AF8YVB1805003480:log_util.py:60 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+INFO     device_AF8YVB1805003480:log_util.py:60 设备AF8YVB1805003480执行亮屏操作
+INFO     device_AF8YVB1805003480:log_util.py:60 设备AF8YVB1805003480执行按键操作：home
