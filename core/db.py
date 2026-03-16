@@ -1,0 +1,590 @@
+import os
+import sqlite3
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+
+from util.log_util import TempLog
+
+log = TempLog()
+
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(PROJECT_ROOT, "data")
+os.makedirs(DATA_DIR, exist_ok=True)
+
+DB_PATH = os.path.join(DATA_DIR, "ums.sqlite3")
+
+
+def _get_conn() -> sqlite3.Connection:
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def _init_db() -> None:
+    """初始化 SQLite 数据库（若表不存在则创建）"""
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+
+        # 用例表
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS test_case (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                file_name TEXT NOT NULL,
+                rel_path TEXT,
+                content TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+
+        # 执行集表
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS exec_set (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL UNIQUE,
+                description TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+
+        # 执行集-用例关联表
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS exec_set_case (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                exec_set_id TEXT NOT NULL,
+                case_id INTEGER NOT NULL,
+                order_no INTEGER,
+                UNIQUE(exec_set_id, case_id)
+            )
+            """
+        )
+
+        # 执行历史表
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS exec_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                task_id TEXT NOT NULL UNIQUE,
+                main_task_id TEXT,
+                type TEXT,
+                device_id TEXT,
+                case_id INTEGER,
+                exec_set_id TEXT,
+                status TEXT,
+                create_time TEXT,
+                start_time TEXT,
+                end_time TEXT,
+                report_index_path TEXT,
+                report_meta_path TEXT,
+                pytest_returncode INTEGER,
+                report_generate_duration REAL,
+                error_msg TEXT
+            )
+            """
+        )
+
+        conn.commit()
+    finally:
+        conn.close()
+
+
+_init_db()
+
+
+# ------------- 用例相关操作 -------------
+
+
+def list_cases() -> List[Dict[str, Any]]:
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT id, name, file_name, rel_path
+            FROM test_case
+            ORDER BY id ASC
+            """
+        )
+        rows = cur.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def get_case(case_id: int) -> Optional[Dict[str, Any]]:
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT id, name, file_name, rel_path, content
+            FROM test_case
+            WHERE id = ?
+            """,
+            (case_id,),
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def create_case(name: str, content: str, rel_path: Optional[str] = None) -> Dict[str, Any]:
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # 默认 file_name 为 name 去空格后加 .py
+    base_name = name.strip().replace(" ", "_")
+    if not base_name.endswith(".py"):
+        base_name = f"{base_name}.py"
+    file_name = base_name
+
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            INSERT INTO test_case (name, file_name, rel_path, content, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (name, file_name, rel_path, content, now, now),
+        )
+        conn.commit()
+        case_id = cur.lastrowid
+        log.info(f"创建用例成功：id={case_id}, name={name}")
+        return {
+            "id": case_id,
+            "name": name,
+            "file_name": file_name,
+            "rel_path": rel_path,
+        }
+    finally:
+        conn.close()
+
+
+def update_case(case_id: int, name: Optional[str], content: Optional[str]) -> bool:
+    if name is None and content is None:
+        return True
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        fields: List[str] = []
+        params: List[Any] = []
+        if name is not None:
+            fields.append("name = ?")
+            params.append(name)
+        if content is not None:
+            fields.append("content = ?")
+            params.append(content)
+        fields.append("updated_at = ?")
+        params.append(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        params.append(case_id)
+        sql = f"UPDATE test_case SET {', '.join(fields)} WHERE id = ?"
+        cur.execute(sql, params)
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def delete_case(case_id: int) -> bool:
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM test_case WHERE id = ?", (case_id,))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+# ------------- 执行集相关操作 -------------
+
+
+def list_exec_sets_with_case_count() -> List[Dict[str, Any]]:
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT es.id,
+                   es.name,
+                   es.description,
+                   es.created_at,
+                   es.updated_at,
+                   COUNT(esc.case_id) AS case_count
+            FROM exec_set es
+            LEFT JOIN exec_set_case esc ON es.id = esc.exec_set_id
+            GROUP BY es.id, es.name, es.description, es.created_at, es.updated_at
+            ORDER BY es.created_at DESC
+            """
+        )
+        rows = cur.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def get_exec_set_with_cases(exec_set_id: str) -> Optional[Dict[str, Any]]:
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT id, name, description, created_at, updated_at
+            FROM exec_set
+            WHERE id = ?
+            """,
+            (exec_set_id,),
+        )
+        base = cur.fetchone()
+        if not base:
+            return None
+
+        cur.execute(
+            """
+            SELECT esc.case_id,
+                   tc.name,
+                   tc.file_name,
+                   tc.rel_path
+            FROM exec_set_case esc
+            JOIN test_case tc ON esc.case_id = tc.id
+            WHERE esc.exec_set_id = ?
+            ORDER BY COALESCE(esc.order_no, esc.id) ASC
+            """,
+            (exec_set_id,),
+        )
+        cases = [dict(r) for r in cur.fetchall()]
+        result = dict(base)
+        result["cases"] = cases
+        result["case_count"] = len(cases)
+        return result
+    finally:
+        conn.close()
+
+
+def create_exec_set_record(exec_set_id: str, name: str, description: str) -> Optional[Dict[str, Any]]:
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        try:
+            cur.execute(
+                """
+                INSERT INTO exec_set (id, name, description, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (exec_set_id, name, description, now, now),
+            )
+        except sqlite3.IntegrityError:
+            # 名称唯一约束冲突
+            return None
+        conn.commit()
+        return {
+            "id": exec_set_id,
+            "name": name,
+            "description": description,
+            "created_at": now,
+            "updated_at": now,
+            "cases": [],
+            "case_count": 0,
+        }
+    finally:
+        conn.close()
+
+
+def update_exec_set_record(exec_set_id: str, name: Optional[str], description: Optional[str]) -> bool:
+    if name is None and description is None:
+        return True
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        fields: List[str] = []
+        params: List[Any] = []
+        if name is not None:
+            fields.append("name = ?")
+            params.append(name)
+        if description is not None:
+            fields.append("description = ?")
+            params.append(description)
+        fields.append("updated_at = ?")
+        params.append(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        params.append(exec_set_id)
+        sql = f"UPDATE exec_set SET {', '.join(fields)} WHERE id = ?"
+        cur.execute(sql, params)
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def overwrite_exec_set_cases(exec_set_id: str, case_ids: List[int]) -> bool:
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM exec_set_case WHERE exec_set_id = ?", (exec_set_id,))
+        if case_ids:
+            rows: List[Tuple[Any, ...]] = []
+            for idx, cid in enumerate(case_ids):
+                rows.append((exec_set_id, cid, idx))
+            cur.executemany(
+                "INSERT INTO exec_set_case (exec_set_id, case_id, order_no) VALUES (?, ?, ?)",
+                rows,
+            )
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def remove_exec_set_case(exec_set_id: str, case_id: int) -> bool:
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "DELETE FROM exec_set_case WHERE exec_set_id = ? AND case_id = ?",
+            (exec_set_id, case_id),
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def delete_exec_set_record(exec_set_id: str) -> bool:
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM exec_set_case WHERE exec_set_id = ?", (exec_set_id,))
+        cur.execute("DELETE FROM exec_set WHERE id = ?", (exec_set_id,))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+# ------------- 执行历史相关操作 -------------
+
+
+def upsert_history(
+    task_id: str,
+    main_task_id: Optional[str] = None,
+    type_: Optional[str] = None,
+    device_id: Optional[str] = None,
+    case_id: Optional[int] = None,
+    exec_set_id: Optional[str] = None,
+    status: Optional[str] = None,
+    create_time: Optional[str] = None,
+    start_time: Optional[str] = None,
+    end_time: Optional[str] = None,
+    report_index_path: Optional[str] = None,
+    report_meta_path: Optional[str] = None,
+    pytest_returncode: Optional[int] = None,
+    report_generate_duration: Optional[float] = None,
+    error_msg: Optional[str] = None,
+) -> None:
+    """
+    以 task_id 为唯一键做“插入或更新”，只覆盖传入非 None 的字段。
+    """
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT id FROM exec_history WHERE task_id = ?",
+            (task_id,),
+        )
+        exists = cur.fetchone() is not None
+
+        if not exists:
+            # 插入时需要补充 create_time
+            if create_time is None:
+                create_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            cur.execute(
+                """
+                INSERT INTO exec_history (
+                    task_id, main_task_id, type, device_id,
+                    case_id, exec_set_id, status,
+                    create_time, start_time, end_time,
+                    report_index_path, report_meta_path,
+                    pytest_returncode, report_generate_duration,
+                    error_msg
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    task_id,
+                    main_task_id,
+                    type_,
+                    device_id,
+                    case_id,
+                    exec_set_id,
+                    status,
+                    create_time,
+                    start_time,
+                    end_time,
+                    report_index_path,
+                    report_meta_path,
+                    pytest_returncode,
+                    report_generate_duration,
+                    error_msg,
+                ),
+            )
+        else:
+            fields: List[str] = []
+            params: List[Any] = []
+            mapping = {
+                "main_task_id": main_task_id,
+                "type": type_,
+                "device_id": device_id,
+                "case_id": case_id,
+                "exec_set_id": exec_set_id,
+                "status": status,
+                "start_time": start_time,
+                "end_time": end_time,
+                "report_index_path": report_index_path,
+                "report_meta_path": report_meta_path,
+                "pytest_returncode": pytest_returncode,
+                "report_generate_duration": report_generate_duration,
+                "error_msg": error_msg,
+            }
+            for col, value in mapping.items():
+                if value is not None:
+                    fields.append(f"{col} = ?")
+                    params.append(value)
+            if fields:
+                params.append(task_id)
+                sql = f"UPDATE exec_history SET {', '.join(fields)} WHERE task_id = ?"
+                cur.execute(sql, params)
+
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_history_by_task_id(task_id: str) -> Optional[Dict[str, Any]]:
+    """根据task_id查询一条执行历史"""
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT *
+            FROM exec_history
+            WHERE task_id = ?
+            """,
+            (task_id,),
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def list_histories(limit: int = 100) -> List[Dict[str, Any]]:
+    """按创建时间倒序查询最近的执行历史"""
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT *
+            FROM exec_history
+            ORDER BY create_time DESC
+            LIMIT ?
+            """,
+            (limit,),
+        )
+        rows = cur.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def list_exec_set_histories(exec_set_id: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
+    """
+    查询执行集主任务的历史记录（type='exec_set'），可按exec_set_id过滤。
+    """
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        if exec_set_id:
+            cur.execute(
+                """
+                SELECT *
+                FROM exec_history
+                WHERE type = 'exec_set' AND exec_set_id = ?
+                ORDER BY create_time DESC
+                LIMIT ?
+                """,
+                (exec_set_id, limit),
+            )
+        else:
+            cur.execute(
+                """
+                SELECT *
+                FROM exec_history
+                WHERE type = 'exec_set'
+                ORDER BY create_time DESC
+                LIMIT ?
+                """,
+                (limit,),
+            )
+        rows = cur.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def get_exec_set_history_detail(main_task_id: str) -> Optional[Dict[str, Any]]:
+    """
+    获取执行集主任务及其所有子任务的历史信息。
+
+    返回结构：
+    {
+      "main": {...},          # 主任务history
+      "sub_tasks": [...],     # 子任务history列表
+    }
+    """
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        # 主任务
+        cur.execute(
+            """
+            SELECT *
+            FROM exec_history
+            WHERE task_id = ? AND type = 'exec_set'
+            """,
+            (main_task_id,),
+        )
+        main_row = cur.fetchone()
+        if not main_row:
+            return None
+
+        # 子任务：main_task_id = main_task_id
+        cur.execute(
+            """
+            SELECT *
+            FROM exec_history
+            WHERE main_task_id = ?
+            ORDER BY create_time ASC
+            """,
+            (main_task_id,),
+        )
+        sub_rows = cur.fetchall()
+
+        return {
+            "main": dict(main_row),
+            "sub_tasks": [dict(r) for r in sub_rows],
+        }
+    finally:
+        conn.close()
+
+
+

@@ -14,6 +14,7 @@ from core.test_executor import TestExecutor
 from core.device_manager import DeviceManager
 from util.log_util import TempLog
 from util.path_util import safe_join, ensure_dir_exists, get_report_root
+from core import db
 
 test_bp = Blueprint("test", __name__)
 test_tasks = {}  # 全局任务状态缓存（task_id: 任务信息）
@@ -29,32 +30,56 @@ def get_task_id() -> str:
 
 
 def get_test_suites() -> list[dict]:
-    """获取测试用例列表（从配置的TEST_SUITE_DIR读取）"""
+    """获取测试用例列表（优先从SQLite读取，自动补全本地历史.py文件）"""
     try:
+        # 1. 从SQLite读取已有用例
+        suites = db.list_cases()
+
+        # 2. 扫描TEST_SUITE_DIR，将历史遗留的.py文件自动同步到SQLite（避免旧用例“丢失”）
         test_suite_dir = current_app.config["TEST_SUITE_DIR"]
-        log.info(f"开始获取测试用例，目录：{test_suite_dir}")
+        ensure_dir_exists(test_suite_dir)
 
-        # 确保用例目录存在
-        if not os.path.exists(test_suite_dir):
-            os.makedirs(test_suite_dir, exist_ok=True)
-            log.warning(f"用例目录不存在，已自动创建：{test_suite_dir}")
+        existing_file_names = {s.get("file_name") for s in suites if s.get("file_name")}
 
-        suites = []
-        # 遍历目录，筛选.py文件（排除conftest.py）
         for root, _, files in os.walk(test_suite_dir):
             for name in files:
-                if name.endswith(".py") and name != "conftest.py":
-                    abs_path = safe_join(root, name)  # 安全路径拼接
-                    rel_path = os.path.relpath(abs_path, test_suite_dir)
-                    suites.append({
-                        "id": len(suites),
-                        "name": name,
-                        "abs_path": abs_path,
-                        "rel_path": rel_path
-                    })
+                if not (name.endswith(".py") and name != "conftest.py"):
+                    continue
+                if name in existing_file_names:
+                    continue
+                # 这是一个还没入库的历史用例文件，自动导入到SQLite
+                abs_path = safe_join(root, name)
+                try:
+                    with open(abs_path, "r", encoding="utf-8") as f:
+                        content = f.read()
+                except Exception as e:
+                    log.warning(f"读取历史用例文件失败，跳过导入：{abs_path}，错误：{e}")
+                    continue
 
-        log.info(f"获取用例完成，共{len(suites)}个可用用例")
-        return suites
+                rel_path = os.path.relpath(abs_path, test_suite_dir)
+                case = db.create_case(name=name, content=content, rel_path=rel_path)
+                suites.append(
+                    {
+                        "id": case["id"],
+                        "name": case["name"],
+                        "file_name": case["file_name"],
+                        "rel_path": case.get("rel_path"),
+                    }
+                )
+                existing_file_names.add(case["file_name"])
+                log.info(f"已将历史用例文件导入SQLite：{abs_path} -> case_id={case['id']}")
+
+        # 3. 统一返回前端需要的结构
+        log.info(f"获取用例完成（SQLite + 历史文件同步），共{len(suites)}个可用用例")
+        return [
+            {
+                "id": s["id"],
+                "name": s["name"],
+                "abs_path": s.get("file_name") or "",
+                "rel_path": s.get("rel_path") or s.get("file_name") or "",
+            }
+            for s in suites
+        ]
     except Exception as e:
         error_msg = f"获取用例列表失败：{str(e)}"
         log.error(error_msg, exc_info=True)
@@ -67,6 +92,16 @@ def run_task_background(task_id: str, device_id: str, suite_abs_path: str) -> No
     test_tasks[task_id]["status"] = "running"
     test_tasks[task_id]["start_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+    # 同步到执行历史
+    try:
+        db.upsert_history(
+            task_id=task_id,
+            status="running",
+            start_time=test_tasks[task_id]["start_time"],
+        )
+    except Exception as e:
+        log.error(f"更新任务{task_id}历史状态为running失败：{str(e)}", exc_info=True)
+
     try:
         # 1. 获取设备实例（确保初始化成功）
         DeviceManager.get_uiautomator_instance(device_id, task_id)
@@ -77,6 +112,20 @@ def run_task_background(task_id: str, device_id: str, suite_abs_path: str) -> No
 
         # 3. 更新任务结果
         test_tasks[task_id].update(task_result)
+        # 写入/更新执行历史
+        try:
+            db.upsert_history(
+                task_id=task_id,
+                status=task_result.get("status"),
+                end_time=task_result.get("end_time"),
+                report_index_path=task_result.get("report_index_path"),
+                report_meta_path=task_result.get("report_meta_path"),
+                pytest_returncode=task_result.get("pytest_returncode"),
+                report_generate_duration=task_result.get("report_generate_duration"),
+                error_msg=task_result.get("error_msg"),
+            )
+        except Exception as e:
+            log.error(f"写入任务{task_id}执行历史失败：{str(e)}", exc_info=True)
     finally:
         # 4. 释放设备实例（无论成功失败）
         DeviceManager.release_device(device_id)
@@ -114,6 +163,15 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
                 }
             )
             test_tasks[main_task_id] = main_task
+            try:
+                db.upsert_history(
+                    task_id=main_task_id,
+                    status="failed",
+                    end_time=main_task["end_time"],
+                    error_msg=main_task["report_error_msg"],
+                )
+            except Exception as e:
+                log.error(f"写入执行集主任务{main_task_id}历史失败：{str(e)}", exc_info=True)
             return
 
         first_sub_task = test_tasks.get(sub_task_ids[0])
@@ -156,6 +214,15 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
                 }
             )
             test_tasks[main_task_id] = main_task
+            try:
+                db.upsert_history(
+                    task_id=main_task_id,
+                    status="failed",
+                    end_time=main_task["end_time"],
+                    error_msg=main_task["report_error_msg"],
+                )
+            except Exception as e:
+                log.error(f"写入执行集主任务{main_task_id}历史失败：{str(e)}", exc_info=True)
             return
 
         log.info(
@@ -185,6 +252,18 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
             }
         )
         test_tasks[main_task_id] = main_task
+        try:
+            db.upsert_history(
+                task_id=main_task_id,
+                status=overall_status,
+                end_time=main_task["end_time"],
+                report_index_path=main_task.get("report_index_path"),
+                report_meta_path=main_task.get("report_meta_path"),
+                report_generate_duration=main_task.get("report_generate_duration"),
+                error_msg=main_task.get("report_error_msg"),
+            )
+        except Exception as e:
+            log.error(f"写入执行集主任务{main_task_id}历史失败：{str(e)}", exc_info=True)
 
         log.info(
             f"执行集主任务{main_task_id}汇总报告生成完成，状态：{overall_status}，入口：{report_result.get('index_path')}"
@@ -200,6 +279,15 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
             }
         )
         test_tasks[main_task_id] = main_task
+        try:
+            db.upsert_history(
+                task_id=main_task_id,
+                status="failed",
+                end_time=main_task["end_time"],
+                error_msg=main_task["report_error_msg"],
+            )
+        except Exception as e2:
+            log.error(f"写入执行集主任务{main_task_id}历史失败：{str(e2)}", exc_info=True)
 
 
 # ------------------- 接口定义 -------------------
@@ -245,6 +333,19 @@ def start_test():
             return jsonify({"code": 404, "msg": f"用例ID{suite_id}不存在", "data": None})
         suite_info = suites[suite_id]
 
+        # 从SQLite获取用例内容，并在测试用例目录生成临时.py文件
+        case = db.get_case(suite_info["id"])
+        if not case:
+            return jsonify({"code": 404, "msg": "用例不存在", "data": None})
+
+        test_suite_dir = current_app.config["TEST_SUITE_DIR"]
+        ensure_dir_exists(test_suite_dir)
+        # 使用数据库中的file_name生成文件
+        file_name = case.get("file_name") or f"case_{case['id']}.py"
+        suite_abs_path = safe_join(test_suite_dir, file_name)
+        with open(suite_abs_path, "w", encoding="utf-8") as f:
+            f.write(case["content"])
+
         # 4. 创建任务
         task_id = get_task_id()
         test_tasks[task_id] = {
@@ -255,10 +356,23 @@ def start_test():
             "create_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
 
+        # 写入执行历史（初始记录）
+        try:
+            db.upsert_history(
+                task_id=task_id,
+                device_id=device_id,
+                case_id=case["id"],
+                type_="single",
+                status="pending",
+                create_time=test_tasks[task_id]["create_time"],
+            )
+        except Exception as e:
+            log.error(f"写入任务{task_id}初始历史失败：{str(e)}", exc_info=True)
+
         # 5. 后台启动任务（避免阻塞Web请求）
         Thread(
             target=run_task_background,
-            args=(task_id, device_id, suite_info["abs_path"]),
+            args=(task_id, device_id, suite_abs_path),
             daemon=True  # 守护线程，Web服务退出时自动结束
         ).start()
 
@@ -347,6 +461,168 @@ def get_task_status(task_id: str):
         })
 
 
+@test_bp.get("/history")
+def get_history_list():
+    """获取最近的任务执行历史列表"""
+    try:
+        limit = int(request.args.get("limit", 100))
+        if limit <= 0:
+            limit = 100
+    except Exception:
+        limit = 100
+
+    try:
+        histories = db.list_histories(limit=limit)
+        return jsonify(
+            {
+                "code": 200,
+                "msg": f"获取执行历史成功（最近{len(histories)}条）",
+                "data": histories,
+            }
+        )
+    except Exception as e:
+        error_msg = f"获取执行历史失败：{str(e)}"
+        log.error(error_msg, exc_info=True)
+        return jsonify({"code": 400, "msg": error_msg, "data": []})
+
+
+@test_bp.get("/history/<task_id>")
+def get_history_detail(task_id: str):
+    """根据task_id获取单条执行历史"""
+    try:
+        history = db.get_history_by_task_id(task_id)
+        if not history:
+            return jsonify(
+                {"code": 404, "msg": f"任务{task_id}无历史记录", "data": None}
+            )
+        return jsonify({"code": 200, "msg": "获取执行历史成功", "data": history})
+    except Exception as e:
+        error_msg = f"获取任务{task_id}执行历史失败：{str(e)}"
+        log.error(error_msg, exc_info=True)
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+
+@test_bp.post("/history/migrate-from-result")
+def migrate_history_from_result():
+    """
+    将现有result目录下的历史report_meta.json导入SQLite的exec_history表。
+    只依赖report_meta.json，不会修改原有报告结构。
+    """
+    try:
+        report_root = get_report_root()
+        imported = 0
+        skipped = 0
+
+        for entry in os.listdir(report_root):
+            task_dir = os.path.join(report_root, entry)
+            if not os.path.isdir(task_dir):
+                continue
+            meta_path = os.path.join(task_dir, "report_meta.json")
+            if not os.path.exists(meta_path):
+                continue
+
+            try:
+                with open(meta_path, "r", encoding="utf-8") as f:
+                    meta = json.load(f)
+            except Exception as e:
+                log.warning(f"读取报告元数据失败，跳过：{meta_path}，错误：{e}")
+                skipped += 1
+                continue
+
+            task_id = meta.get("task_id") or entry
+            device_id = meta.get("device_id")
+            generate_time = meta.get("generate_time")
+            report_info = meta.get("report_info") or {}
+
+            status = report_info.get("status")
+            index_path = report_info.get("index_path")
+            report_dir = os.path.dirname(index_path) if index_path else None
+            generate_duration = report_info.get("generate_duration")
+            error_msg = report_info.get("error_msg")
+
+            try:
+                db.upsert_history(
+                    task_id=task_id,
+                    device_id=device_id,
+                    status=status,
+                    end_time=generate_time,
+                    report_index_path=index_path,
+                    report_meta_path=meta_path,
+                    report_generate_duration=generate_duration,
+                    error_msg=error_msg,
+                )
+                imported += 1
+            except Exception as e:
+                log.error(f"导入任务{task_id}历史失败：{str(e)}", exc_info=True)
+                skipped += 1
+
+        return jsonify(
+            {
+                "code": 200,
+                "msg": f"历史报告导入完成，成功{imported}条，跳过{skipped}条",
+                "data": {"imported": imported, "skipped": skipped},
+            }
+        )
+    except Exception as e:
+        error_msg = f"导入历史报告到SQLite失败：{str(e)}"
+        log.error(error_msg, exc_info=True)
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+
+@test_bp.get("/exec-set/history")
+def get_exec_set_history_list():
+    """
+    获取执行集主任务的执行历史列表。
+    支持通过query参数exec_set_id过滤指定执行集，limit控制返回数量。
+    """
+    exec_set_id = request.args.get("exec_set_id") or None
+    try:
+        limit = int(request.args.get("limit", 100))
+        if limit <= 0:
+            limit = 100
+    except Exception:
+        limit = 100
+
+    try:
+        histories = db.list_exec_set_histories(exec_set_id=exec_set_id, limit=limit)
+        return jsonify(
+            {
+                "code": 200,
+                "msg": f"获取执行集执行历史成功（共{len(histories)}条）",
+                "data": histories,
+            }
+        )
+    except Exception as e:
+        error_msg = f"获取执行集执行历史失败：{str(e)}"
+        log.error(error_msg, exc_info=True)
+        return jsonify({"code": 400, "msg": error_msg, "data": []})
+
+
+@test_bp.get("/exec-set/history/<main_task_id>")
+def get_exec_set_history_detail_api(main_task_id: str):
+    """
+    获取某次执行集任务的主任务+子任务执行历史明细。
+    """
+    try:
+        detail = db.get_exec_set_history_detail(main_task_id)
+        if not detail:
+            return jsonify(
+                {"code": 404, "msg": f"执行集主任务{main_task_id}无历史记录", "data": None}
+            )
+
+        return jsonify(
+            {
+                "code": 200,
+                "msg": "获取执行集执行历史明细成功",
+                "data": detail,
+            }
+        )
+    except Exception as e:
+        error_msg = f"获取执行集主任务{main_task_id}执行历史失败：{str(e)}"
+        log.error(error_msg, exc_info=True)
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+
 @test_bp.get("/running")
 def get_running_tasks():
     """获取所有运行中任务"""
@@ -395,6 +671,16 @@ def stop_test_task(task_id: str):
         task["end_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         task["stop_reason"] = "用户手动停止"
 
+        try:
+            db.upsert_history(
+                task_id=task_id,
+                status="stopped",
+                end_time=task["end_time"],
+                error_msg=task["stop_reason"],
+            )
+        except Exception as e:
+            log.error(f"写入任务{task_id}停止历史失败：{str(e)}", exc_info=True)
+
         log.info(f"任务{task_id}已被手动停止")
         return jsonify({
             "code": 200,
@@ -420,18 +706,20 @@ def get_test_suite(suite_id):
             return jsonify({"code": 404, "msg": f"用例不存在", "data": None})
 
         suite_info = suites[suite_id]
-        with open(suite_info["abs_path"], "r", encoding="utf-8") as f:
-            content = f.read()
+        case = db.get_case(suite_info["id"])
+        if not case:
+            return jsonify({"code": 404, "msg": "用例不存在", "data": None})
+        content = case["content"]
 
         return jsonify({
             "code": 200,
             "msg": "获取用例内容成功",
             "data": {
-                "id": suite_id,
-                "name": suite_info["name"],
+                "id": case["id"],
+                "name": case["name"],
                 "content": content,
-                "abs_path": suite_info["abs_path"],
-                "rel_path": suite_info["rel_path"]
+                "abs_path": case.get("file_name"),
+                "rel_path": case.get("rel_path")
             }
         })
     except Exception as e:
@@ -448,22 +736,15 @@ def create_test_suite():
         name = req_data.get("name")
         content = req_data.get("content", "")
 
-        if not name or not name.endswith(".py"):
-            return jsonify({"code": 400, "msg": "用例名称必须以.py结尾", "data": None})
+        if not name:
+            return jsonify({"code": 400, "msg": "用例名称不能为空", "data": None})
 
-        test_suite_dir = current_app.config["TEST_SUITE_DIR"]
-        file_path = safe_join(test_suite_dir, name)
-
-        if os.path.exists(file_path):
-            return jsonify({"code": 400, "msg": "用例已存在", "data": None})
-
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(content)
+        case = db.create_case(name=name, content=content, rel_path=None)
 
         return jsonify({
             "code": 200,
             "msg": "用例创建成功",
-            "data": {"name": name}
+            "data": {"id": case["id"], "name": case["name"]}
         })
     except Exception as e:
         error_msg = f"创建用例失败：{str(e)}"
@@ -485,9 +766,10 @@ def update_test_suite(suite_id):
         if suite_id < 0 or suite_id >= len(suites):
             return jsonify({"code": 404, "msg": f"用例不存在", "data": None})
 
-        suite_info = suites[suite_id]
-        with open(suite_info["abs_path"], "w", encoding="utf-8") as f:
-            f.write(content)
+        case_id = suites[suite_id]["id"]
+        ok = db.update_case(case_id, name=None, content=content)
+        if not ok:
+            return jsonify({"code": 404, "msg": "用例不存在", "data": None})
 
         return jsonify({
             "code": 200,
@@ -508,8 +790,10 @@ def delete_test_suite(suite_id):
         if suite_id < 0 or suite_id >= len(suites):
             return jsonify({"code": 404, "msg": f"用例不存在", "data": None})
 
-        suite_info = suites[suite_id]
-        os.remove(suite_info["abs_path"])
+        case_id = suites[suite_id]["id"]
+        ok = db.delete_case(case_id)
+        if not ok:
+            return jsonify({"code": 404, "msg": "用例不存在", "data": None})
 
         return jsonify({
             "code": 200,
@@ -530,16 +814,17 @@ def get_suite_content(suite_id):
         if suite_id < 0 or suite_id >= len(suites):
             return jsonify({"code": 404, "msg": f"用例ID{suite_id}不存在", "data": None})
 
-        suite_info = suites[suite_id]
-        with open(suite_info["abs_path"], "r", encoding="utf-8") as f:
-            content = f.read()
+        case = db.get_case(suites[suite_id]["id"])
+        if not case:
+            return jsonify({"code": 404, "msg": "用例不存在", "data": None})
+        content = case["content"]
 
         return jsonify({
             "code": 200,
             "msg": "获取用例内容成功",
             "data": {
                 "content": content,
-                "path": suite_info["rel_path"]
+                "path": case.get("rel_path")
             }
         })
     except Exception as e:
@@ -567,22 +852,12 @@ def update_suite(suite_id):
         if suite_id < 0 or suite_id >= len(suites):
             return jsonify({"code": 404, "msg": f"用例ID{suite_id}不存在", "data": None})
 
-        suite_info = suites[suite_id]
-        file_path = suite_info["abs_path"]
+        case_id = suites[suite_id]["id"]
+        ok = db.update_case(case_id, name=new_name, content=new_content)
+        if not ok:
+            return jsonify({"code": 404, "msg": "用例不存在", "data": None})
 
-        # 确保文件名有效
-        new_file_name = f"{new_name.replace(' ', '_')}.py"
-        new_file_path = os.path.join(os.path.dirname(file_path), new_file_name)
-
-        # 保存文件内容
-        with open(new_file_path, "w", encoding="utf-8") as f:
-            f.write(new_content)
-
-        # 如果文件名改变，删除旧文件
-        if new_file_path != file_path:
-            os.remove(file_path)
-
-        log.info(f"用例{suite_id}更新成功，路径：{new_file_path}")
+        log.info(f"用例{case_id}更新成功（名称与内容已更新）")
         return jsonify({
             "code": 200,
             "msg": "用例更新成功",
@@ -816,8 +1091,8 @@ def add_cases_to_exec_set(exec_set_id):
             s = suite_map[sid]
             cases.append(
                 {
-                    "suite_id": s["id"],
-                    "abs_path": s["abs_path"],
+                    "suite_id": s["id"],  # 这里的suite_id即为case_id
+                    "abs_path": s.get("abs_path"),
                     "name": s.get("name"),
                     "rel_path": s.get("rel_path"),
                 }
@@ -907,21 +1182,52 @@ def start_exec_set_test():
         main_task_id = get_task_id()
         sub_tasks = []
 
+        test_suite_dir = current_app.config["TEST_SUITE_DIR"]
+        ensure_dir_exists(test_suite_dir)
+
         # 4. 批量创建子任务（每个用例一个子任务）
         for case in exec_set["cases"]:
+            # 从SQLite获取用例内容，并为每个子任务生成独立的临时.py文件
+            case_id = case["case_id"]
+            case_detail = db.get_case(case_id)
+            if not case_detail:
+                log.warning(f"执行集{exec_set_id}中的用例{case_id}在数据库中不存在，跳过")
+                continue
+
+            file_name = case_detail.get("file_name") or f"case_{case_id}.py"
+            suite_abs_path = safe_join(test_suite_dir, f"{main_task_id}_{file_name}")
+            with open(suite_abs_path, "w", encoding="utf-8") as f:
+                f.write(case_detail["content"])
+
             sub_task_id = get_task_id()
             test_tasks[sub_task_id] = {
                 "task_id": sub_task_id,
                 "main_task_id": main_task_id,
                 "device_id": device_id,
-                "suite_info": case,
+                "suite_info": {"id": case_id, "name": case_detail["name"], "abs_path": suite_abs_path},
                 "status": "pending",
                 "create_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
+
+            # 写入执行历史（子任务）
+            try:
+                db.upsert_history(
+                    task_id=sub_task_id,
+                    main_task_id=main_task_id,
+                    type_="single",
+                    device_id=device_id,
+                    case_id=case_id,
+                    exec_set_id=exec_set_id,
+                    status="pending",
+                    create_time=test_tasks[sub_task_id]["create_time"],
+                )
+            except Exception as e:
+                log.error(f"写入子任务{sub_task_id}初始历史失败：{str(e)}", exc_info=True)
+
             # 后台启动子任务
             Thread(
                 target=run_task_background,
-                args=(sub_task_id, device_id, case["abs_path"]),
+                args=(sub_task_id, device_id, suite_abs_path),
                 daemon=True
             ).start()
             sub_tasks.append(sub_task_id)
@@ -938,6 +1244,19 @@ def start_exec_set_test():
             "start_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "case_count": len(sub_tasks)
         }
+
+        # 主任务历史
+        try:
+            db.upsert_history(
+                task_id=main_task_id,
+                type_="exec_set",
+                device_id=device_id,
+                exec_set_id=exec_set_id,
+                status="running",
+                create_time=test_tasks[main_task_id]["start_time"],
+            )
+        except Exception as e:
+            log.error(f"写入执行集主任务{main_task_id}初始历史失败：{str(e)}", exc_info=True)
 
         # 6. 后台启动执行集报告汇总线程
         Thread(
