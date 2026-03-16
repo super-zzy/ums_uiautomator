@@ -28,6 +28,16 @@
             }
         }
     </script>
+    <!-- CodeMirror 样式（用于Python代码编辑器） -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css"
+    />
+
     <!-- 自定义工具类 -->
     <style type="text/tailwindcss">
         @layer utilities {
@@ -415,6 +425,9 @@
     </footer>
 
     <!-- JS 逻辑模块化拆分 -->
+    <!-- CodeMirror 脚本（Python 语法高亮） -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
     <script src="/static/js/common.js"></script>
     <script src="/static/js/banner.js"></script>
     <script src="/static/js/devices.js"></script>

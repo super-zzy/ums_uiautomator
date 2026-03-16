@@ -24,6 +24,24 @@
   // 用例编辑状态
   let editorMode = null; // "edit" | "new"
   let currentEditingSuiteId = null;
+  let codeEditor = null; // CodeMirror 实例（用于Python语法高亮）
+
+  function ensureCodeEditor() {
+    if (!suiteContent || typeof window.CodeMirror === "undefined") {
+      return null;
+    }
+    if (!codeEditor) {
+      codeEditor = window.CodeMirror.fromTextArea(suiteContent, {
+        mode: "python",
+        lineNumbers: true,
+        indentUnit: 4,
+        tabSize: 4,
+        lineWrapping: true,
+      });
+      window.SuiteCodeEditor = codeEditor;
+    }
+    return codeEditor;
+  }
 
   async function loadTestSuites() {
     if (!testSuiteSelect) return;
@@ -257,22 +275,49 @@
   }
 
   function initSuiteEvents() {
-    if (testSuiteSelect) {
-      testSuiteSelect.addEventListener("change", () => {
+    // 兜底获取关键 DOM 元素，避免 Elements 映射异常导致事件未绑定
+    const suiteSelectEl =
+      testSuiteSelect || document.getElementById("test-suite-select");
+    const startBtnEl =
+      startTestBtn || document.getElementById("start-test-btn");
+    const stopBtnEl = stopTestBtn || document.getElementById("stop-test-btn");
+    const viewReportBtnEl =
+      viewReportBtn || document.getElementById("view-report-btn");
+    const editSuiteBtnEl =
+      editSuiteBtn || document.getElementById("edit-suite-btn");
+    const newSuiteBtnEl =
+      newSuiteBtn || document.getElementById("new-suite-btn");
+    const deleteSuiteBtnEl =
+      deleteSuiteBtn || document.getElementById("delete-suite-btn");
+    const suiteEditorModalEl =
+      suiteEditorModal || document.getElementById("suite-editor-modal");
+    const closeEditorBtnEl =
+      closeEditorBtn || document.getElementById("close-editor-btn");
+    const cancelEditBtnEl =
+      cancelEditBtn || document.getElementById("cancel-edit-btn");
+
+    if (suiteSelectEl) {
+      suiteSelectEl.addEventListener("change", () => {
         updateStartBtnStatus();
         // 同时更新编辑/删除按钮状态（简化：只看是否有值）
-        Elements.editSuiteBtn &&
-          (Elements.editSuiteBtn.disabled = !testSuiteSelect.value);
-        Elements.deleteSuiteBtn &&
-          (Elements.deleteSuiteBtn.disabled = !testSuiteSelect.value);
+        if (editSuiteBtnEl) {
+          editSuiteBtnEl.disabled = !suiteSelectEl.value;
+        }
+        if (deleteSuiteBtnEl) {
+          deleteSuiteBtnEl.disabled = !suiteSelectEl.value;
+        }
       });
     }
-    startTestBtn &&
-      startTestBtn.addEventListener("click", startTestTask);
-    stopTestBtn &&
-      stopTestBtn.addEventListener("click", stopCurrentTask);
-    if (viewReportBtn) {
-      viewReportBtn.addEventListener("click", () => {
+
+    if (startBtnEl) {
+      startBtnEl.addEventListener("click", startTestTask);
+    }
+    if (stopBtnEl) {
+      stopBtnEl.addEventListener("click", stopCurrentTask);
+    }
+
+    if (viewReportBtnEl) {
+      viewReportBtnEl.addEventListener("click", () => {
         const history = AppState.taskHistory || [];
         if (!history.length) {
           addTaskLog &&
@@ -290,8 +335,8 @@
     }
 
     // 新建用例
-    if (newSuiteBtn) {
-      newSuiteBtn.addEventListener("click", () => {
+    if (newSuiteBtnEl) {
+      newSuiteBtnEl.addEventListener("click", () => {
         editorMode = "new";
         currentEditingSuiteId = null;
         if (editorModalTitle) {
@@ -303,19 +348,25 @@
         if (newSuiteName) {
           newSuiteName.value = "";
         }
-        if (suiteContent) {
+        const editor = ensureCodeEditor();
+        if (editor) {
+          editor.setValue("");
+        } else if (suiteContent) {
           suiteContent.value = "";
         }
-        if (suiteEditorModal) {
-          suiteEditorModal.classList.remove("hidden");
+        if (suiteEditorModalEl) {
+          suiteEditorModalEl.classList.remove("hidden");
+        }
+        if (editor) {
+          setTimeout(() => editor.refresh(), 0);
         }
       });
     }
 
     // 编辑用例
-    if (editSuiteBtn) {
-      editSuiteBtn.addEventListener("click", async () => {
-        const selectedSuiteId = testSuiteSelect?.value;
+    if (editSuiteBtnEl) {
+      editSuiteBtnEl.addEventListener("click", async () => {
+        const selectedSuiteId = suiteSelectEl?.value;
         if (!selectedSuiteId) {
           addTaskLog &&
             addTaskLog("[错误] 请先选择要编辑的用例", "danger");
@@ -337,11 +388,17 @@
             `/api/test/suite/${currentEditingSuiteId}`
           );
           if (data.code === 200 && data.data) {
-            if (suiteContent) {
+            const editor = ensureCodeEditor();
+            if (editor) {
+              editor.setValue(data.data.content || "");
+            } else if (suiteContent) {
               suiteContent.value = data.data.content || "";
             }
-            if (suiteEditorModal) {
-              suiteEditorModal.classList.remove("hidden");
+            if (suiteEditorModalEl) {
+              suiteEditorModalEl.classList.remove("hidden");
+            }
+            if (editor) {
+              setTimeout(() => editor.refresh(), 0);
             }
           } else {
             throw new Error(data.msg || "获取用例内容失败");
@@ -358,9 +415,9 @@
     }
 
     // 删除用例
-    if (deleteSuiteBtn) {
-      deleteSuiteBtn.addEventListener("click", async () => {
-        const selectedSuiteId = testSuiteSelect?.value;
+    if (deleteSuiteBtnEl) {
+      deleteSuiteBtnEl.addEventListener("click", async () => {
+        const selectedSuiteId = suiteSelectEl?.value;
         if (!selectedSuiteId) {
           addTaskLog &&
             addTaskLog("[错误] 请先选择要删除的用例", "danger");
@@ -404,23 +461,28 @@
     const closeEditor = () => {
       editorMode = null;
       currentEditingSuiteId = null;
-      if (suiteEditorModal) {
-        suiteEditorModal.classList.add("hidden");
+      if (suiteEditorModalEl) {
+        suiteEditorModalEl.classList.add("hidden");
       }
     };
 
-    if (closeEditorBtn) {
-      closeEditorBtn.addEventListener("click", closeEditor);
+    if (closeEditorBtnEl) {
+      closeEditorBtnEl.addEventListener("click", closeEditor);
     }
-    if (cancelEditBtn) {
-      cancelEditBtn.addEventListener("click", closeEditor);
+    if (cancelEditBtnEl) {
+      cancelEditBtnEl.addEventListener("click", closeEditor);
     }
 
     // 保存用例
     if (saveSuiteBtn) {
       saveSuiteBtn.addEventListener("click", async () => {
         try {
-          const content = suiteContent ? suiteContent.value || "" : "";
+          const editor = ensureCodeEditor();
+          const content = editor
+            ? editor.getValue() || ""
+            : suiteContent
+            ? suiteContent.value || ""
+            : "";
           if (editorMode === "new") {
             let name = newSuiteName ? newSuiteName.value.trim() : "";
             if (!name) {
