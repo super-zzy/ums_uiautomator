@@ -18,6 +18,16 @@
     editorModalTitle,
     newSuiteNameContainer,
     newSuiteName,
+    // 用例列表分页相关
+    caseListTbody,
+    casePageInfo,
+    casePrevPage,
+    caseNextPage,
+    // Tabs
+    caseManageTab,
+    execSetManageTab,
+    caseManagePanel,
+    execSetManagePanel,
   } = Elements || {};
   const { apiGet, apiPost, addTaskLog } = Common || {};
 
@@ -26,6 +36,52 @@
   let currentEditingSuiteId = null;
   let codeEditor = null; // CodeMirror 实例（用于Python语法高亮）
   let currentEditingSuiteName = ""; // 当前编辑用例的原始文件名（含.py）
+
+  // 用例列表分页状态
+  let allSuitesForList = [];
+  let casePage = 1;
+  const CASE_PAGE_SIZE = 10;
+
+  function renderCaseList() {
+    if (!caseListTbody) return;
+    if (!allSuitesForList.length) {
+      caseListTbody.innerHTML =
+        '<tr><td colspan="4" class="text-center py-4 text-light">暂无可用测试用例</td></tr>';
+      casePageInfo && (casePageInfo.textContent = "第 1 页");
+      casePrevPage && (casePrevPage.disabled = true);
+      caseNextPage && (caseNextPage.disabled = true);
+      return;
+    }
+    const total = allSuitesForList.length;
+    const totalPages = Math.max(1, Math.ceil(total / CASE_PAGE_SIZE));
+    if (casePage > totalPages) casePage = totalPages;
+    if (casePage < 1) casePage = 1;
+    const start = (casePage - 1) * CASE_PAGE_SIZE;
+    const end = start + CASE_PAGE_SIZE;
+    const pageItems = allSuitesForList.slice(start, end);
+    caseListTbody.innerHTML = pageItems
+      .map(
+        (s) => `
+      <tr class="border-b border-gray-100 hover:bg-gray-50">
+        <td class="py-2 px-2 text-center">
+          <input type="radio" name="case-select-radio" value="${s.id}">
+        </td>
+        <td class="py-2 px-4 text-xs">${s.id}</td>
+        <td class="py-2 px-4 text-xs">${s.name}</td>
+        <td class="py-2 px-4 text-xs">${s.rel_path}</td>
+      </tr>
+    `
+      )
+      .join("");
+    casePageInfo &&
+      (casePageInfo.textContent = `第 ${casePage} / ${totalPages} 页，共 ${total} 条`);
+    if (casePrevPage) {
+      casePrevPage.disabled = casePage <= 1;
+    }
+    if (caseNextPage) {
+      caseNextPage.disabled = casePage >= totalPages;
+    }
+  }
 
   function ensureCodeEditor() {
     if (!suiteContent || typeof window.CodeMirror === "undefined") {
@@ -74,32 +130,40 @@
   }
 
   async function loadTestSuites() {
-    if (!testSuiteSelect) return;
+    if (!testSuiteSelect && !caseListTbody) return;
     try {
-      testSuiteSelect.innerHTML =
-        '<option value="" disabled selected>加载用例中...</option>';
+      if (testSuiteSelect) {
+        testSuiteSelect.innerHTML =
+          '<option value="" disabled selected>加载用例中...</option>';
+      }
       const data = await apiGet("/api/test/suites");
       if (data.code === 200 && Array.isArray(data.data)) {
         const suites = data.data;
         Elements.testSuiteCount &&
           (Elements.testSuiteCount.textContent = suites.length);
-        if (!suites.length) {
+        allSuitesForList = suites;
+        casePage = 1;
+        renderCaseList();
+
+        if (testSuiteSelect) {
+          if (!suites.length) {
+            testSuiteSelect.innerHTML =
+              '<option value="" disabled selected>暂无可用测试用例</option>';
+            startTestBtn && (startTestBtn.disabled = true);
+            return;
+          }
           testSuiteSelect.innerHTML =
-            '<option value="" disabled selected>暂无可用测试用例</option>';
-          startTestBtn && (startTestBtn.disabled = true);
-          return;
-        }
-        testSuiteSelect.innerHTML =
-          '<option value="" disabled selected>请选择测试用例</option>' +
-          suites
-            .map(
-              (suite) =>
-                `<option value="${suite.id}" data-abs-path="${suite.abs_path}">
+            '<option value="" disabled selected>请选择测试用例</option>' +
+            suites
+              .map(
+                (suite) =>
+                  `<option value="${suite.id}" data-abs-path="${suite.abs_path}">
                    ${suite.name} (${suite.rel_path})
                  </option>`
-            )
-            .join("");
-        updateStartBtnStatus();
+              )
+              .join("");
+          updateStartBtnStatus();
+        }
       } else {
         throw new Error(data.msg || "加载测试用例失败");
       }
@@ -341,7 +405,6 @@
     if (suiteSelectEl) {
       suiteSelectEl.addEventListener("change", () => {
         updateStartBtnStatus();
-        // 同时更新编辑/删除按钮状态（简化：只看是否有值）
         const hasValue = !!suiteSelectEl.value;
         if (editSuiteBtnEl) {
           editSuiteBtnEl.disabled = !hasValue;
@@ -349,6 +412,59 @@
         if (deleteSuiteBtnEl) {
           deleteSuiteBtnEl.disabled = !hasValue;
         }
+      });
+    }
+
+    // 用例列表行选择 -> 同步到隐藏下拉框，以复用现有逻辑
+    if (caseListTbody && suiteSelectEl) {
+      caseListTbody.addEventListener("change", (e) => {
+        const target = e.target;
+        if (target && target.name === "case-select-radio") {
+          const val = target.value;
+          suiteSelectEl.value = val;
+          updateStartBtnStatus();
+          const hasValue = !!val;
+          if (editSuiteBtnEl) {
+            editSuiteBtnEl.disabled = !hasValue;
+          }
+          if (deleteSuiteBtnEl) {
+            deleteSuiteBtnEl.disabled = !hasValue;
+          }
+        }
+      });
+    }
+
+    // 用例列表分页按钮
+    if (casePrevPage) {
+      casePrevPage.addEventListener("click", () => {
+        casePage -= 1;
+        renderCaseList();
+      });
+    }
+    if (caseNextPage) {
+      caseNextPage.addEventListener("click", () => {
+        casePage += 1;
+        renderCaseList();
+      });
+    }
+
+    // 用例 / 执行集 管理 Tabs 切换
+    if (caseManageTab && execSetManageTab && caseManagePanel && execSetManagePanel) {
+      caseManageTab.addEventListener("click", () => {
+        caseManageTab.classList.add("border-primary", "text-primary");
+        caseManageTab.classList.remove("text-light");
+        execSetManageTab.classList.remove("border-primary", "text-primary");
+        execSetManageTab.classList.add("text-light");
+        caseManagePanel.classList.remove("hidden");
+        execSetManagePanel.classList.add("hidden");
+      });
+      execSetManageTab.addEventListener("click", () => {
+        execSetManageTab.classList.add("border-primary", "text-primary");
+        execSetManageTab.classList.remove("text-light");
+        caseManageTab.classList.remove("border-primary", "text-primary");
+        caseManageTab.classList.add("text-light");
+        execSetManagePanel.classList.remove("hidden");
+        caseManagePanel.classList.add("hidden");
       });
     }
 

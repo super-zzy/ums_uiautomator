@@ -754,17 +754,11 @@ def stop_test_task(task_id: str):
 
 @test_bp.get("/suite/<int:suite_id>")
 def get_test_suite(suite_id):
-    """获取单个测试用例内容"""
+    """获取单个测试用例内容（suite_id 直接为用例在 SQLite 中的 id）"""
     try:
-        suites = get_test_suites()
-        if suite_id < 0 or suite_id >= len(suites):
-            return jsonify({"code": 404, "msg": f"用例不存在", "data": None})
-
-        suite_info = suites[suite_id]
-        case = db.get_case(suite_info["id"])
+        case = db.get_case(suite_id)
         if not case:
             return jsonify({"code": 404, "msg": "用例不存在", "data": None})
-        content = case["content"]
 
         return jsonify({
             "code": 200,
@@ -772,7 +766,7 @@ def get_test_suite(suite_id):
             "data": {
                 "id": case["id"],
                 "name": case["name"],
-                "content": content,
+                "content": case.get("content"),
                 "abs_path": case.get("file_name"),
                 "rel_path": case.get("rel_path")
             }
@@ -809,7 +803,7 @@ def create_test_suite():
 
 @test_bp.put("/suite/<int:suite_id>")
 def update_test_suite(suite_id):
-    """更新测试用例内容"""
+    """更新测试用例内容（suite_id 直接为用例在 SQLite 中的 id）"""
     try:
         req_data = request.get_json() or {}
         content = req_data.get("content")
@@ -817,12 +811,7 @@ def update_test_suite(suite_id):
         if content is None:
             return jsonify({"code": 400, "msg": "请提供用例内容", "data": None})
 
-        suites = get_test_suites()
-        if suite_id < 0 or suite_id >= len(suites):
-            return jsonify({"code": 404, "msg": f"用例不存在", "data": None})
-
-        case_id = suites[suite_id]["id"]
-        ok = db.update_case(case_id, name=None, content=content)
+        ok = db.update_case(suite_id, name=None, content=content)
         if not ok:
             return jsonify({"code": 404, "msg": "用例不存在", "data": None})
 
@@ -839,14 +828,9 @@ def update_test_suite(suite_id):
 
 @test_bp.delete("/suite/<int:suite_id>")
 def delete_test_suite(suite_id):
-    """删除测试用例"""
+    """删除测试用例（suite_id 直接为用例在 SQLite 中的 id）"""
     try:
-        suites = get_test_suites()
-        if suite_id < 0 or suite_id >= len(suites):
-            return jsonify({"code": 404, "msg": f"用例不存在", "data": None})
-
-        case_id = suites[suite_id]["id"]
-        ok = db.delete_case(case_id)
+        ok = db.delete_case(suite_id)
         if not ok:
             return jsonify({"code": 404, "msg": "用例不存在", "data": None})
 

@@ -154,14 +154,14 @@
                 </div>
             </div>
 
-            <!-- 用例选择与任务控制卡片 -->
+            <!-- 用例 / 执行集管理与任务控制卡片 -->
             <div class="lg:col-span-2 bg-white rounded-lg p-5 card-shadow">
                 <h2 class="text-lg font-semibold flex items-center mb-4">
                     <i class="fa fa-list-alt text-primary mr-2"></i>测试配置
                 </h2>
 
-                <!-- 用例选择下拉框 -->
-                <div class="mb-6">
+                <!-- 用例选择下拉框（保留供现有逻辑使用，可隐藏） -->
+                <div class="mb-4 hidden">
                     <label class="block text-sm font-medium text-light mb-2">选择测试用例</label>
                     <div class="relative">
                         <select id="test-suite-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none appearance-none cursor-pointer">
@@ -174,7 +174,7 @@
                 </div>
 
                 <!-- 任务控制按钮 -->
-                <div class="flex flex-wrap gap-4 mb-6">
+                <div class="flex flex-wrap gap-4 mb-4">
                     <button id="start-test-btn" class="bg-primary text-white px-6 py-2 rounded-lg flex items-center btn-hover disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none" disabled>
                         <i class="fa fa-play mr-2"></i>启动测试
                     </button>
@@ -186,26 +186,76 @@
                     </button>
                 </div>
 
-                <!-- 用例相关 -->
-                <div class="flex flex-wrap gap-4 mb-6">
-                    <!-- 编辑用例按钮 -->
-                    <button id="edit-suite-btn" class="bg-primary text-white px-4 py-2 rounded-lg flex items-center btn-hover disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                        <i class="fa fa-edit mr-2"></i>编辑用例
+                <!-- 用例 / 执行集 管理 Tabs -->
+                <div class="border-b border-gray-200 mb-4 flex">
+                    <button
+                        id="case-manage-tab"
+                        class="px-4 py-2 text-sm font-medium border-b-2 border-primary text-primary"
+                        data-tab="cases"
+                    >
+                        用例管理
                     </button>
-                    <button id="new-suite-btn" class="bg-success text-white px-4 py-2 rounded-lg flex items-center btn-hover">
-                        <i class="fa fa-plus mr-2"></i>新建用例
-                    </button>
-                    <!-- 添加删除按钮 -->
-                    <button id="delete-suite-btn" class="bg-danger text-white px-4 py-2 rounded-lg flex items-center btn-hover disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                        <i class="fa fa-trash mr-2"></i>删除用例
+                    <button
+                        id="exec-set-manage-tab"
+                        class="ml-2 px-4 py-2 text-sm font-medium border-b-2 border-transparent text-light hover:text-primary hover:border-primary/50"
+                        data-tab="exec_sets"
+                    >
+                        执行集管理
                     </button>
                 </div>
 
+                <!-- 用例管理面板 -->
+                <div id="case-manage-panel">
+                    <div class="flex flex-wrap gap-4 mb-4">
+                        <!-- 编辑用例按钮 -->
+                        <button id="edit-suite-btn" class="bg-primary text-white px-4 py-2 rounded-lg flex items-center btn-hover disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i class="fa fa-edit mr-2"></i>编辑用例
+                        </button>
+                        <button id="new-suite-btn" class="bg-success text-white px-4 py-2 rounded-lg flex items-center btn-hover">
+                            <i class="fa fa-plus mr-2"></i>新建用例
+                        </button>
+                        <!-- 添加删除按钮 -->
+                        <button id="delete-suite-btn" class="bg-danger text-white px-4 py-2 rounded-lg flex items-center btn-hover disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i class="fa fa-trash mr-2"></i>删除用例
+                        </button>
+                    </div>
+
+                    <!-- 用例列表（分页） -->
+                    <div class="overflow-x-auto mb-2">
+                        <table class="w-full min-w-[640px]">
+                            <thead>
+                                <tr class="border-b border-gray-200">
+                                    <th class="w-12 text-center py-3 px-2 text-sm font-medium text-light">选择</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-light">用例ID</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-light">名称</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-light">路径</th>
+                                </tr>
+                            </thead>
+                            <tbody id="case-list-tbody">
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-light">加载用例中...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="case-pagination" class="flex items-center justify-between text-xs text-light mt-1">
+                        <div>
+                            <span id="case-page-info">第 1 页</span>
+                        </div>
+                        <div class="space-x-2">
+                            <button id="case-prev-page" class="px-2 py-1 border rounded disabled:opacity-50" disabled>上一页</button>
+                            <button id="case-next-page" class="px-2 py-1 border rounded disabled:opacity-50">下一页</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 执行集管理面板 -->
+                <div id="exec-set-manage-panel" class="hidden">
                 <!-- 执行集管理模块 -->
-<div class="bg-white rounded-lg p-5 card-shadow mb-6">
+                <div class="bg-white rounded-lg p-5 card-shadow mb-4">
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-lg font-semibold flex items-center">
-            <i class="fa fa-list-alt text-primary mr-2"></i>执行集管理
+            <i class="fa fa-list-alt text-primary mr-2"></i>
         </h2>
         <button id="create-exec-set-btn" class="bg-primary text-white px-4 py-2 rounded-lg flex items-center btn-hover">
             <i class="fa fa-plus mr-2"></i>新建执行集
@@ -213,7 +263,7 @@
     </div>
 
     <!-- 执行集列表 -->
-    <div class="overflow-x-auto mb-4">
+    <div class="overflow-x-auto mb-2">
         <table class="w-full min-w-[640px]">
             <thead>
                 <tr class="border-b border-gray-200">
@@ -232,6 +282,17 @@
         </table>
     </div>
 
+    <!-- 执行集分页 -->
+    <div id="exec-set-pagination" class="flex items-center justify-between text-xs text-light mt-1">
+        <div>
+            <span id="exec-set-page-info">第 1 页</span>
+        </div>
+        <div class="space-x-2">
+            <button id="exec-set-prev-page" class="px-2 py-1 border rounded disabled:opacity-50" disabled>上一页</button>
+            <button id="exec-set-next-page" class="px-2 py-1 border rounded disabled:opacity-50">下一页</button>
+        </div>
+    </div>
+
     <!-- 执行集选择 + 启动按钮 -->
     <div class="flex flex-wrap gap-4">
         <div class="relative w-64">
@@ -246,7 +307,9 @@
             <i class="fa fa-play mr-2"></i>启动执行集测试
         </button>
     </div>
-</div>
+</div> <!-- 执行集管理模块结束 -->
+
+                </div> <!-- 执行集管理面板结束 -->
 
 <!-- 新建/编辑执行集模态框 -->
 <div id="exec-set-editor-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
@@ -462,7 +525,9 @@
     <script src="/static/js/banner.js"></script>
     <script src="/static/js/devices.js"></script>
     <script src="/static/js/history.js"></script>
+    <!-- 用例管理与单用例执行逻辑 -->
     <script src="/static/js/suites.js"></script>
+    <!-- 执行集管理与执行逻辑 -->
     <script src="/static/js/exec_sets.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', async () => {

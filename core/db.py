@@ -132,7 +132,28 @@ def _init_db() -> None:
                 # 字段已存在时忽略错误
                 pass
 
-        conn.commit()
+        # 为历史数据补充缺失的 created_at 字段（统一写入当前时间）
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        for tbl in [
+            "test_case",
+            "exec_set",
+            "exec_set_case",
+            "exec_history",
+            "task_runtime",
+        ]:
+            try:
+                cur.execute(
+                    f"""
+                    UPDATE {tbl}
+                    SET created_at = ?
+                    WHERE (created_at IS NULL OR created_at = '')
+                    """
+                    ,
+                    (now_str,),
+                )
+            except Exception:
+                # 兼容旧库：若表中不存在 created_at 字段或其他异常，忽略
+                pass
 
         conn.commit()
     finally:
@@ -182,11 +203,8 @@ def get_case(case_id: int) -> Optional[Dict[str, Any]]:
 
 def create_case(name: str, content: str, rel_path: Optional[str] = None) -> Dict[str, Any]:
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    # 默认 file_name 为 name 去空格后加 .py
-    base_name = name.strip().replace(" ", "_")
-    if not base_name.endswith(".py"):
-        base_name = f"{base_name}.py"
-    file_name = base_name
+    # 默认 file_name 统一为 case.py
+    file_name = "case.py"
 
     conn = _get_conn()
     try:

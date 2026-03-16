@@ -19,36 +19,50 @@
     selectedCaseCount,
     execSetSelect,
     startExecSetBtn,
+    execSetPageInfo,
+    execSetPrevPage,
+    execSetNextPage,
   } = Elements || {};
   const { apiGet, apiPost, addTaskLog } = Common || {};
 
   let currentEditingExecSetId = null;
   let selectedCaseIds = [];
   let allCasesCache = [];
+  let allExecSetsCache = [];
+  let execSetPage = 1;
+  const EXEC_SET_PAGE_SIZE = 10;
 
-  async function loadExecSets() {
-    if (!execSetList || !execSetSelect) return;
-    try {
-      const data = await apiGet("/api/test/exec-sets");
-      if (data.code === 200 && Array.isArray(data.data)) {
-        const execSets = data.data;
-        if (!execSets.length) {
-          execSetList.innerHTML = `
+  function renderExecSetTable() {
+    if (!execSetList) return;
+    const list = allExecSetsCache || [];
+    if (!list.length) {
+      execSetList.innerHTML = `
             <tr>
               <td colspan="5" class="text-center py-4 text-light">
                 暂无执行集，请点击"新建执行集"创建
               </td>
             </tr>
           `;
-        } else {
-          execSetList.innerHTML = execSets
-            .map(
-              (es) => `
+      execSetPageInfo && (execSetPageInfo.textContent = "第 1 页");
+      execSetPrevPage && (execSetPrevPage.disabled = true);
+      execSetNextPage && (execSetNextPage.disabled = true);
+      return;
+    }
+    const total = list.length;
+    const totalPages = Math.max(1, Math.ceil(total / EXEC_SET_PAGE_SIZE));
+    if (execSetPage > totalPages) execSetPage = totalPages;
+    if (execSetPage < 1) execSetPage = 1;
+    const start = (execSetPage - 1) * EXEC_SET_PAGE_SIZE;
+    const end = start + EXEC_SET_PAGE_SIZE;
+    const pageItems = list.slice(start, end);
+    execSetList.innerHTML = pageItems
+      .map(
+        (es) => `
             <tr class="border-b border-gray-100 hover:bg-gray-50">
               <td class="py-3 px-4 text-sm">${es.id}</td>
               <td class="py-3 px-4 text-sm">${es.name}</td>
               <td class="py-3 px-4 text-sm">${es.case_count}</td>
-              <td class="py-3 px-4 text-sm text-light">${es.create_time}</td>
+              <td class="py-3 px-4 text-sm text-light">${es.created_at || ""}</td>
               <td class="py-3 px-4 text-sm">
                 <button class="text-primary hover:text-primary/80 mr-2" data-action="edit" data-id="${es.id}">
                   <i class="fa fa-edit"></i> 编辑
@@ -62,9 +76,28 @@
               </td>
             </tr>
           `
-            )
-            .join("");
-          // 行内按钮事件委托
+      )
+      .join("");
+    execSetPageInfo &&
+      (execSetPageInfo.textContent = `第 ${execSetPage} / ${totalPages} 页，共 ${total} 条`);
+    if (execSetPrevPage) {
+      execSetPrevPage.disabled = execSetPage <= 1;
+    }
+    if (execSetNextPage) {
+      execSetNextPage.disabled = execSetPage >= totalPages;
+    }
+  }
+
+  async function loadExecSets() {
+    if (!execSetList || !execSetSelect) return;
+    try {
+      const data = await apiGet("/api/test/exec-sets");
+      if (data.code === 200 && Array.isArray(data.data)) {
+        allExecSetsCache = data.data;
+        execSetPage = 1;
+        renderExecSetTable();
+        // 行内按钮事件委托（仅绑定一次）
+        if (!execSetList._boundClick) {
           execSetList.addEventListener("click", (e) => {
             const btn = e.target.closest("button[data-action]");
             if (!btn) return;
@@ -75,10 +108,11 @@
             else if (action === "delete") deleteExecSet(id, name);
             else if (action === "select") selectExecSet(id, name);
           });
+          execSetList._boundClick = true;
         }
         execSetSelect.innerHTML =
           '<option value="" disabled selected>请选择执行集</option>' +
-          execSets
+          allExecSetsCache
             .map(
               (es) =>
                 `<option value="${es.id}">${es.name}（${es.case_count}个用例）</option>`
@@ -115,6 +149,9 @@
         `
           )
           .join("");
+        // 用例列表加载完成后，根据最新的 allCasesCache 重新渲染已选用例，
+        // 避免在编辑执行集时仅显示 ID 占位信息。
+        renderSelectedCases();
       } else {
         throw new Error(data.msg || "加载用例失败");
       }
@@ -179,7 +216,7 @@
         const es = data.data;
         currentEditingExecSetId = id;
         selectedCaseIds = (es.cases || [])
-          .map((c) => c.suite_id)
+          .map((c) => c.case_id)
           .filter((v) => v !== undefined && v !== null)
           .map((v) => parseInt(v, 10));
         execSetEditorTitle &&
@@ -205,12 +242,6 @@
 
   async function deleteExecSet(id, name) {
     if (!confirm(`确定要删除执行集"${name}"吗？`)) return;
-    try {
-      const data = await apiPost(`/api/test/exec-set/${id}`, null, "DELETE");
-      // 上面是 POST 封装，这里简单用 fetch
-    } catch {
-      // 为避免复杂化，直接使用 fetch
-    }
     try {
       const resp = await fetch(`/api/test/exec-set/${id}`, {
         method: "DELETE",
@@ -529,6 +560,20 @@
         "click",
         startExecSetTest
       );
+
+    // 执行集分页
+    if (execSetPrevPage) {
+      execSetPrevPage.addEventListener("click", () => {
+        execSetPage -= 1;
+        renderExecSetTable();
+      });
+    }
+    if (execSetNextPage) {
+      execSetNextPage.addEventListener("click", () => {
+        execSetPage += 1;
+        renderExecSetTable();
+      });
+    }
   }
 
   function initExecSets() {

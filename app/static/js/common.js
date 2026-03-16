@@ -85,6 +85,19 @@ window.Elements = {
   selectedCaseCount: document.getElementById("selected-case-count"),
   execSetSelect: document.getElementById("exec-set-select"),
   startExecSetBtn: document.getElementById("start-exec-set-btn"),
+
+  // 用例/执行集管理 Tabs 与列表分页
+  caseManageTab: document.getElementById("case-manage-tab"),
+  execSetManageTab: document.getElementById("exec-set-manage-tab"),
+  caseManagePanel: document.getElementById("case-manage-panel"),
+  execSetManagePanel: document.getElementById("exec-set-manage-panel"),
+  caseListTbody: document.getElementById("case-list-tbody"),
+  casePageInfo: document.getElementById("case-page-info"),
+  casePrevPage: document.getElementById("case-prev-page"),
+  caseNextPage: document.getElementById("case-next-page"),
+  execSetPageInfo: document.getElementById("exec-set-page-info"),
+  execSetPrevPage: document.getElementById("exec-set-prev-page"),
+  execSetNextPage: document.getElementById("exec-set-next-page"),
 };
 
 // 通用 API 封装
