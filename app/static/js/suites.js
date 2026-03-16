@@ -7,8 +7,23 @@
     startTestBtn,
     stopTestBtn,
     viewReportBtn,
+    editSuiteBtn,
+    newSuiteBtn,
+    deleteSuiteBtn,
+    suiteEditorModal,
+    closeEditorBtn,
+    cancelEditBtn,
+    saveSuiteBtn,
+    suiteContent,
+    editorModalTitle,
+    newSuiteNameContainer,
+    newSuiteName,
   } = Elements || {};
   const { apiGet, apiPost, addTaskLog } = Common || {};
+
+  // 用例编辑状态
+  let editorMode = null; // "edit" | "new"
+  let currentEditingSuiteId = null;
 
   async function loadTestSuites() {
     if (!testSuiteSelect) return;
@@ -270,6 +285,206 @@
         } else {
           addTaskLog &&
             addTaskLog("[错误] 最新任务无报告可查看", "danger");
+        }
+      });
+    }
+
+    // 新建用例
+    if (newSuiteBtn) {
+      newSuiteBtn.addEventListener("click", () => {
+        editorMode = "new";
+        currentEditingSuiteId = null;
+        if (editorModalTitle) {
+          editorModalTitle.textContent = "新建测试用例";
+        }
+        if (newSuiteNameContainer) {
+          newSuiteNameContainer.style.display = "block";
+        }
+        if (newSuiteName) {
+          newSuiteName.value = "";
+        }
+        if (suiteContent) {
+          suiteContent.value = "";
+        }
+        if (suiteEditorModal) {
+          suiteEditorModal.classList.remove("hidden");
+        }
+      });
+    }
+
+    // 编辑用例
+    if (editSuiteBtn) {
+      editSuiteBtn.addEventListener("click", async () => {
+        const selectedSuiteId = testSuiteSelect?.value;
+        if (!selectedSuiteId) {
+          addTaskLog &&
+            addTaskLog("[错误] 请先选择要编辑的用例", "danger");
+          return;
+        }
+        editorMode = "edit";
+        currentEditingSuiteId = parseInt(selectedSuiteId, 10);
+        if (editorModalTitle) {
+          editorModalTitle.textContent = "编辑测试用例";
+        }
+        if (newSuiteNameContainer) {
+          newSuiteNameContainer.style.display = "none";
+        }
+        if (newSuiteName) {
+          newSuiteName.value = "";
+        }
+        try {
+          const data = await apiGet(
+            `/api/test/suite/${currentEditingSuiteId}`
+          );
+          if (data.code === 200 && data.data) {
+            if (suiteContent) {
+              suiteContent.value = data.data.content || "";
+            }
+            if (suiteEditorModal) {
+              suiteEditorModal.classList.remove("hidden");
+            }
+          } else {
+            throw new Error(data.msg || "获取用例内容失败");
+          }
+        } catch (e) {
+          addTaskLog &&
+            addTaskLog(
+              `[错误] 加载用例内容失败：${e.message}`,
+              "danger"
+            );
+          console.error("加载用例内容失败:", e);
+        }
+      });
+    }
+
+    // 删除用例
+    if (deleteSuiteBtn) {
+      deleteSuiteBtn.addEventListener("click", async () => {
+        const selectedSuiteId = testSuiteSelect?.value;
+        if (!selectedSuiteId) {
+          addTaskLog &&
+            addTaskLog("[错误] 请先选择要删除的用例", "danger");
+          return;
+        }
+        if (
+          !confirm(
+            "确定要删除当前选中的用例吗？该操作不可恢复！"
+          )
+        ) {
+          return;
+        }
+        try {
+          const resp = await fetch(
+            `/api/test/suite/${parseInt(selectedSuiteId, 10)}`,
+            {
+              method: "DELETE",
+            }
+          );
+          const data = await resp.json();
+          if (data.code === 200) {
+            addTaskLog &&
+              addTaskLog("[成功] 用例删除成功", "success");
+            // 重新加载用例列表
+            await loadTestSuites();
+          } else {
+            throw new Error(data.msg || "删除用例失败");
+          }
+        } catch (e) {
+          addTaskLog &&
+            addTaskLog(
+              `[错误] 删除用例失败：${e.message}`,
+              "danger"
+            );
+          console.error("删除用例失败:", e);
+        }
+      });
+    }
+
+    // 关闭/取消编辑
+    const closeEditor = () => {
+      editorMode = null;
+      currentEditingSuiteId = null;
+      if (suiteEditorModal) {
+        suiteEditorModal.classList.add("hidden");
+      }
+    };
+
+    if (closeEditorBtn) {
+      closeEditorBtn.addEventListener("click", closeEditor);
+    }
+    if (cancelEditBtn) {
+      cancelEditBtn.addEventListener("click", closeEditor);
+    }
+
+    // 保存用例
+    if (saveSuiteBtn) {
+      saveSuiteBtn.addEventListener("click", async () => {
+        try {
+          const content = suiteContent ? suiteContent.value || "" : "";
+          if (editorMode === "new") {
+            let name = newSuiteName ? newSuiteName.value.trim() : "";
+            if (!name) {
+              addTaskLog &&
+                addTaskLog("[错误] 请填写用例文件名", "danger");
+              return;
+            }
+            if (!name.endsWith(".py")) {
+              name = `${name}.py`;
+            }
+            const resp = await fetch("/api/test/suite", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name, content }),
+            });
+            const data = await resp.json();
+            if (data.code === 200) {
+              addTaskLog &&
+                addTaskLog("[成功] 新建用例成功", "success");
+              closeEditor();
+              await loadTestSuites();
+            } else {
+              throw new Error(data.msg || "新建用例失败");
+            }
+          } else if (editorMode === "edit") {
+            if (currentEditingSuiteId === null) {
+              addTaskLog &&
+                addTaskLog(
+                  "[错误] 未找到当前编辑的用例ID",
+                  "danger"
+                );
+              return;
+            }
+            const resp = await fetch(
+              `/api/test/suite/${currentEditingSuiteId}`,
+              {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ content }),
+              }
+            );
+            const data = await resp.json();
+            if (data.code === 200) {
+              addTaskLog &&
+                addTaskLog("[成功] 用例保存成功", "success");
+              closeEditor();
+              await loadTestSuites();
+            } else {
+              throw new Error(data.msg || "保存用例失败");
+            }
+          } else {
+            addTaskLog &&
+              addTaskLog(
+                "[错误] 当前用例编辑状态未知，无法保存",
+                "danger"
+              );
+          }
+        } catch (e) {
+          addTaskLog &&
+            addTaskLog(
+              `[错误] 保存用例失败：${e.message}`,
+              "danger"
+            );
+          console.error("保存用例失败:", e);
         }
       });
     }
