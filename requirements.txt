@@ -1,0 +1,15 @@
+# 项目依赖汇总（由 requirement/web.txt 与 requirement/common.txt 合并而来）
+# 如有遗漏，请将原有 requirement 目录中的依赖追加到本文件
+
+Flask>=2.2
+flask-apscheduler>=1.12
+
+pytest>=7.0
+pytest-timeout>=2.1
+
+allure-pytest>=2.13
+
+appium-python-client>=3.1
+
+requests>=2.31
+
