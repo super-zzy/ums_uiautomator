@@ -103,27 +103,31 @@
             </div>
         </div>
 
-        <!-- 测试配置区 -->
+        <!-- 测试配置区：左侧“在线设备 + 任务管理”上下排列，右侧为测试配置 -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-4">
-            <!-- 设备选择卡片 -->
-            <div class="lg:col-span-1 bg-white rounded-lg p-5 card-shadow">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold flex items-center">
-                        <i class="fa fa-mobile text-primary mr-2"></i>在线设备
-                    </h2>
-                    <button id="refresh-device-btn" class="text-primary text-sm flex items-center hover:text-primary/80">
-                        <i class="fa fa-refresh mr-1"></i>刷新
-                    </button>
-                </div>
-                <div id="device-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                    <!-- 设备列表将通过JS动态渲染 -->
-                    <div class="text-center text-light py-8">
-                        <i class="fa fa-spinner fa-spin text-2xl mb-2"></i>
-                        <p>加载设备中...</p>
+            <!-- 左侧：在线设备 + 任务管理（上下布局） -->
+            <div class="lg:col-span-1 space-y-4" id="left-panel-column">
+                <!-- 在线设备卡片 -->
+                <div class="bg-white rounded-lg p-5 card-shadow" id="device-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold flex items-center">
+                            <i class="fa fa-mobile text-primary mr-2"></i>在线设备
+                        </h2>
+                        <button id="refresh-device-btn" class="text-primary text-sm flex items-center hover:text-primary/80">
+                            <i class="fa fa-refresh mr-1"></i>刷新
+                        </button>
+                    </div>
+                    <div id="device-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                        <!-- 设备列表将通过JS动态渲染 -->
+                        <div class="text-center text-light py-8">
+                            <i class="fa fa-spinner fa-spin text-2xl mb-2"></i>
+                            <p>加载设备中...</p>
+                        </div>
                     </div>
                 </div>
-                <!-- 任务管理区域 -->
-                <div class="mt-5 border-t border-gray-200 pt-4">
+
+                <!-- 任务管理卡片 -->
+                <div class="bg-white rounded-lg p-5 card-shadow" id="task-card">
                     <div class="flex justify-between items-center mb-2">
                         <h3 class="text-sm font-semibold flex items-center">
                             <i class="fa fa-tasks text-primary mr-2"></i>任务管理
@@ -154,8 +158,8 @@
                 </div>
             </div>
 
-            <!-- 用例 / 执行集管理与任务控制卡片 -->
-            <div class="lg:col-span-2 bg-white rounded-lg p-5 card-shadow">
+            <!-- 右侧：用例 / 执行集管理与任务控制卡片（保持不变） -->
+            <div class="lg:col-span-2 bg-white rounded-lg p-5 card-shadow" id="config-card">
                 <h2 class="text-lg font-semibold flex items-center mb-4">
                     <i class="fa fa-list-alt text-primary mr-2"></i>测试配置
                 </h2>
@@ -545,6 +549,46 @@
         window.Banner && window.Banner.initBanner();
         window.Suites && window.Suites.initSuites();
         window.ExecSets && window.ExecSets.initExecSets();
+
+        // 动态同步“在线设备 + 任务管理”与“测试配置”高度
+        function adjustPanelHeights() {
+          const deviceCard = document.getElementById('device-card');
+          const taskCard = document.getElementById('task-card');
+          const configCard = document.getElementById('config-card');
+          const leftCol = document.getElementById('left-panel-column');
+          if (!deviceCard || !taskCard || !configCard || !leftCol) return;
+
+          // 仅在桌面布局（lg 及以上）下调整高度
+          if (window.innerWidth < 1024) {
+            deviceCard.style.height = 'auto';
+            taskCard.style.height = 'auto';
+            return;
+          }
+
+          // 先还原为自适应，再测量
+          deviceCard.style.height = 'auto';
+          taskCard.style.height = 'auto';
+
+          const configHeight = configCard.offsetHeight;
+          if (!configHeight) return;
+
+          // space-y-4 => gap 1rem (16px)
+          const gap = 16;
+          const available = Math.max(configHeight - gap, 0);
+          const each = Math.max(available / 2, 160); // 给每个卡片一个合理的最小高度
+
+          deviceCard.style.height = each + 'px';
+          taskCard.style.height = each + 'px';
+        }
+
+        // 初次调整
+        adjustPanelHeights();
+        // 窗口尺寸变化时重新计算（简单防抖）
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+          if (resizeTimer) clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(adjustPanelHeights, 150);
+        });
       });
     </script>
 </body>
