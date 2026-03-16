@@ -30,47 +30,13 @@ def get_task_id() -> str:
 
 
 def get_test_suites() -> list[dict]:
-    """获取测试用例列表（优先从SQLite读取，自动补全本地历史.py文件）"""
+    """获取测试用例列表（仅从SQLite读取）"""
     try:
-        # 1. 从SQLite读取已有用例
+        # 仅从SQLite读取已有用例
         suites = db.list_cases()
 
-        # 2. 扫描TEST_SUITE_DIR，将历史遗留的.py文件自动同步到SQLite（避免旧用例“丢失”）
-        test_suite_dir = current_app.config["TEST_SUITE_DIR"]
-        ensure_dir_exists(test_suite_dir)
-
-        existing_file_names = {s.get("file_name") for s in suites if s.get("file_name")}
-
-        for root, _, files in os.walk(test_suite_dir):
-            for name in files:
-                if not (name.endswith(".py") and name != "conftest.py"):
-                    continue
-                if name in existing_file_names:
-                    continue
-                # 这是一个还没入库的历史用例文件，自动导入到SQLite
-                abs_path = safe_join(root, name)
-                try:
-                    with open(abs_path, "r", encoding="utf-8") as f:
-                        content = f.read()
-                except Exception as e:
-                    log.warning(f"读取历史用例文件失败，跳过导入：{abs_path}，错误：{e}")
-                    continue
-
-                rel_path = os.path.relpath(abs_path, test_suite_dir)
-                case = db.create_case(name=name, content=content, rel_path=rel_path)
-                suites.append(
-                    {
-                        "id": case["id"],
-                        "name": case["name"],
-                        "file_name": case["file_name"],
-                        "rel_path": case.get("rel_path"),
-                    }
-                )
-                existing_file_names.add(case["file_name"])
-                log.info(f"已将历史用例文件导入SQLite：{abs_path} -> case_id={case['id']}")
-
-        # 3. 统一返回前端需要的结构
-        log.info(f"获取用例完成（SQLite + 历史文件同步），共{len(suites)}个可用用例")
+        # 统一返回前端需要的结构
+        log.info(f"获取用例完成（仅SQLite），共{suites and len(suites) or 0}个可用用例")
         return [
             {
                 "id": s["id"],
@@ -92,9 +58,14 @@ def run_task_background(task_id: str, device_id: str, suite_abs_path: str) -> No
     test_tasks[task_id]["status"] = "running"
     test_tasks[task_id]["start_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # 同步到执行历史
+    # 同步到执行历史与运行时任务表
     try:
         db.upsert_history(
+            task_id=task_id,
+            status="running",
+            start_time=test_tasks[task_id]["start_time"],
+        )
+        db.upsert_task_runtime(
             task_id=task_id,
             status="running",
             start_time=test_tasks[task_id]["start_time"],
@@ -112,7 +83,7 @@ def run_task_background(task_id: str, device_id: str, suite_abs_path: str) -> No
 
         # 3. 更新任务结果
         test_tasks[task_id].update(task_result)
-        # 写入/更新执行历史
+        # 写入/更新执行历史与运行时任务
         try:
             db.upsert_history(
                 task_id=task_id,
@@ -123,6 +94,11 @@ def run_task_background(task_id: str, device_id: str, suite_abs_path: str) -> No
                 pytest_returncode=task_result.get("pytest_returncode"),
                 report_generate_duration=task_result.get("report_generate_duration"),
                 error_msg=task_result.get("error_msg"),
+            )
+            db.upsert_task_runtime(
+                task_id=task_id,
+                status=task_result.get("status"),
+                end_time=task_result.get("end_time"),
             )
         except Exception as e:
             log.error(f"写入任务{task_id}执行历史失败：{str(e)}", exc_info=True)
@@ -262,6 +238,12 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
                 report_generate_duration=main_task.get("report_generate_duration"),
                 error_msg=main_task.get("report_error_msg"),
             )
+            # 同步更新运行时任务表中的主任务状态，避免任务管理中残留“运行中”记录
+            db.upsert_task_runtime(
+                task_id=main_task_id,
+                status=overall_status,
+                end_time=main_task["end_time"],
+            )
         except Exception as e:
             log.error(f"写入执行集主任务{main_task_id}历史失败：{str(e)}", exc_info=True)
 
@@ -285,6 +267,12 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
                 status="failed",
                 end_time=main_task["end_time"],
                 error_msg=main_task["report_error_msg"],
+            )
+            # 同步更新运行时任务表中的主任务状态，避免任务管理中残留“运行中”记录
+            db.upsert_task_runtime(
+                task_id=main_task_id,
+                status="failed",
+                end_time=main_task["end_time"],
             )
         except Exception as e2:
             log.error(f"写入执行集主任务{main_task_id}历史失败：{str(e2)}", exc_info=True)
@@ -356,13 +344,21 @@ def start_test():
             "create_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
 
-        # 写入执行历史（初始记录）
+        # 写入执行历史与运行时任务（初始记录）
         try:
             db.upsert_history(
                 task_id=task_id,
                 device_id=device_id,
                 case_id=case["id"],
                 type_="single",
+                status="pending",
+                create_time=test_tasks[task_id]["create_time"],
+            )
+            db.upsert_task_runtime(
+                task_id=task_id,
+                main_task_id=None,
+                type_="single",
+                device_id=device_id,
                 status="pending",
                 create_time=test_tasks[task_id]["create_time"],
             )
@@ -412,6 +408,19 @@ def get_task_status(task_id: str):
 
                     status = "success" if report_info.get("status") == "success" else "failed"
 
+                    # 尝试从执行历史中补充用例名称，避免前端显示“未知用例”
+                    case_name = None
+                    try:
+                        history = db.get_history_by_task_id(task_id)
+                        if history and history.get("case_id"):
+                            case = db.get_case(history["case_id"])
+                            if case:
+                                case_name = case.get("name")
+                    except Exception as e:
+                        log.warning(
+                            f"根据历史记录补充任务{task_id}用例名称失败：{e}"
+                        )
+
                     restored_task = {
                         "task_id": meta.get("task_id", task_id),
                         "device_id": meta.get("device_id"),
@@ -420,6 +429,9 @@ def get_task_status(task_id: str):
                         "report_path": report_dir,
                         "report_index_path": index_path,
                         "report_meta_path": report_meta_path,
+                        "suite_info": {
+                            "name": case_name,
+                        }
                     }
                     if restored_task.get("report_path"):
                         restored_task["report_url"] = f"/api/report/files/{task_id}/index.html"
@@ -627,10 +639,8 @@ def get_exec_set_history_detail_api(main_task_id: str):
 def get_running_tasks():
     """获取所有运行中任务"""
     try:
-        running_tasks = [
-            task for task in test_tasks.values()
-            if task["status"] == "running"
-        ]
+        # 优先从数据库的运行时任务表中获取，包含 pending 与 running
+        running_tasks = db.list_running_tasks()
         return jsonify({
             "code": 200,
             "msg": f"获取运行中任务成功（共{len(running_tasks)}个）",
@@ -652,10 +662,49 @@ def stop_test_task(task_id: str):
     try:
         task = test_tasks.get(task_id)
         if not task:
+            # 内存中已无任务信息时，尝试根据运行时任务表做“强制停止”
+            runtime = db.get_task_runtime(task_id)
+            if not runtime:
+                return jsonify({
+                    "code": 404,
+                    "msg": f"任务{task_id}不存在",
+                    "data": None
+                })
+
+            # 仅对标记为 pending/running 的任务做强制终止
+            if runtime.get("status") not in ("pending", "running"):
+                return jsonify({
+                    "code": 400,
+                    "msg": f"任务{task_id}不在运行中，状态：{runtime.get('status')}",
+                    "data": None
+                })
+
+            end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            stop_reason = "用户手动强制停止（任务实例已不存在）"
+
+            try:
+                # 更新运行时任务表状态
+                db.upsert_task_runtime(
+                    task_id=task_id,
+                    status="stopped",
+                    end_time=end_time,
+                    stop_reason=stop_reason,
+                )
+                # 同步执行历史
+                db.upsert_history(
+                    task_id=task_id,
+                    status="stopped",
+                    end_time=end_time,
+                    error_msg=stop_reason,
+                )
+            except Exception as e:
+                log.error(f"强制停止任务{task_id}时更新数据库失败：{str(e)}", exc_info=True)
+
+            log.info(f"任务{task_id}已被手动强制停止（仅更新数据库记录）")
             return jsonify({
-                "code": 404,
-                "msg": f"任务{task_id}不存在",
-                "data": None
+                "code": 200,
+                "msg": f"任务{task_id}已强制停止",
+                "data": {"task_id": task_id}
             })
 
         if task["status"] != "running":
@@ -677,6 +726,12 @@ def stop_test_task(task_id: str):
                 status="stopped",
                 end_time=task["end_time"],
                 error_msg=task["stop_reason"],
+            )
+            db.upsert_task_runtime(
+                task_id=task_id,
+                status="stopped",
+                end_time=task["end_time"],
+                stop_reason=task["stop_reason"],
             )
         except Exception as e:
             log.error(f"写入任务{task_id}停止历史失败：{str(e)}", exc_info=True)
@@ -1209,7 +1264,7 @@ def start_exec_set_test():
                 "create_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
 
-            # 写入执行历史（子任务）
+            # 写入执行历史与运行时任务（子任务）
             try:
                 db.upsert_history(
                     task_id=sub_task_id,
@@ -1218,6 +1273,14 @@ def start_exec_set_test():
                     device_id=device_id,
                     case_id=case_id,
                     exec_set_id=exec_set_id,
+                    status="pending",
+                    create_time=test_tasks[sub_task_id]["create_time"],
+                )
+                db.upsert_task_runtime(
+                    task_id=sub_task_id,
+                    main_task_id=main_task_id,
+                    type_="single",
+                    device_id=device_id,
                     status="pending",
                     create_time=test_tasks[sub_task_id]["create_time"],
                 )
@@ -1245,7 +1308,7 @@ def start_exec_set_test():
             "case_count": len(sub_tasks)
         }
 
-        # 主任务历史
+        # 主任务历史与运行时任务
         try:
             db.upsert_history(
                 task_id=main_task_id,
@@ -1254,6 +1317,15 @@ def start_exec_set_test():
                 exec_set_id=exec_set_id,
                 status="running",
                 create_time=test_tasks[main_task_id]["start_time"],
+            )
+            db.upsert_task_runtime(
+                task_id=main_task_id,
+                main_task_id=None,
+                type_="exec_set",
+                device_id=device_id,
+                status="running",
+                create_time=test_tasks[main_task_id]["start_time"],
+                start_time=test_tasks[main_task_id]["start_time"],
             )
         except Exception as e:
             log.error(f"写入执行集主任务{main_task_id}初始历史失败：{str(e)}", exc_info=True)

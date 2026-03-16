@@ -122,6 +122,36 @@
                         <p>加载设备中...</p>
                     </div>
                 </div>
+                <!-- 任务管理区域 -->
+                <div class="mt-5 border-t border-gray-200 pt-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-sm font-semibold flex items-center">
+                            <i class="fa fa-tasks text-primary mr-2"></i>任务管理
+                        </h3>
+                        <button id="refresh-running-tasks-btn" class="text-primary text-xs flex items-center hover:text-primary/80">
+                            <i class="fa fa-refresh mr-1"></i>刷新
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full min-w-[320px] text-sm">
+                            <thead>
+                                <tr class="border-b border-gray-200">
+                                    <th class="text-left py-2 px-2 text-light">任务ID</th>
+                                    <th class="text-left py-2 px-2 text-light">设备ID</th>
+                                    <th class="text-left py-2 px-2 text-light">状态</th>
+                                    <th class="text-left py-2 px-2 text-light">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="running-task-table">
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-light">
+                                        暂无运行中任务
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
 
             <!-- 用例选择与任务控制卡片 -->

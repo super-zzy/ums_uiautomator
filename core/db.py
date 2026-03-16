@@ -87,10 +87,52 @@ def _init_db() -> None:
                 report_meta_path TEXT,
                 pytest_returncode INTEGER,
                 report_generate_duration REAL,
-                error_msg TEXT
+                error_msg TEXT,
+                created_at TEXT,
+                updated_at TEXT
             )
             """
         )
+
+        # 运行时任务表（记录当前/最近一次运行时状态，便于运行中任务管理）
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS task_runtime (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                task_id TEXT NOT NULL UNIQUE,
+                main_task_id TEXT,
+                type TEXT,
+                device_id TEXT,
+                status TEXT,
+                create_time TEXT,
+                start_time TEXT,
+                end_time TEXT,
+                stop_reason TEXT,
+                created_at TEXT,
+                updated_at TEXT
+            )
+            """
+        )
+
+        # 为已有表补充时间字段（兼容旧库）
+        for sql in [
+            # exec_history 时间字段
+            "ALTER TABLE exec_history ADD COLUMN created_at TEXT",
+            "ALTER TABLE exec_history ADD COLUMN updated_at TEXT",
+            # exec_set_case 时间字段
+            "ALTER TABLE exec_set_case ADD COLUMN created_at TEXT",
+            "ALTER TABLE exec_set_case ADD COLUMN updated_at TEXT",
+            # task_runtime 时间字段
+            "ALTER TABLE task_runtime ADD COLUMN created_at TEXT",
+            "ALTER TABLE task_runtime ADD COLUMN updated_at TEXT",
+        ]:
+            try:
+                cur.execute(sql)
+            except Exception:
+                # 字段已存在时忽略错误
+                pass
+
+        conn.commit()
 
         conn.commit()
     finally:
@@ -332,10 +374,15 @@ def overwrite_exec_set_cases(exec_set_id: str, case_ids: List[int]) -> bool:
         cur.execute("DELETE FROM exec_set_case WHERE exec_set_id = ?", (exec_set_id,))
         if case_ids:
             rows: List[Tuple[Any, ...]] = []
+            now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             for idx, cid in enumerate(case_ids):
-                rows.append((exec_set_id, cid, idx))
+                rows.append((exec_set_id, cid, idx, now, now))
             cur.executemany(
-                "INSERT INTO exec_set_case (exec_set_id, case_id, order_no) VALUES (?, ?, ?)",
+                """
+                INSERT INTO exec_set_case (
+                    exec_set_id, case_id, order_no, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?)
+                """,
                 rows,
             )
         conn.commit()
@@ -402,10 +449,12 @@ def upsert_history(
         )
         exists = cur.fetchone() is not None
 
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         if not exists:
-            # 插入时需要补充 create_time
+            # 插入时需要补充 create_time / created_at / updated_at
             if create_time is None:
-                create_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                create_time = now_str
             cur.execute(
                 """
                 INSERT INTO exec_history (
@@ -413,9 +462,9 @@ def upsert_history(
                     case_id, exec_set_id, status,
                     create_time, start_time, end_time,
                     report_index_path, report_meta_path,
-                    pytest_returncode, report_generate_duration,
-                    error_msg
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    pytest_returncode, report_generate_duration, error_msg,
+                    created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     task_id,
@@ -433,6 +482,8 @@ def upsert_history(
                     pytest_returncode,
                     report_generate_duration,
                     error_msg,
+                    now_str,
+                    now_str,
                 ),
             )
         else:
@@ -457,6 +508,9 @@ def upsert_history(
                 if value is not None:
                     fields.append(f"{col} = ?")
                     params.append(value)
+            # 总是更新 updated_at
+            fields.append("updated_at = ?")
+            params.append(now_str)
             if fields:
                 params.append(task_id)
                 sql = f"UPDATE exec_history SET {', '.join(fields)} WHERE task_id = ?"
@@ -587,4 +641,125 @@ def get_exec_set_history_detail(main_task_id: str) -> Optional[Dict[str, Any]]:
         conn.close()
 
 
+def upsert_task_runtime(
+    task_id: str,
+    main_task_id: Optional[str] = None,
+    type_: Optional[str] = None,
+    device_id: Optional[str] = None,
+    status: Optional[str] = None,
+    create_time: Optional[str] = None,
+    start_time: Optional[str] = None,
+    end_time: Optional[str] = None,
+    stop_reason: Optional[str] = None,
+) -> None:
+    """
+    以 task_id 为唯一键做“插入或更新”，只覆盖传入非 None 的字段。
+    用于运行中任务管理，与 exec_history 解耦。
+    """
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT id FROM task_runtime WHERE task_id = ?",
+            (task_id,),
+        )
+        exists = cur.fetchone() is not None
+
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        if not exists:
+            if create_time is None:
+                create_time = now_str
+            cur.execute(
+                """
+                INSERT INTO task_runtime (
+                    task_id, main_task_id, type, device_id,
+                    status, create_time, start_time, end_time, stop_reason,
+                    created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    task_id,
+                    main_task_id,
+                    type_,
+                    device_id,
+                    status,
+                    create_time,
+                    start_time,
+                    end_time,
+                    stop_reason,
+                    now_str,
+                    now_str,
+                ),
+            )
+        else:
+            fields: List[str] = []
+            params: List[Any] = []
+            mapping = {
+                "main_task_id": main_task_id,
+                "type": type_,
+                "device_id": device_id,
+                "status": status,
+                "start_time": start_time,
+                "end_time": end_time,
+                "stop_reason": stop_reason,
+            }
+            for col, value in mapping.items():
+                if value is not None:
+                    fields.append(f"{col} = ?")
+                    params.append(value)
+            # 总是更新 updated_at
+            fields.append("updated_at = ?")
+            params.append(now_str)
+            if fields:
+                params.append(task_id)
+                sql = f"UPDATE task_runtime SET {', '.join(fields)} WHERE task_id = ?"
+                cur.execute(sql, params)
+
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def get_task_runtime(task_id: str) -> Optional[Dict[str, Any]]:
+    """根据task_id查询一条运行时任务记录"""
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT *
+            FROM task_runtime
+            WHERE task_id = ?
+            """,
+            (task_id,),
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def list_running_tasks() -> List[Dict[str, Any]]:
+    """
+    查询运行中任务列表。
+    这里的“运行中”包含 pending / running 两种状态，便于前端统一展示。
+    仅返回 type != 'exec_set' 的任务（即单用例/子任务），避免执行集主任务重复计数。
+    """
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT *
+            FROM task_runtime
+            WHERE status IN ('pending', 'running')
+              AND (type IS NULL OR type != 'exec_set')
+            ORDER BY create_time DESC
+            """
+        )
+        rows = cur.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
 

@@ -3,6 +3,7 @@
 // 全局任务状态
 window.AppState = {
   currentTaskId: null,
+  currentTaskMeta: null,
   // 兼容老的 key（taskHistory）与新的 automation_test_task_history
   taskHistory:
     JSON.parse(localStorage.getItem("automation_test_task_history")) ||
@@ -21,6 +22,10 @@ window.Elements = {
   // 设备列表
   deviceList: document.getElementById("device-list"),
   refreshDeviceBtn: document.getElementById("refresh-device-btn"),
+
+  // 任务管理（在线设备卡片下）
+  runningTaskTable: document.getElementById("running-task-table"),
+  refreshRunningTasksBtn: document.getElementById("refresh-running-tasks-btn"),
 
   // 测试配置
   testSuiteSelect: document.getElementById("test-suite-select"),

@@ -159,6 +159,13 @@
       }
       const suiteName =
         testSuiteSelect.options[testSuiteSelect.selectedIndex].text;
+      // 记录当前任务的元信息，便于后续历史记录中展示用例名称
+      if (window.AppState) {
+        window.AppState.currentTaskMeta = {
+          deviceId,
+          suiteName,
+        };
+      }
       addTaskLog &&
         addTaskLog(
           `[信息] 正在启动测试任务（设备：${deviceId}，用例：${suiteName}）`,
@@ -225,7 +232,11 @@
             const newTask = {
               id: AppState.currentTaskId,
               device: task.device_id,
-              suite: suiteInfo.name || "未知用例",
+              suite:
+                suiteInfo.name ||
+                (AppState.currentTaskMeta &&
+                  AppState.currentTaskMeta.suiteName) ||
+                "未知用例",
               status: isSuccess ? "成功" : "失败",
               time:
                 task.start_time ||
@@ -293,6 +304,7 @@
       return;
     }
     AppState.currentTaskId = null;
+    AppState.currentTaskMeta = null;
     clearInterval(AppState.refreshInterval);
     stopTestBtn && (stopTestBtn.disabled = true);
     startTestBtn && (startTestBtn.disabled = false);
