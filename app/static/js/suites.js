@@ -25,6 +25,7 @@
   let editorMode = null; // "edit" | "new"
   let currentEditingSuiteId = null;
   let codeEditor = null; // CodeMirror 实例（用于Python语法高亮）
+  let currentEditingSuiteName = ""; // 当前编辑用例的原始文件名（含.py）
 
   function ensureCodeEditor() {
     if (!suiteContent || typeof window.CodeMirror === "undefined") {
@@ -41,6 +42,35 @@
       window.SuiteCodeEditor = codeEditor;
     }
     return codeEditor;
+  }
+
+  async function validatePythonSyntax(code) {
+    if (!code || !code.trim()) {
+      return { ok: true, message: "代码为空，跳过语法校验" };
+    }
+    try {
+      const resp = await fetch("/api/test/validate-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = await resp.json();
+      if (data.code === 200 && data.data?.valid) {
+        return { ok: true, message: data.msg || "语法校验通过" };
+      }
+      // 语法错误
+      const err = (data.data && data.data.errors && data.data.errors[0]) || {};
+      const line = err.lineno || "-";
+      const col = err.offset || "-";
+      const msg = err.msg || data.msg || "未知语法错误";
+      return {
+        ok: false,
+        message: `第 ${line} 行，第 ${col} 列：${msg}`,
+      };
+    } catch (e) {
+      console.error("语法校验接口异常:", e);
+      return { ok: false, message: `语法校验异常：${e.message || e}` };
+    }
   }
 
   async function loadTestSuites() {
@@ -300,11 +330,12 @@
       suiteSelectEl.addEventListener("change", () => {
         updateStartBtnStatus();
         // 同时更新编辑/删除按钮状态（简化：只看是否有值）
+        const hasValue = !!suiteSelectEl.value;
         if (editSuiteBtnEl) {
-          editSuiteBtnEl.disabled = !suiteSelectEl.value;
+          editSuiteBtnEl.disabled = !hasValue;
         }
         if (deleteSuiteBtnEl) {
-          deleteSuiteBtnEl.disabled = !suiteSelectEl.value;
+          deleteSuiteBtnEl.disabled = !hasValue;
         }
       });
     }
@@ -339,6 +370,7 @@
       newSuiteBtnEl.addEventListener("click", () => {
         editorMode = "new";
         currentEditingSuiteId = null;
+        currentEditingSuiteName = "";
         if (editorModalTitle) {
           editorModalTitle.textContent = "新建测试用例";
         }
@@ -378,7 +410,7 @@
           editorModalTitle.textContent = "编辑测试用例";
         }
         if (newSuiteNameContainer) {
-          newSuiteNameContainer.style.display = "none";
+          newSuiteNameContainer.style.display = "block";
         }
         if (newSuiteName) {
           newSuiteName.value = "";
@@ -388,6 +420,14 @@
             `/api/test/suite/${currentEditingSuiteId}`
           );
           if (data.code === 200 && data.data) {
+            currentEditingSuiteName = data.data.name || "";
+            if (newSuiteName) {
+              // 去掉.py后缀只展示基础名
+              const baseName = currentEditingSuiteName.endsWith(".py")
+                ? currentEditingSuiteName.slice(0, -3)
+                : currentEditingSuiteName;
+              newSuiteName.value = baseName;
+            }
             const editor = ensureCodeEditor();
             if (editor) {
               editor.setValue(data.data.content || "");
@@ -461,6 +501,7 @@
     const closeEditor = () => {
       editorMode = null;
       currentEditingSuiteId = null;
+      currentEditingSuiteName = "";
       if (suiteEditorModalEl) {
         suiteEditorModalEl.classList.add("hidden");
       }
@@ -483,6 +524,21 @@
             : suiteContent
             ? suiteContent.value || ""
             : "";
+          const syntaxResult = await validatePythonSyntax(content);
+          if (!syntaxResult.ok) {
+            addTaskLog &&
+              addTaskLog(
+                `[错误] Python 语法校验失败：${syntaxResult.message}`,
+                "danger"
+              );
+            return;
+          }
+          addTaskLog &&
+            addTaskLog(
+              `[信息] Python 语法校验通过：${syntaxResult.message}`,
+              "info"
+            );
+
           if (editorMode === "new") {
             let name = newSuiteName ? newSuiteName.value.trim() : "";
             if (!name) {
@@ -516,12 +572,21 @@
                 );
               return;
             }
+            let name = newSuiteName ? newSuiteName.value.trim() : "";
+            if (!name) {
+              addTaskLog &&
+                addTaskLog("[错误] 请填写用例文件名", "danger");
+              return;
+            }
             const resp = await fetch(
-              `/api/test/suite/${currentEditingSuiteId}`,
+              `/api/test/suites/${currentEditingSuiteId}`,
               {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ content }),
+                body: JSON.stringify({
+                  name,
+                  content,
+                }),
               }
             );
             const data = await resp.json();

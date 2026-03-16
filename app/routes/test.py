@@ -625,6 +625,57 @@ def format_code():
             "data": None
         })
 
+
+@test_bp.post("/validate-code")
+def validate_code():
+    """Python 语法校验接口，仅做语法检查，不执行代码"""
+    try:
+        req_data = request.get_json() or {}
+        code = req_data.get("code", "")
+
+        # 空代码直接视为通过
+        if not code.strip():
+            return jsonify(
+                {
+                    "code": 200,
+                    "msg": "代码为空，跳过语法校验",
+                    "data": {"valid": True, "errors": []},
+                }
+            )
+
+        import ast
+
+        try:
+            ast.parse(code)
+        except SyntaxError as se:
+            error_detail = {
+                "lineno": se.lineno,
+                "offset": se.offset,
+                "text": se.text,
+                "msg": se.msg,
+            }
+            return jsonify(
+                {
+                    "code": 400,
+                    "msg": "语法校验失败",
+                    "data": {"valid": False, "errors": [error_detail]},
+                }
+            )
+
+        return jsonify(
+            {
+                "code": 200,
+                "msg": "语法校验通过",
+                "data": {"valid": True, "errors": []},
+            }
+        )
+    except Exception as e:
+        error_msg = f"语法校验异常：{str(e)}"
+        log.error(error_msg, exc_info=True)
+        return jsonify(
+            {"code": 500, "msg": error_msg, "data": {"valid": False, "errors": []}}
+        )
+
 # 新增导入
 from core.exec_set_manager import ExecSetManager
 
