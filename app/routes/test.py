@@ -86,12 +86,24 @@ def run_task_background(task_id: str, device_id: str, suite_abs_path: str) -> No
 
         # 3. 更新任务结果
         test_tasks[task_id].update(task_result)
+        # 计算本次执行耗时（秒）
+        exec_duration = None
+        try:
+            start_str = test_tasks[task_id].get("start_time")
+            end_str = task_result.get("end_time")
+            if start_str and end_str:
+                start_dt = datetime.strptime(start_str, "%Y-%m-%d %H:%M:%S")
+                end_dt = datetime.strptime(end_str, "%Y-%m-%d %H:%M:%S")
+                exec_duration = max((end_dt - start_dt).total_seconds(), 0.0)
+        except Exception:
+            exec_duration = None
         # 写入/更新执行历史与运行时任务
         try:
             db.upsert_history(
                 task_id=task_id,
                 status=task_result.get("status"),
                 end_time=task_result.get("end_time"),
+                exec_duration=exec_duration,
                 report_index_path=task_result.get("report_index_path"),
                 report_meta_path=task_result.get("report_meta_path"),
                 pytest_returncode=task_result.get("pytest_returncode"),
@@ -231,11 +243,23 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
             }
         )
         test_tasks[main_task_id] = main_task
+        # 计算主任务执行耗时（秒）
+        exec_duration = None
+        try:
+            start_str = main_task.get("start_time")
+            end_str = main_task.get("end_time")
+            if start_str and end_str:
+                start_dt = datetime.strptime(start_str, "%Y-%m-%d %H:%M:%S")
+                end_dt = datetime.strptime(end_str, "%Y-%m-%d %H:%M:%S")
+                exec_duration = max((end_dt - start_dt).total_seconds(), 0.0)
+        except Exception:
+            exec_duration = None
         try:
             db.upsert_history(
                 task_id=main_task_id,
                 status=overall_status,
                 end_time=main_task["end_time"],
+                exec_duration=exec_duration,
                 report_index_path=main_task.get("report_index_path"),
                 report_meta_path=main_task.get("report_meta_path"),
                 report_generate_duration=main_task.get("report_generate_duration"),
@@ -264,11 +288,23 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
             }
         )
         test_tasks[main_task_id] = main_task
+        # 计算执行耗时（若有开始时间）
+        exec_duration = None
+        try:
+            start_str = main_task.get("start_time")
+            end_str = main_task.get("end_time")
+            if start_str and end_str:
+                start_dt = datetime.strptime(start_str, "%Y-%m-%d %H:%M:%S")
+                end_dt = datetime.strptime(end_str, "%Y-%m-%d %H:%M:%S")
+                exec_duration = max((end_dt - start_dt).total_seconds(), 0.0)
+        except Exception:
+            exec_duration = None
         try:
             db.upsert_history(
                 task_id=main_task_id,
                 status="failed",
                 end_time=main_task["end_time"],
+                exec_duration=exec_duration,
                 error_msg=main_task["report_error_msg"],
             )
             # 同步更新运行时任务表中的主任务状态，避免任务管理中残留“运行中”记录
@@ -685,6 +721,17 @@ def stop_test_task(task_id: str):
             end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             stop_reason = "用户手动强制停止（任务实例已不存在）"
 
+            # 计算执行耗时（若有开始时间）
+            exec_duration = None
+            try:
+                start_str = runtime.get("start_time")
+                if start_str and end_time:
+                    start_dt = datetime.strptime(start_str, "%Y-%m-%d %H:%M:%S")
+                    end_dt = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
+                    exec_duration = max((end_dt - start_dt).total_seconds(), 0.0)
+            except Exception:
+                exec_duration = None
+
             try:
                 # 更新运行时任务表状态
                 db.upsert_task_runtime(
@@ -698,6 +745,7 @@ def stop_test_task(task_id: str):
                     task_id=task_id,
                     status="stopped",
                     end_time=end_time,
+                    exec_duration=exec_duration,
                     error_msg=stop_reason,
                 )
             except Exception as e:
@@ -723,11 +771,24 @@ def stop_test_task(task_id: str):
         task["end_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         task["stop_reason"] = "用户手动停止"
 
+        # 计算执行耗时（若有开始时间）
+        exec_duration = None
+        try:
+            start_str = task.get("start_time")
+            end_str = task.get("end_time")
+            if start_str and end_str:
+                start_dt = datetime.strptime(start_str, "%Y-%m-%d %H:%M:%S")
+                end_dt = datetime.strptime(end_str, "%Y-%m-%d %H:%M:%S")
+                exec_duration = max((end_dt - start_dt).total_seconds(), 0.0)
+        except Exception:
+            exec_duration = None
+
         try:
             db.upsert_history(
                 task_id=task_id,
                 status="stopped",
                 end_time=task["end_time"],
+                exec_duration=exec_duration,
                 error_msg=task["stop_reason"],
             )
             db.upsert_task_runtime(

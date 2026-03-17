@@ -163,11 +163,42 @@ function loadHistory() {
   }
 }
 
+// 简单的日期时间解析（后端格式：YYYY-MM-DD HH:MM:SS）
+function parseDateTime(value) {
+  if (!value) return null;
+  try {
+    const str = String(value).trim().replace(" ", "T");
+    const ts = Date.parse(str);
+    if (Number.isNaN(ts)) return null;
+    return new Date(ts);
+  } catch (e) {
+    return null;
+  }
+}
+
+// 将秒数格式化为「X小时Y分Z秒」
+function formatDuration(seconds) {
+  if (seconds == null || Number.isNaN(seconds)) return "-";
+  const total = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h > 0) {
+    return `${h}h${m}m${s}s`;
+  }
+  if (m > 0) {
+    return `${m}m${s}s`;
+  }
+  return `${s}s`;
+}
+
 window.Common = {
   apiGet,
   apiPost,
   addTaskLog,
   saveHistory,
   loadHistory,
+  parseDateTime,
+  formatDuration,
 };
 

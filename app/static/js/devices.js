@@ -10,7 +10,8 @@
     runningTaskCount,
     refreshRunningTasksBtn,
   } = Elements || {};
-  const { apiGet, apiPost, addTaskLog } = Common || {};
+  const { apiGet, apiPost, addTaskLog, parseDateTime, formatDuration } =
+    Common || {};
 
   async function loadDeviceList() {
     if (!deviceList || !onlineDeviceCount) return;
@@ -95,7 +96,7 @@
     try {
       runningTaskTable.innerHTML = `
         <tr>
-          <td colspan="4" class="text-center py-4 text-light">
+          <td colspan="5" class="text-center py-4 text-light">
             <i class="fa fa-spinner fa-spin mr-1"></i>加载运行中任务...
           </td>
         </tr>
@@ -109,19 +110,36 @@
         if (!tasks.length) {
           runningTaskTable.innerHTML = `
             <tr>
-              <td colspan="4" class="text-center py-4 text-light">
+              <td colspan="5" class="text-center py-4 text-light">
                 暂无运行中任务
               </td>
             </tr>
           `;
           return;
         }
+        const now = new Date();
         runningTaskTable.innerHTML = tasks
           .map(
-            (t) => `
+            (t) => {
+              let elapsedText = "-";
+              try {
+                const start = parseDateTime && parseDateTime(t.start_time);
+                if (start) {
+                  const diffSec = Math.max(
+                    0,
+                    Math.floor((now.getTime() - start.getTime()) / 1000)
+                  );
+                  elapsedText = formatDuration
+                    ? formatDuration(diffSec)
+                    : `${diffSec}s`;
+                }
+              } catch (e) {
+                elapsedText = "-";
+              }
+              return `
           <tr class="border-b border-gray-100 hover:bg-gray-50">
-            <td class="py-2 px-2">${t.task_id}</td>
-            <td class="py-2 px-2">${t.device_id || "-"}</td>
+            <td class="py-2 px-2 max-w-[8rem] overflow-hidden text-ellipsis whitespace-nowrap" title="${t.task_id}">${t.task_id}</td>
+            <td class="py-2 px-2 max-w-[7rem] overflow-hidden text-ellipsis whitespace-nowrap" title="${t.device_id || "-"}">${t.device_id || "-"}</td>
             <td class="py-2 px-2">
               <span class="px-2 py-0.5 rounded-full text-[11px] ${
                 t.status === "running"
@@ -131,6 +149,7 @@
                 ${t.status || "-"}
               </span>
             </td>
+            <td class="py-2 px-2">${elapsedText}</td>
             <td class="py-2 px-2">
               <button
                 class="text-danger hover:text-danger/80 text-xs stop-running-task-btn"
@@ -140,7 +159,8 @@
               </button>
             </td>
           </tr>
-        `
+        `;
+            }
           )
           .join("");
 
@@ -194,7 +214,7 @@
       console.error("加载运行中任务失败:", e);
       runningTaskTable.innerHTML = `
         <tr>
-          <td colspan="4" class="text-center py-4 text-danger text-xs">
+          <td colspan="5" class="text-center py-4 text-danger text-xs">
             加载失败：${e.message}
           </td>
         </tr>

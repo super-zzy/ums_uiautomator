@@ -83,6 +83,7 @@ def _init_db() -> None:
                 create_time TEXT,
                 start_time TEXT,
                 end_time TEXT,
+                exec_duration REAL,
                 report_index_path TEXT,
                 report_meta_path TEXT,
                 pytest_returncode INTEGER,
@@ -125,9 +126,10 @@ def _init_db() -> None:
             # exec_history 关联字段（用例ID、执行集ID）
             "ALTER TABLE exec_history ADD COLUMN case_id INTEGER",
             "ALTER TABLE exec_history ADD COLUMN exec_set_id TEXT",
-            # exec_history 时间字段
+            # exec_history 时间/耗时字段
             "ALTER TABLE exec_history ADD COLUMN created_at TEXT",
             "ALTER TABLE exec_history ADD COLUMN updated_at TEXT",
+            "ALTER TABLE exec_history ADD COLUMN exec_duration REAL",
             # exec_set_case 时间字段
             "ALTER TABLE exec_set_case ADD COLUMN created_at TEXT",
             "ALTER TABLE exec_set_case ADD COLUMN updated_at TEXT",
@@ -482,6 +484,7 @@ def upsert_history(
     pytest_returncode: Optional[int] = None,
     report_generate_duration: Optional[float] = None,
     error_msg: Optional[str] = None,
+    exec_duration: Optional[float] = None,
 ) -> None:
     """
     以 task_id 为唯一键做“插入或更新”，只覆盖传入非 None 的字段。
@@ -507,10 +510,11 @@ def upsert_history(
                     task_id, main_task_id, type, device_id,
                     case_id, exec_set_id, status,
                     create_time, start_time, end_time,
+                    exec_duration,
                     report_index_path, report_meta_path,
                     pytest_returncode, report_generate_duration, error_msg,
                     created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     task_id,
@@ -523,6 +527,7 @@ def upsert_history(
                     create_time,
                     start_time,
                     end_time,
+                    exec_duration,
                     report_index_path,
                     report_meta_path,
                     pytest_returncode,
@@ -544,6 +549,7 @@ def upsert_history(
                 "status": status,
                 "start_time": start_time,
                 "end_time": end_time,
+                 "exec_duration": exec_duration,
                 "report_index_path": report_index_path,
                 "report_meta_path": report_meta_path,
                 "pytest_returncode": pytest_returncode,

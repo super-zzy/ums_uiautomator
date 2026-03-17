@@ -29,7 +29,8 @@
     caseManagePanel,
     execSetManagePanel,
   } = Elements || {};
-  const { apiGet, apiPost, addTaskLog } = Common || {};
+  const { apiGet, apiPost, addTaskLog, parseDateTime, formatDuration } =
+    Common || {};
 
   // 用例编辑状态
   let editorMode = null; // "edit" | "new"
@@ -409,6 +410,22 @@
                 new Date().toLocaleString("zh-CN"),
               type: "single",
               reportUrl: task.report_url || "",
+              duration: (function () {
+                try {
+                  const start = parseDateTime && parseDateTime(task.start_time);
+                  const end = parseDateTime && parseDateTime(task.end_time);
+                  if (start && end) {
+                    const sec = Math.max(
+                      0,
+                      Math.floor((end.getTime() - start.getTime()) / 1000)
+                    );
+                    return formatDuration ? formatDuration(sec) : `${sec}s`;
+                  }
+                } catch (e) {
+                  // ignore
+                }
+                return "-";
+              })(),
             };
             window.History?.appendTask?.(newTask);
             clearInterval(AppState.refreshInterval);

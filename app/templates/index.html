@@ -140,15 +140,16 @@
                         <table class="w-full min-w-[320px] text-sm">
                             <thead>
                                 <tr class="border-b border-gray-200">
-                                    <th class="text-left py-2 px-2 text-light">任务ID</th>
-                                    <th class="text-left py-2 px-2 text-light">设备ID</th>
+                                    <th class="text-left py-2 px-2 text-light w-32">任务ID</th>
+                                    <th class="text-left py-2 px-2 text-light w-28">设备ID</th>
                                     <th class="text-left py-2 px-2 text-light">状态</th>
+                                    <th class="text-left py-2 px-2 text-light">耗时</th>
                                     <th class="text-left py-2 px-2 text-light">操作</th>
                                 </tr>
                             </thead>
                             <tbody id="running-task-table">
                                 <tr>
-                                    <td colspan="4" class="text-center py-4 text-light">
+                                    <td colspan="5" class="text-center py-4 text-light">
                                         暂无运行中任务
                                     </td>
                                 </tr>
@@ -453,12 +454,13 @@
                             <th class="text-left py-3 px-4 text-sm font-medium text-light">测试用例</th>
                             <th class="text-left py-3 px-4 text-sm font-medium text-light">状态</th>
                             <th class="text-left py-3 px-4 text-sm font-medium text-light">开始时间</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-light">耗时</th>
                             <th class="text-left py-3 px-4 text-sm font-medium text-light">操作</th>
                         </tr>
                     </thead>
                     <tbody id="task-history-table-single">
                         <tr>
-                            <td colspan="6" class="text-center py-8 text-light">
+                            <td colspan="7" class="text-center py-8 text-light">
                                 <i class="fa fa-history text-2xl mb-2"></i>
                                 <p>暂无任务历史记录</p>
                             </td>
@@ -477,12 +479,13 @@
                             <th class="text-left py-3 px-4 text-sm font-medium text-light">执行集名称</th>
                             <th class="text-left py-3 px-4 text-sm font-medium text-light">状态</th>
                             <th class="text-left py-3 px-4 text-sm font-medium text-light">开始时间</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-light">耗时</th>
                             <th class="text-left py-3 px-4 text-sm font-medium text-light">操作</th>
                         </tr>
                     </thead>
                     <tbody id="task-history-table-exec-set">
                         <tr>
-                            <td colspan="6" class="text-center py-8 text-light">
+                            <td colspan="7" class="text-center py-8 text-light">
                                 <i class="fa fa-history text-2xl mb-2"></i>
                                 <p>暂无执行集历史记录</p>
                             </td>

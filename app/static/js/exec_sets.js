@@ -23,7 +23,8 @@
     execSetPrevPage,
     execSetNextPage,
   } = Elements || {};
-  const { apiGet, apiPost, addTaskLog } = Common || {};
+  const { apiGet, apiPost, addTaskLog, parseDateTime, formatDuration } =
+    Common || {};
 
   let currentEditingExecSetId = null;
   let selectedCaseIds = [];
@@ -549,6 +550,22 @@
         AppState.taskHistory[idx].status = statusText;
         if (reportUrl) {
           AppState.taskHistory[idx].reportUrl = reportUrl;
+        }
+        // 计算耗时
+        try {
+          const start = parseDateTime && parseDateTime(task.start_time);
+          const end = parseDateTime && parseDateTime(task.end_time);
+          if (start && end) {
+            const sec = Math.max(
+              0,
+              Math.floor((end.getTime() - start.getTime()) / 1000)
+            );
+            AppState.taskHistory[idx].duration = formatDuration
+              ? formatDuration(sec)
+              : `${sec}s`;
+          }
+        } catch (e) {
+          // ignore parse error
         }
         Common.saveHistory();
         window.History?.renderHistory?.();

@@ -46,6 +46,7 @@
           </span>
         </td>
         <td class="py-3 px-4">${task.time}</td>
+        <td class="py-3 px-4">${task.duration || "-"}</td>
         <td class="py-3 px-4">
           ${
             task.reportUrl
@@ -94,6 +95,7 @@
           </span>
         </td>
         <td class="py-3 px-4">${task.time}</td>
+        <td class="py-3 px-4">${task.duration || "-"}</td>
         <td class="py-3 px-4">
           ${
             task.reportUrl
