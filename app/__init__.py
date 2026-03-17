@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-from flask import Flask, render_template  # 新增：导入 render_template 用于渲染模板
+from flask import Flask, render_template, redirect  # 新增：导入 render_template 用于渲染模板
 from flask_apscheduler import APScheduler
 
 # 修正：动态获取项目根目录（兼容开发和打包环境）
@@ -50,15 +50,31 @@ def create_app():
     from app.routes.device import device_bp
     from app.routes.test import test_bp
     from app.routes.report import report_bp
+    from app.routes.record import record_bp
 
     app.register_blueprint(device_bp, url_prefix="/api/device")
     app.register_blueprint(test_bp, url_prefix="/api/test")
     app.register_blueprint(report_bp, url_prefix="/api/report")
+    app.register_blueprint(record_bp, url_prefix="/api/record")
 
-    # 修复：首页路由指向 templates/index.html（使用 render_template 渲染）
+    # 根路径重定向到 /home
     @app.route("/")
     def index():
-        # 渲染模板文件（自动从 app/templates 文件夹查找 index.html）
+        return redirect("/home")
+
+    # 新首页：项目介绍页
+    @app.route("/home")
+    def home_page():
+        return render_template("home.html")
+
+    # 自动化测试主页面
+    @app.route("/autotest")
+    def autotest_page():
         return render_template("index.html")
+
+    # 录制页面：专用脚本录制页
+    @app.route("/record")
+    def record_page():
+        return render_template("record.html")
 
     return app

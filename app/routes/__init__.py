@@ -10,6 +10,7 @@
 from app.routes.device import device_bp
 from app.routes.test import test_bp
 from app.routes.report import report_bp
+from app.routes.record import record_bp
 
 # 定义__all__，明确导出内容（可选，但符合Python规范）
-__all__ = ["device_bp", "test_bp", "report_bp"]
+__all__ = ["device_bp", "test_bp", "report_bp", "record_bp"]
