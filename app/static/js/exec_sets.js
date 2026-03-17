@@ -38,7 +38,7 @@
     if (!list.length) {
       execSetList.innerHTML = `
             <tr>
-              <td colspan="5" class="text-center py-4 text-light">
+              <td colspan="6" class="text-center py-4 text-light">
                 暂无执行集，请点击"新建执行集"创建
               </td>
             </tr>
@@ -63,7 +63,14 @@
               <td class="py-3 px-4 text-sm">${es.name}</td>
               <td class="py-3 px-4 text-sm">${es.case_count}</td>
               <td class="py-3 px-4 text-sm text-light">${es.created_at || ""}</td>
+              <td class="py-3 px-4 text-sm text-light">${es.updated_at || ""}</td>
               <td class="py-3 px-4 text-sm">
+                <button class="text-success hover:text-success/80 mr-2" data-action="start" data-id="${es.id}" data-name="${es.name}">
+                  <i class="fa fa-play"></i> 启动
+                </button>
+                <button class="text-primary hover:text-primary/80 mr-2" data-action="view-report" data-id="${es.id}" data-name="${es.name}">
+                  <i class="fa fa-file-text-o"></i> 查看报告
+                </button>
                 <button class="text-primary hover:text-primary/80 mr-2" data-action="edit" data-id="${es.id}">
                   <i class="fa fa-edit"></i> 编辑
                 </button>
@@ -104,9 +111,19 @@
             const action = btn.dataset.action;
             const id = btn.dataset.id;
             const name = btn.dataset.name;
-            if (action === "edit") editExecSet(id);
-            else if (action === "delete") deleteExecSet(id, name);
-            else if (action === "select") selectExecSet(id, name);
+            if (!id) return;
+            if (action === "start") {
+              selectExecSet(id, name);
+              startExecSetTest();
+            } else if (action === "view-report") {
+              openLatestExecSetReport(id, name);
+            } else if (action === "edit") {
+              editExecSet(id);
+            } else if (action === "delete") {
+              deleteExecSet(id, name);
+            } else if (action === "select") {
+              selectExecSet(id, name);
+            }
           });
           execSetList._boundClick = true;
         }
@@ -125,7 +142,7 @@
       console.error("加载执行集失败:", e);
       execSetList.innerHTML = `
         <tr>
-          <td colspan="5" class="text-center py-4 text-danger">加载失败：${e.message}</td>
+          <td colspan="6" class="text-center py-4 text-danger">加载失败：${e.message}</td>
         </tr>
       `;
     }
@@ -377,6 +394,44 @@
       execSetEditorModal.classList.add("hidden");
     currentEditingExecSetId = null;
     selectedCaseIds = [];
+  }
+
+  async function openLatestExecSetReport(execSetId, execSetName) {
+    try {
+      const data = await apiGet(
+        `/api/test/exec-set/history?exec_set_id=${encodeURIComponent(
+          execSetId
+        )}&limit=1`
+      );
+      if (data.code !== 200 || !Array.isArray(data.data) || !data.data.length) {
+        addTaskLog &&
+          addTaskLog(
+            `[提示] 执行集「${execSetName}」暂无可用执行历史`,
+            "info"
+          );
+        return;
+      }
+      const latest = data.data[0];
+      if (!latest.task_id || !latest.report_index_path) {
+        addTaskLog &&
+          addTaskLog(
+            `[提示] 执行集「${execSetName}」最近一次执行尚未生成报告`,
+            "info"
+          );
+        return;
+      }
+      const url = `/api/report/files/${encodeURIComponent(
+        latest.task_id
+      )}/index.html`;
+      window.open(url, "_blank");
+    } catch (e) {
+      console.error("打开执行集最新报告失败:", e);
+      addTaskLog &&
+        addTaskLog(
+          `[错误] 获取执行集「${execSetName}」最新执行结果失败：${e.message}`,
+          "danger"
+        );
+    }
   }
 
   async function startExecSetTest() {

@@ -128,11 +128,11 @@
 
                 <!-- 任务管理卡片 -->
                 <div class="bg-white rounded-lg p-5 card-shadow" id="task-card">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-sm font-semibold flex items-center">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold flex items-center">
                             <i class="fa fa-tasks text-primary mr-2"></i>任务管理
-                        </h3>
-                        <button id="refresh-running-tasks-btn" class="text-primary text-xs flex items-center hover:text-primary/80">
+                        </h2>
+                        <button id="refresh-running-tasks-btn" class="text-primary text-sm flex items-center hover:text-primary/80">
                             <i class="fa fa-refresh mr-1"></i>刷新
                         </button>
                     </div>
@@ -177,18 +177,7 @@
                     </div>
                 </div>
 
-                <!-- 任务控制按钮 -->
-                <div class="flex flex-wrap gap-4 mb-4">
-                    <button id="start-test-btn" class="bg-primary text-white px-6 py-2 rounded-lg flex items-center btn-hover disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none" disabled>
-                        <i class="fa fa-play mr-2"></i>启动测试
-                    </button>
-                    <button id="stop-test-btn" class="bg-danger text-white px-6 py-2 rounded-lg flex items-center btn-hover disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                        <i class="fa fa-stop mr-2"></i>停止测试
-                    </button>
-                    <button id="view-report-btn" class="bg-success text-white px-6 py-2 rounded-lg flex items-center btn-hover disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                        <i class="fa fa-file-text-o mr-2"></i>查看报告
-                    </button>
-                </div>
+                <!-- 任务控制按钮（已取消：统一移到各行操作中） -->
 
                 <!-- 用例 / 执行集 管理 Tabs -->
                 <div class="border-b border-gray-200 mb-4 flex">
@@ -211,33 +200,26 @@
                 <!-- 用例管理面板 -->
                 <div id="case-manage-panel">
                     <div class="flex flex-wrap gap-4 mb-4">
-                        <!-- 编辑用例按钮 -->
-                        <button id="edit-suite-btn" class="bg-primary text-white px-4 py-2 rounded-lg flex items-center btn-hover disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                            <i class="fa fa-edit mr-2"></i>编辑
-                        </button>
                         <button id="new-suite-btn" class="bg-success text-white px-4 py-2 rounded-lg flex items-center btn-hover">
                             <i class="fa fa-plus mr-2"></i>新建
-                        </button>
-                        <!-- 添加删除按钮 -->
-                        <button id="delete-suite-btn" class="bg-danger text-white px-4 py-2 rounded-lg flex items-center btn-hover disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                            <i class="fa fa-trash mr-2"></i>删除
                         </button>
                     </div>
 
                     <!-- 用例列表（分页） -->
                     <div class="overflow-x-auto mb-2">
-                        <table class="w-full min-w-[640px]">
+                        <table class="w-full min-w-[720px]">
                             <thead>
                                 <tr class="border-b border-gray-200">
                                     <th class="text-left py-3 px-4 text-sm font-medium text-light">用例ID</th>
                                     <th class="text-left py-3 px-4 text-sm font-medium text-light">名称</th>
-                                    <th class="text-left py-3 px-4 text-sm font-medium text-light">路径</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-light">创建时间</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-light">更新时间</th>
                                     <th class="text-left py-3 px-4 text-sm font-medium text-light">操作</th>
                                 </tr>
                             </thead>
                             <tbody id="case-list-tbody">
                                 <tr>
-                                    <td colspan="4" class="text-center py-4 text-light">加载用例中...</td>
+                                    <td colspan="5" class="text-center py-4 text-light">加载用例中...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -255,61 +237,58 @@
 
                 <!-- 执行集管理面板 -->
                 <div id="exec-set-manage-panel" class="hidden">
-                <!-- 执行集管理模块 -->
-                <div class="bg-white rounded-lg p-5 card-shadow mb-4">
-    <div class="flex flex-wrap gap-4 mb-4">
-        <button id="create-exec-set-btn" class="bg-primary text-white px-4 py-2 rounded-lg flex items-center btn-hover">
-            <i class="fa fa-plus mr-2"></i>新建
-        </button>
-    </div>
+                    <div class="flex flex-wrap gap-4 mb-4">
+                        <button id="create-exec-set-btn" class="bg-success text-white px-4 py-2 rounded-lg flex items-center btn-hover">
+                            <i class="fa fa-plus mr-2"></i>新建
+                        </button>
+                    </div>
 
-    <!-- 执行集列表 -->
-    <div class="overflow-x-auto mb-2">
-        <table class="w-full min-w-[640px]">
-            <thead>
-                <tr class="border-b border-gray-200">
-                    <th class="text-left py-3 px-4 text-sm font-medium text-light">执行集ID</th>
-                    <th class="text-left py-3 px-4 text-sm font-medium text-light">名称</th>
-                    <th class="text-left py-3 px-4 text-sm font-medium text-light">用例数</th>
-                    <th class="text-left py-3 px-4 text-sm font-medium text-light">创建时间</th>
-                    <th class="text-left py-3 px-4 text-sm font-medium text-light">操作</th>
-                </tr>
-            </thead>
-            <tbody id="exec-set-list">
-                <tr>
-                    <td colspan="5" class="text-center py-4 text-light">加载执行集中...</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+                    <!-- 执行集列表 -->
+                    <div class="overflow-x-auto mb-2">
+                        <table class="w-full min-w-[720px]">
+                            <thead>
+                                <tr class="border-b border-gray-200">
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-light">执行集ID</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-light">名称</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-light">用例数</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-light">创建时间</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-light">更新时间</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-light">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="exec-set-list">
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-light">加载执行集中...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-    <!-- 执行集分页 -->
-    <div id="exec-set-pagination" class="flex items-center justify-between text-xs text-light mt-1">
-        <div>
-            <span id="exec-set-page-info">第 1 页</span>
-        </div>
-        <div class="space-x-2">
-            <button id="exec-set-prev-page" class="px-2 py-1 border rounded disabled:opacity-50" disabled>上一页</button>
-            <button id="exec-set-next-page" class="px-2 py-1 border rounded disabled:opacity-50">下一页</button>
-        </div>
-    </div>
+                    <!-- 执行集分页 -->
+                    <div id="exec-set-pagination" class="flex items-center justify-between text-xs text-light mt-1">
+                        <div>
+                            <span id="exec-set-page-info">第 1 页</span>
+                        </div>
+                        <div class="space-x-2">
+                            <button id="exec-set-prev-page" class="px-2 py-1 border rounded disabled:opacity-50" disabled>上一页</button>
+                            <button id="exec-set-next-page" class="px-2 py-1 border rounded disabled:opacity-50">下一页</button>
+                        </div>
+                    </div>
 
-    <!-- 执行集选择 + 启动按钮 -->
-    <div class="flex flex-wrap gap-4">
-        <div class="relative w-64">
-            <select id="exec-set-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none appearance-none cursor-pointer">
-                <option value="" disabled selected>请选择执行集</option>
-            </select>
-            <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-light">
-                <i class="fa fa-chevron-down"></i>
-            </div>
-        </div>
-        <button id="start-exec-set-btn" class="bg-success text-white px-6 py-2 rounded-lg flex items-center btn-hover disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-            <i class="fa fa-play mr-2"></i>启动执行集测试
-        </button>
-    </div>
-</div> <!-- 执行集管理模块结束 -->
-
+                    <!-- 执行集选择 + 启动按钮（仅保留 DOM，隐藏样式以满足“不要下拉和按钮”的视觉需求） -->
+                    <div class="flex flex-wrap gap-4 mt-4 hidden">
+                        <div class="relative w-64">
+                            <select id="exec-set-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none appearance-none cursor-pointer">
+                                <option value="" disabled selected>请选择执行集</option>
+                            </select>
+                            <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-light">
+                                <i class="fa fa-chevron-down"></i>
+                            </div>
+                        </div>
+                        <button id="start-exec-set-btn" class="bg-success text-white px-6 py-2 rounded-lg flex items-center btn-hover disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <i class="fa fa-play mr-2"></i>启动执行集测试
+                        </button>
+                    </div>
                 </div> <!-- 执行集管理面板结束 -->
 
 <!-- 新建/编辑执行集模态框 -->
@@ -581,7 +560,10 @@
           taskCard.style.height = each + 'px';
         }
 
-        // 初次调整
+        // 将函数暴露到全局，便于 Tab 切换时调用
+        window.adjustPanelHeights = adjustPanelHeights;
+
+        // 初次调整（初始为“用例管理”Tab，一般不会生效高度锁定）
         adjustPanelHeights();
         // 窗口尺寸变化时重新计算（简单防抖）
         let resizeTimer = null;

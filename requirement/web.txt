@@ -1,5 +1,0 @@
-# Web服务依赖
-Flask==2.3.3                   # Web框架
-Flask-APScheduler==1.13.0      # 异步任务调度
-psutil==5.9.6                  # 进程管理（确保测试独立）
-Werkzeug==2.3.7                # Flask依赖（兼容版本）

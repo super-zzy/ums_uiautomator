@@ -68,7 +68,7 @@ def _init_db() -> None:
             """
         )
 
-        # 执行历史表
+        # 执行历史表（测试结果表）
         cur.execute(
             """
             CREATE TABLE IF NOT EXISTS exec_history (
@@ -114,8 +114,17 @@ def _init_db() -> None:
             """
         )
 
-        # 为已有表补充时间字段（兼容旧库）
+        # 为已有表补充缺失字段（兼容旧库）
         for sql in [
+            # test_case 时间字段（老库可能没有）
+            "ALTER TABLE test_case ADD COLUMN created_at TEXT",
+            "ALTER TABLE test_case ADD COLUMN updated_at TEXT",
+            # exec_set 时间字段（老库可能没有）
+            "ALTER TABLE exec_set ADD COLUMN created_at TEXT",
+            "ALTER TABLE exec_set ADD COLUMN updated_at TEXT",
+            # exec_history 关联字段（用例ID、执行集ID）
+            "ALTER TABLE exec_history ADD COLUMN case_id INTEGER",
+            "ALTER TABLE exec_history ADD COLUMN exec_set_id TEXT",
             # exec_history 时间字段
             "ALTER TABLE exec_history ADD COLUMN created_at TEXT",
             "ALTER TABLE exec_history ADD COLUMN updated_at TEXT",
@@ -132,7 +141,7 @@ def _init_db() -> None:
                 # 字段已存在时忽略错误
                 pass
 
-        # 为历史数据补充缺失的 created_at 字段（统一写入当前时间）
+        # 为历史数据补充缺失的 created_at / updated_at 字段（统一写入当前时间）
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         for tbl in [
             "test_case",
@@ -141,18 +150,32 @@ def _init_db() -> None:
             "exec_history",
             "task_runtime",
         ]:
+            # created_at 兜底
             try:
                 cur.execute(
                     f"""
                     UPDATE {tbl}
                     SET created_at = ?
                     WHERE (created_at IS NULL OR created_at = '')
-                    """
-                    ,
+                    """,
                     (now_str,),
                 )
             except Exception:
                 # 兼容旧库：若表中不存在 created_at 字段或其他异常，忽略
+                pass
+
+            # updated_at 兜底
+            try:
+                cur.execute(
+                    f"""
+                    UPDATE {tbl}
+                    SET updated_at = COALESCE(updated_at, created_at, ?)
+                    WHERE (updated_at IS NULL OR updated_at = '')
+                    """,
+                    (now_str,),
+                )
+            except Exception:
+                # 兼容旧库：若表中不存在 updated_at 字段或其他异常，忽略
                 pass
 
         conn.commit()
@@ -172,7 +195,12 @@ def list_cases() -> List[Dict[str, Any]]:
         cur = conn.cursor()
         cur.execute(
             """
-            SELECT id, name, file_name, rel_path
+            SELECT id,
+                   name,
+                   file_name,
+                   rel_path,
+                   created_at,
+                   updated_at
             FROM test_case
             ORDER BY id ASC
             """

@@ -35,7 +35,7 @@ def get_test_suites() -> list[dict]:
         # 仅从SQLite读取已有用例
         suites = db.list_cases()
 
-        # 统一返回前端需要的结构
+        # 统一返回前端需要的结构（补充创建/更新时间，便于前端展示）
         log.info(f"获取用例完成（仅SQLite），共{suites and len(suites) or 0}个可用用例")
         return [
             {
@@ -43,6 +43,9 @@ def get_test_suites() -> list[dict]:
                 "name": s["name"],
                 "abs_path": s.get("file_name") or "",
                 "rel_path": s.get("rel_path") or s.get("file_name") or "",
+                # 旧数据可能缺少 updated_at，这里做一个兜底：若为空则回退到 created_at
+                "created_at": s.get("created_at") or "",
+                "updated_at": s.get("updated_at") or s.get("created_at") or "",
             }
             for s in suites
         ]

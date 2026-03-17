@@ -1,7 +1,0 @@
-# 测试核心依赖
-pytest==7.4.3                  # 测试框架（修复旧版本bug）
-pytest-timeout==2.2.0          # 测试超时控制（新增）
-allure-pytest==2.13.5          # Allure报告集成
-allure-python-commons==2.13.5  # Allure公共库
-PyYAML==6.0.1                  # YAML配置解析
-requests==2.31.0               # HTTP请求（备用）

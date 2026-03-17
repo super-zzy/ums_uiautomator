@@ -46,7 +46,7 @@
     if (!caseListTbody) return;
     if (!allSuitesForList.length) {
       caseListTbody.innerHTML =
-        '<tr><td colspan="4" class="text-center py-4 text-light">暂无可用测试用例</td></tr>';
+        '<tr><td colspan="5" class="text-center py-4 text-light">暂无可用测试用例</td></tr>';
       casePageInfo && (casePageInfo.textContent = "第 1 页");
       casePrevPage && (casePrevPage.disabled = true);
       caseNextPage && (caseNextPage.disabled = true);
@@ -65,8 +65,15 @@
       <tr class="border-b border-gray-100 hover:bg-gray-50">
         <td class="py-2 px-4 text-xs">${s.id}</td>
         <td class="py-2 px-4 text-xs">${s.name}</td>
-        <td class="py-2 px-4 text-xs">${s.rel_path}</td>
+        <td class="py-2 px-4 text-xs text-light">${s.created_at || ""}</td>
+        <td class="py-2 px-4 text-xs text-light">${s.updated_at || ""}</td>
         <td class="py-2 px-4 text-xs">
+          <button class="text-success hover:text-success/80 mr-2" data-action="start" data-id="${s.id}">
+            <i class="fa fa-play"></i> 启动
+          </button>
+          <button class="text-primary hover:text-primary/80 mr-2" data-action="view-report" data-id="${s.id}" data-name="${s.name}">
+            <i class="fa fa-file-text-o"></i> 查看报告
+          </button>
           <button class="text-primary hover:text-primary/80 mr-2" data-action="edit" data-id="${s.id}">
             <i class="fa fa-edit"></i> 编辑
           </button>
@@ -203,6 +210,96 @@
       }
     } catch (e) {
       console.error("加载运行中任务失败:", e);
+    }
+  }
+
+  async function openLatestCaseReport(caseId, caseName) {
+    try {
+      const data = await apiGet("/api/test/history?limit=200");
+      if (data.code !== 200 || !Array.isArray(data.data)) {
+        throw new Error(data.msg || "获取执行历史失败");
+      }
+      const target = (data.data || []).find(
+        (h) =>
+          String(h.case_id) === String(caseId) &&
+          (!h.type || h.type === "single") &&
+          h.report_index_path
+      );
+      if (!target) {
+        addTaskLog &&
+          addTaskLog(
+            `[提示] 用例「${caseName}」暂无可用测试报告`,
+            "info"
+          );
+        return;
+      }
+      const url = `/api/report/files/${encodeURIComponent(
+        target.task_id
+      )}/index.html`;
+      window.open(url, "_blank");
+    } catch (e) {
+      console.error("打开用例最新报告失败:", e);
+      addTaskLog &&
+        addTaskLog(
+          `[错误] 获取用例「${caseName}」最新执行结果失败：${e.message}`,
+          "danger"
+        );
+    }
+  }
+
+  async function openSuiteEditorById(suiteId) {
+    if (!suiteId && suiteId !== 0) {
+      addTaskLog &&
+        addTaskLog("[错误] 未指定要编辑的用例ID", "danger");
+      return;
+    }
+    editorMode = "edit";
+    currentEditingSuiteId = parseInt(suiteId, 10);
+    if (editorModalTitle) {
+      editorModalTitle.textContent = "编辑测试用例";
+    }
+    if (newSuiteNameContainer) {
+      newSuiteNameContainer.style.display = "block";
+    }
+    if (newSuiteName) {
+      newSuiteName.value = "";
+    }
+    try {
+      const data = await apiGet(
+        `/api/test/suite/${currentEditingSuiteId}`
+      );
+      if (data.code === 200 && data.data) {
+        currentEditingSuiteName = data.data.name || "";
+        if (newSuiteName) {
+          const baseName = currentEditingSuiteName.endsWith(".py")
+            ? currentEditingSuiteName.slice(0, -3)
+            : currentEditingSuiteName;
+          newSuiteName.value = baseName;
+        }
+        const editor = ensureCodeEditor();
+        if (editor) {
+          editor.setValue(data.data.content || "");
+        } else if (suiteContent) {
+          suiteContent.value = data.data.content || "";
+        }
+        const suiteEditorModalEl =
+          suiteEditorModal || document.getElementById("suite-editor-modal");
+        if (suiteEditorModalEl) {
+          suiteEditorModalEl.classList.remove("hidden");
+        }
+        if (editor) {
+          setTimeout(() => editor.refresh(), 0);
+        }
+      } else {
+        throw new Error(data.msg || "获取用例内容失败");
+      }
+    } catch (e) {
+      addTaskLog &&
+        addTaskLog(
+          `[错误] 加载用例内容失败：${e.message}`,
+          "danger"
+        );
+      console.error("加载用例内容失败:", e);
     }
   }
 
@@ -433,24 +530,56 @@
           if (!id) return;
 
           // 同步隐藏下拉框的选中项，复用原有逻辑
-          suiteSelectEl.value = id;
+          if (suiteSelectEl) {
+            suiteSelectEl.value = id;
+          }
           updateStartBtnStatus();
-          const hasValue = !!id;
-          if (editSuiteBtnEl) {
-            editSuiteBtnEl.disabled = !hasValue;
-          }
-          if (deleteSuiteBtnEl) {
-            deleteSuiteBtnEl.disabled = !hasValue;
-          }
 
-          if (action === "edit" && editSuiteBtnEl && !editSuiteBtnEl.disabled) {
-            editSuiteBtnEl.click();
-          } else if (
-            action === "delete" &&
-            deleteSuiteBtnEl &&
-            !deleteSuiteBtnEl.disabled
-          ) {
-            deleteSuiteBtnEl.click();
+          if (action === "start") {
+            // 行内启动：直接复用现有启动逻辑
+            if (startBtnEl) {
+              startBtnEl.click();
+            } else {
+              startTestTask();
+            }
+          } else if (action === "view-report") {
+            openLatestCaseReport(id, name || "");
+          } else if (action === "edit") {
+            openSuiteEditorById(id);
+          } else if (action === "delete") {
+            // 直接执行删除逻辑，而不是依赖隐藏的工具栏按钮
+            (async () => {
+              if (
+                !confirm(
+                  `确定要删除用例「${name || id}」吗？该操作不可恢复！`
+                )
+              ) {
+                return;
+              }
+              try {
+                const resp = await fetch(
+                  `/api/test/suite/${parseInt(id, 10)}`,
+                  {
+                    method: "DELETE",
+                  }
+                );
+                const data = await resp.json();
+                if (data.code === 200) {
+                  addTaskLog &&
+                    addTaskLog("[成功] 用例删除成功", "success");
+                  await loadTestSuites();
+                } else {
+                  throw new Error(data.msg || "删除用例失败");
+                }
+              } catch (e) {
+                addTaskLog &&
+                  addTaskLog(
+                    `[错误] 删除用例失败：${e.message}`,
+                    "danger"
+                  );
+                console.error("删除用例失败:", e);
+              }
+            })();
           }
         });
         caseListTbody._boundClick = true;
@@ -480,6 +609,11 @@
         execSetManageTab.classList.add("text-light");
         caseManagePanel.classList.remove("hidden");
         execSetManagePanel.classList.add("hidden");
+
+        // 切回用例管理时，恢复左侧卡片自适应高度
+        if (window.adjustPanelHeights) {
+          window.adjustPanelHeights();
+        }
       });
       execSetManageTab.addEventListener("click", () => {
         execSetManageTab.classList.add("border-primary", "text-primary");
@@ -488,6 +622,11 @@
         caseManageTab.classList.add("text-light");
         execSetManagePanel.classList.remove("hidden");
         caseManagePanel.classList.add("hidden");
+
+        // 当切换到执行集管理时，同步左侧高度与“测试配置”一致
+        if (window.adjustPanelHeights) {
+          window.adjustPanelHeights();
+        }
       });
     }
 
@@ -548,60 +687,14 @@
 
     // 编辑用例
     if (editSuiteBtnEl) {
-      editSuiteBtnEl.addEventListener("click", async () => {
+      editSuiteBtnEl.addEventListener("click", () => {
         const selectedSuiteId = suiteSelectEl?.value;
         if (!selectedSuiteId) {
           addTaskLog &&
             addTaskLog("[错误] 请先选择要编辑的用例", "danger");
           return;
         }
-        editorMode = "edit";
-        currentEditingSuiteId = parseInt(selectedSuiteId, 10);
-        if (editorModalTitle) {
-          editorModalTitle.textContent = "编辑测试用例";
-        }
-        if (newSuiteNameContainer) {
-          newSuiteNameContainer.style.display = "block";
-        }
-        if (newSuiteName) {
-          newSuiteName.value = "";
-        }
-        try {
-          const data = await apiGet(
-            `/api/test/suite/${currentEditingSuiteId}`
-          );
-          if (data.code === 200 && data.data) {
-            currentEditingSuiteName = data.data.name || "";
-            if (newSuiteName) {
-              // 去掉.py后缀只展示基础名
-              const baseName = currentEditingSuiteName.endsWith(".py")
-                ? currentEditingSuiteName.slice(0, -3)
-                : currentEditingSuiteName;
-              newSuiteName.value = baseName;
-            }
-            const editor = ensureCodeEditor();
-            if (editor) {
-              editor.setValue(data.data.content || "");
-            } else if (suiteContent) {
-              suiteContent.value = data.data.content || "";
-            }
-            if (suiteEditorModalEl) {
-              suiteEditorModalEl.classList.remove("hidden");
-            }
-            if (editor) {
-              setTimeout(() => editor.refresh(), 0);
-            }
-          } else {
-            throw new Error(data.msg || "获取用例内容失败");
-          }
-        } catch (e) {
-          addTaskLog &&
-            addTaskLog(
-              `[错误] 加载用例内容失败：${e.message}`,
-              "danger"
-            );
-          console.error("加载用例内容失败:", e);
-        }
+        openSuiteEditorById(selectedSuiteId);
       });
     }
 
