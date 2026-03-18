@@ -427,6 +427,7 @@ def _generate_python_code(device_id: str, actions: List[Dict[str, Any]]) -> str:
     if not body_lines:
         body_lines.append("# TODO: 当前录制无任何可执行动作")
 
+    indented_body = textwrap.indent("\n".join(body_lines), "    ")
     code = f'''import time
 import allure
 import pytest
@@ -445,7 +446,7 @@ def test_recorded_case(d):
     """
 
     # 录制动作回放开始
-{textwrap.indent("\n".join(body_lines), "    ")}
+{indented_body}
 '''
     return code
 

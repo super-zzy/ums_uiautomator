@@ -1,0 +1,26 @@
+[2026-03-18 17:04:03] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-18 17:04:04] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-18 17:04:04] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-18 17:04:06] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-18 17:04:06] [task_2026031817040_8d1f] [INFO] 准备测试环境：d:\cursor\ums_uiautomator\result\2026031817040_8d1f
+[2026-03-18 17:04:06] [task_2026031817040_8d1f] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031817040_8d1f\allure_raw
+[2026-03-18 17:04:06] [task_2026031817040_8d1f] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031817040_8d1f\allure_html
+[2026-03-18 17:04:06] [task_2026031817040_8d1f] [INFO] 测试目录初始化完成：d:\cursor\ums_uiautomator\result\2026031817040_8d1f
+[2026-03-18 17:04:06] [task_2026031817040_8d1f] [INFO] 测试用例校验通过：d:\cursor\ums_uiautomator\test_suite\case_5.py（文件大小：0.74KB）
+[2026-03-18 17:04:06] [task_2026031817040_8d1f] [INFO] 开始执行Pytest测试...
+[2026-03-18 17:04:07] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-18 17:04:07] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-18 17:04:07] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-18 17:04:07] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-18 17:04:08] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行亮屏操作
+[2026-03-18 17:04:19] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-18 17:04:19] [task_2026031817040_8d1f] [INFO] Pytest执行完成（耗时：13.51秒，返回码：1）
+[2026-03-18 17:04:19] [task_2026031817040_8d1f] [INFO] Pytest日志已保存：d:\cursor\ums_uiautomator\result\2026031817040_8d1f\task_2026031817040_8d1f.log（大小：0.46KB）
+[2026-03-18 17:04:19] [task_2026031817040_8d1f] [INFO] 开始生成Allure HTML报告...
+[2026-03-18 17:04:19] [task_2026031817040_8d1f] [DEBUG] Allure生成命令包含--clean参数
+[2026-03-18 17:04:19] [task_2026031817040_8d1f] [DEBUG] Allure报告标题：report_2026031817040_8d1f
+[2026-03-18 17:04:19] [task_2026031817040_8d1f] [DEBUG] Allure生成命令：allure generate d:\cursor\ums_uiautomator\result\2026031817040_8d1f\allure_raw -o d:\cursor\ums_uiautomator\result\2026031817040_8d1f\allure_html --clean --title report_2026031817040_8d1f
+[2026-03-18 17:04:22] [task_2026031817040_8d1f] [INFO] Allure生成日志已保存：d:\cursor\ums_uiautomator\result\2026031817040_8d1f\allure_generate.log
+[2026-03-18 17:04:22] [task_2026031817040_8d1f] [DEBUG] 报告压缩功能已禁用
+[2026-03-18 17:04:22] [task_2026031817040_8d1f] [INFO] Allure报告生成成功：d:\cursor\ums_uiautomator\result\2026031817040_8d1f\allure_html\index.html（目录大小：2428.01MB，耗时：3.22秒）
+[2026-03-18 17:04:22] [task_2026031817040_8d1f] [INFO] 报告元数据已保存：d:\cursor\ums_uiautomator\result\2026031817040_8d1f\report_meta.json

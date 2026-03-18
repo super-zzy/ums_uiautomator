@@ -2,6 +2,19 @@
 import os
 import sys  # 必须最先导入 sys 模块
 
+# Windows 控制台中文乱码兜底：尽量强制 Python stdout/stderr 为 UTF-8
+# 注意：这只能解决“Python 输出编码”，若终端本身 codepage 非 UTF-8，仍建议在终端执行 `chcp 65001`
+os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+os.environ.setdefault("PYTHONUTF8", "1")
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    # 避免在某些打包/重定向场景下抛异常影响启动
+    pass
+
 # 在打包后的环境中，确保当前工作目录是可执行文件所在目录
 if getattr(sys, "frozen", False):
     exe_dir = os.path.dirname(sys.executable)

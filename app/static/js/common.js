@@ -37,6 +37,7 @@ window.Elements = {
   stopTestBtn: document.getElementById("stop-test-btn"),
   viewReportBtn: document.getElementById("view-report-btn"),
   taskLog: document.getElementById("task-log"),
+  recordVideoCheckbox: document.getElementById("record-video-checkbox"),
 
   // 用例编辑
   editSuiteBtn: document.getElementById("edit-suite-btn"),

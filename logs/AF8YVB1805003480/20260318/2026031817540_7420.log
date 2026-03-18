@@ -1,0 +1,42 @@
+[2026-03-18 17:54:03] [runtime_2026031817540_7420] [INFO] 任务2026031817540_7420后台线程启动：device=AF8YVB1805003480, record_video=True, suite=d:\cursor\ums_uiautomator\test_suite\case_4.py
+[2026-03-18 17:54:03] [runtime_2026031817540_7420] [INFO] 任务2026031817540_7420准备启动全程录屏：device=AF8YVB1805003480
+[2026-03-18 17:54:03] [runtime_2026031817540_7420] [INFO] 任务2026031817540_7420全程录屏线程已启动
+[2026-03-18 17:54:03] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-18 17:54:03] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-18 17:54:03] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-18 17:54:03] [runtime_2026031817540_7420] [WARNING] 设备可能不支持 screenrecord（which 失败）：stdout=, stderr=
+[2026-03-18 17:54:03] [runtime_2026031817540_7420] [DEBUG] 录屏目录探测删除失败：dir=/sdcard/Movies, rc=1, stdout=, stderr=rm: Needs 1 argument
+[2026-03-18 17:54:03] [runtime_2026031817540_7420] [WARNING] 录屏目录可写但清理探测文件失败（忽略）：dir=/sdcard/Movies, file=/sdcard/Movies/.ums_record_probe_1773827643146.tmp
+[2026-03-18 17:54:03] [runtime_2026031817540_7420] [INFO] 录屏临时目录：/sdcard/Movies
+[2026-03-18 17:54:03] [runtime_2026031817540_7420] [INFO] 开始录屏分段：task=2026031817540_7420, device=AF8YVB1805003480, seg=1, limit=180s
+[2026-03-18 17:54:04] [runtime_2026031817540_7420] [WARNING] screenrecord 启动后快速退出（seg=1, attempt=1），stdout=, stderr=/system/bin/sh: screenrecord: inaccessible or not found
+[2026-03-18 17:54:05] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-18 17:54:05] [task_2026031817540_7420] [INFO] 准备测试环境：d:\cursor\ums_uiautomator\result\2026031817540_7420
+[2026-03-18 17:54:05] [task_2026031817540_7420] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031817540_7420\allure_raw
+[2026-03-18 17:54:05] [task_2026031817540_7420] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031817540_7420\allure_html
+[2026-03-18 17:54:05] [task_2026031817540_7420] [INFO] 测试目录初始化完成：d:\cursor\ums_uiautomator\result\2026031817540_7420
+[2026-03-18 17:54:05] [task_2026031817540_7420] [INFO] 测试用例校验通过：d:\cursor\ums_uiautomator\test_suite\case_4.py（文件大小：1.20KB）
+[2026-03-18 17:54:05] [task_2026031817540_7420] [INFO] 开始执行Pytest测试...
+[2026-03-18 17:54:05] [runtime_2026031817540_7420] [WARNING] screenrecord 启动后快速退出（seg=1, attempt=2），stdout=, stderr=/system/bin/sh: screenrecord: inaccessible or not found
+[2026-03-18 17:54:05] [runtime_2026031817540_7420] [ERROR] 任务2026031817540_7420录屏启动失败，停止录屏线程
+[2026-03-18 17:54:06] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-18 17:54:06] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-18 17:54:06] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-18 17:54:06] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-18 17:54:07] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行亮屏操作
+[2026-03-18 17:54:14] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-18 17:54:15] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行亮屏操作
+[2026-03-18 17:54:15] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-18 17:54:26] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-18 17:54:26] [task_2026031817540_7420] [INFO] Pytest执行完成（耗时：21.42秒，返回码：0）
+[2026-03-18 17:54:26] [task_2026031817540_7420] [INFO] Pytest日志已保存：d:\cursor\ums_uiautomator\result\2026031817540_7420\task_2026031817540_7420.log（大小：1.07KB）
+[2026-03-18 17:54:26] [task_2026031817540_7420] [INFO] 开始生成Allure HTML报告...
+[2026-03-18 17:54:26] [task_2026031817540_7420] [DEBUG] Allure生成命令包含--clean参数
+[2026-03-18 17:54:26] [task_2026031817540_7420] [DEBUG] Allure报告标题：report_2026031817540_7420
+[2026-03-18 17:54:26] [task_2026031817540_7420] [DEBUG] Allure生成命令：allure generate d:\cursor\ums_uiautomator\result\2026031817540_7420\allure_raw -o d:\cursor\ums_uiautomator\result\2026031817540_7420\allure_html --clean --title report_2026031817540_7420
+[2026-03-18 17:54:30] [task_2026031817540_7420] [INFO] Allure生成日志已保存：d:\cursor\ums_uiautomator\result\2026031817540_7420\allure_generate.log
+[2026-03-18 17:54:30] [task_2026031817540_7420] [DEBUG] 报告压缩功能已禁用
+[2026-03-18 17:54:30] [task_2026031817540_7420] [INFO] Allure报告生成成功：d:\cursor\ums_uiautomator\result\2026031817540_7420\allure_html\index.html（目录大小：2433.20MB，耗时：3.51秒）
+[2026-03-18 17:54:30] [task_2026031817540_7420] [INFO] 报告元数据已保存：d:\cursor\ums_uiautomator\result\2026031817540_7420\report_meta.json
+[2026-03-18 17:54:30] [runtime_2026031817540_7420] [INFO] 任务2026031817540_7420准备停止录屏并收集文件
+[2026-03-18 17:54:30] [runtime_2026031817540_7420] [WARNING] 任务2026031817540_7420录屏未生成或为空（video_path=None）

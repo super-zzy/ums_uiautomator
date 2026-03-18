@@ -72,10 +72,11 @@ class TempLog:
     def _log(level: str, msg: str, exc_info: bool = False) -> None:
         """基础日志打印方法，新增 exc_info 参数支持异常堆栈"""
         log_msg = f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [{level.upper()}] {msg}"
-        print(log_msg)
+        # flush=True：避免后台线程/重定向场景下日志延迟或丢失
+        print(log_msg, flush=True)
         # 若需要打印异常堆栈，调用 traceback.print_exc()
         if exc_info:
-            print(f"[异常堆栈]：")
+            print(f"[异常堆栈]：", flush=True)
             traceback.print_exc()  # 打印当前异常的堆栈信息
 
     def debug(self, msg: str) -> None:

@@ -28,6 +28,7 @@
     execSetManageTab,
     caseManagePanel,
     execSetManagePanel,
+    recordVideoCheckbox,
   } = Elements || {};
   const { apiGet, apiPost, addTaskLog, parseDateTime, formatDuration } =
     Common || {};
@@ -341,6 +342,7 @@
       const data = await apiPost("/api/test/start", {
         device_id: deviceId,
         suite_id: parseInt(selectedSuiteId, 10),
+        record_video: !!(recordVideoCheckbox && recordVideoCheckbox.checked),
       });
       if (data.code === 200 && data.data?.task_id) {
         AppState.currentTaskId = data.data.task_id;

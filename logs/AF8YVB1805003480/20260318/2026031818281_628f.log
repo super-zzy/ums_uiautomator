@@ -1,0 +1,48 @@
+[2026-03-18 18:28:18] [runtime_2026031818281_628f] [INFO] 任务2026031818281_628f后台线程启动：device=AF8YVB1805003480, record_video=True, suite=d:\cursor\ums_uiautomator\test_suite\case_4.py
+[2026-03-18 18:28:18] [runtime_2026031818281_628f] [INFO] 任务2026031818281_628f准备启动全程录屏：device=AF8YVB1805003480
+[2026-03-18 18:28:19] [runtime_2026031818281_628f] [WARNING] screenrecord 探测失败诊断：stdout=ls: ./init: Permission denied
+ls: ./init.environ.rc: Permission denied
+ls: ./init.rc: Permission denied
+ls: ./init.usb.configfs.rc: Permission denied
+ls: ./init.usb.rc: Permission denied
+ls: ./init.zygote32.rc: Permission denied
+ls: ./init.zygote64_32.rc: Permission denied
+ls: ./log: Permission denied
+ls: ./metadata: Permission denied
+ls: ./resetFactory.cfg: Permission denied
+ls: ./sec_storage: Pe, stderr=
+[2026-03-18 18:28:19] [runtime_2026031818281_628f] [WARNING] 任务2026031818281_628f当前环境无可用录屏方案，将降级为每隔1s保存截图
+[2026-03-18 18:28:19] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-18 18:28:19] [runtime_2026031818281_628f] [WARNING] 录屏不可用，已降级为截图模式：每1.0s保存一张（task=2026031818281_628f）
+[2026-03-18 18:28:19] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-18 18:28:19] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-18 18:28:21] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-18 18:28:21] [task_2026031818281_628f] [INFO] 准备测试环境：d:\cursor\ums_uiautomator\result\2026031818281_628f
+[2026-03-18 18:28:21] [task_2026031818281_628f] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031818281_628f\allure_raw
+[2026-03-18 18:28:21] [task_2026031818281_628f] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031818281_628f\allure_html
+[2026-03-18 18:28:21] [task_2026031818281_628f] [INFO] 测试目录初始化完成：d:\cursor\ums_uiautomator\result\2026031818281_628f
+[2026-03-18 18:28:21] [task_2026031818281_628f] [INFO] 测试用例校验通过：d:\cursor\ums_uiautomator\test_suite\case_4.py（文件大小：1.20KB）
+[2026-03-18 18:28:21] [task_2026031818281_628f] [INFO] 开始执行Pytest测试...
+[2026-03-18 18:28:22] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-18 18:28:22] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-18 18:28:22] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-18 18:28:23] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-18 18:28:23] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行亮屏操作
+[2026-03-18 18:28:31] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-18 18:28:31] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行亮屏操作
+[2026-03-18 18:28:32] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-18 18:28:42] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-18 18:28:42] [task_2026031818281_628f] [INFO] Pytest执行完成（耗时：21.25秒，返回码：0）
+[2026-03-18 18:28:42] [task_2026031818281_628f] [INFO] Pytest日志已保存：d:\cursor\ums_uiautomator\result\2026031818281_628f\task_2026031818281_628f.log（大小：1.07KB）
+[2026-03-18 18:28:42] [task_2026031818281_628f] [INFO] 开始生成Allure HTML报告...
+[2026-03-18 18:28:42] [task_2026031818281_628f] [DEBUG] Allure生成命令包含--clean参数
+[2026-03-18 18:28:42] [task_2026031818281_628f] [DEBUG] Allure报告标题：report_2026031818281_628f
+[2026-03-18 18:28:42] [task_2026031818281_628f] [DEBUG] Allure生成命令：allure generate d:\cursor\ums_uiautomator\result\2026031818281_628f\allure_raw -o d:\cursor\ums_uiautomator\result\2026031818281_628f\allure_html --clean --title report_2026031818281_628f
+[2026-03-18 18:28:55] [task_2026031818281_628f] [INFO] Allure生成日志已保存：d:\cursor\ums_uiautomator\result\2026031818281_628f\allure_generate.log
+[2026-03-18 18:28:55] [task_2026031818281_628f] [DEBUG] 报告压缩功能已禁用
+[2026-03-18 18:28:55] [task_2026031818281_628f] [INFO] Allure报告生成成功：d:\cursor\ums_uiautomator\result\2026031818281_628f\allure_html\index.html（目录大小：2433.21MB，耗时：12.7秒）
+[2026-03-18 18:28:55] [task_2026031818281_628f] [INFO] 报告元数据已保存：d:\cursor\ums_uiautomator\result\2026031818281_628f\report_meta.json
+[2026-03-18 18:28:55] [runtime_2026031818281_628f] [INFO] 任务2026031818281_628f准备停止录屏并收集文件
+[2026-03-18 18:28:55] [runtime_2026031818281_628f] [WARNING] 任务2026031818281_628f录屏未生成或为空（video_path=None）
+[2026-03-18 18:28:55] [runtime_2026031818281_628f] [INFO] 任务2026031818281_628f准备停止截图录制并打包文件
+[2026-03-18 18:28:57] [runtime_2026031818281_628f] [INFO] 任务2026031818281_628f截图包已生成：d:\cursor\ums_uiautomator\record\2026031818281_628f.zip

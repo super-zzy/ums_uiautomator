@@ -4,6 +4,7 @@
 import os
 # filePath: ums_uiautomator/util/path_util.py
 import os
+import sys
 from conf import GlobalConfig  # 假设GlobalConfig用于读取配置
 
 
@@ -21,6 +22,24 @@ def get_report_root() -> str:
     # 确保目录存在
     os.makedirs(report_root, exist_ok=True)
     return report_root
+
+
+def get_project_root() -> str:
+    """
+    获取项目根目录（兼容开发环境与 PyInstaller 打包环境）。
+    - 开发环境：以仓库根目录为准（util 的上两级）
+    - 打包环境：以可执行文件所在目录为准
+    """
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def get_record_root() -> str:
+    """获取录屏文件根目录：<project_root>/record"""
+    root = os.path.join(get_project_root(), "record")
+    os.makedirs(root, exist_ok=True)
+    return root
 
 def safe_join(base_dir: str, *paths: str) -> str:
     """

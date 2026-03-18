@@ -28,13 +28,25 @@ def normalize_history_status(value: Optional[str]) -> Optional[str]:
     if not s:
         return None
 
-    if s in ("success", "passed", "pass", "ok"):
+    if s in ("success", "passed", "pass", "ok") or s.startswith("success"):
         return HISTORY_STATUS_SUCCESS
 
-    if s in ("failed", "failure", "error", "exception"):
+    if (
+        s in ("failed", "failure", "error", "exception")
+        or s.startswith("failed")
+        or s.startswith("failure")
+        or "failed" in s
+        or "failure" in s
+        or "error" in s
+        or "exception" in s
+    ):
         return HISTORY_STATUS_FAILURE
 
-    if s in ("stopped", "stop", "stopping", "cancelled", "canceled", "killed"):
+    if (
+        s in ("stopped", "stop", "stopping", "cancelled", "canceled", "killed")
+        or s.startswith("stop")
+        or "stopped" in s
+    ):
         return HISTORY_STATUS_STOP
 
     # 非最终态：不写入 history.status（避免出现额外状态值）
@@ -114,6 +126,8 @@ def _init_db() -> None:
                 device_id TEXT,
                 case_id INTEGER,
                 exec_set_id TEXT,
+                record_video INTEGER,
+                video_path TEXT,
                 status TEXT,
                 create_time TEXT,
                 start_time TEXT,
@@ -195,6 +209,8 @@ def _init_db() -> None:
             # exec_history 关联字段（用例ID、执行集ID）
             "ALTER TABLE exec_history ADD COLUMN case_id INTEGER",
             "ALTER TABLE exec_history ADD COLUMN exec_set_id TEXT",
+            "ALTER TABLE exec_history ADD COLUMN record_video INTEGER",
+            "ALTER TABLE exec_history ADD COLUMN video_path TEXT",
             # exec_history 时间/耗时字段
             "ALTER TABLE exec_history ADD COLUMN created_at TEXT",
             "ALTER TABLE exec_history ADD COLUMN updated_at TEXT",
@@ -582,6 +598,8 @@ def upsert_history(
     device_id: Optional[str] = None,
     case_id: Optional[int] = None,
     exec_set_id: Optional[str] = None,
+    record_video: Optional[bool] = None,
+    video_path: Optional[str] = None,
     status: Optional[str] = None,
     create_time: Optional[str] = None,
     start_time: Optional[str] = None,
@@ -616,13 +634,13 @@ def upsert_history(
                 """
                 INSERT INTO exec_history (
                     task_id, main_task_id, type, device_id,
-                    case_id, exec_set_id, status,
+                    case_id, exec_set_id, record_video, video_path, status,
                     create_time, start_time, end_time,
                     exec_duration,
                     report_index_path, report_meta_path,
                     pytest_returncode, report_generate_duration, error_msg,
                     created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     task_id,
@@ -631,6 +649,8 @@ def upsert_history(
                     device_id,
                     case_id,
                     exec_set_id,
+                    (1 if record_video else 0) if record_video is not None else None,
+                    video_path,
                     status,
                     create_time,
                     start_time,
@@ -654,6 +674,8 @@ def upsert_history(
                 "device_id": device_id,
                 "case_id": case_id,
                 "exec_set_id": exec_set_id,
+                "record_video": (1 if record_video else 0) if record_video is not None else None,
+                "video_path": video_path,
                 "status": status,
                 "start_time": start_time,
                 "end_time": end_time,

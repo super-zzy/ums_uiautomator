@@ -1,0 +1,48 @@
+[2026-03-18 18:03:27] [runtime_2026031818032_99ca] [INFO] 任务2026031818032_99ca后台线程启动：device=AF8YVB1805003480, record_video=True, suite=d:\cursor\ums_uiautomator\test_suite\case_4.py
+[2026-03-18 18:03:27] [runtime_2026031818032_99ca] [INFO] 任务2026031818032_99ca准备启动全程录屏：device=AF8YVB1805003480
+[2026-03-18 18:03:27] [runtime_2026031818032_99ca] [INFO] 任务2026031818032_99ca全程录屏线程已启动
+[2026-03-18 18:03:27] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-18 18:03:27] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-18 18:03:27] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-18 18:03:27] [runtime_2026031818032_99ca] [WARNING] 未检测到 ffmpeg，minicap 方案无法输出 mp4，将回退到旧方案
+[2026-03-18 18:03:28] [runtime_2026031818032_99ca] [WARNING] screenrecord 探测失败诊断：stdout=ls: ./init: Permission denied
+ls: ./init.environ.rc: Permission denied
+ls: ./init.rc: Permission denied
+ls: ./init.usb.configfs.rc: Permission denied
+ls: ./init.usb.rc: Permission denied
+ls: ./init.zygote32.rc: Permission denied
+ls: ./init.zygote64_32.rc: Permission denied
+ls: ./log: Permission denied
+ls: ./metadata: Permission denied
+ls: ./resetFactory.cfg: Permission denied
+ls: ./sec_storage: Pe, stderr=
+[2026-03-18 18:03:28] [runtime_2026031818032_99ca] [WARNING] 设备端 screenrecord 不可用，将尝试 scrcpy 兜底录屏
+[2026-03-18 18:03:28] [runtime_2026031818032_99ca] [ERROR] minicap 不可用、screenrecord 不可用，且主机未安装 scrcpy，无法录屏。建议：安装 ffmpeg + minicap，或确保设备包含 screenrecord，或安装 scrcpy。
+[2026-03-18 18:03:29] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-18 18:03:29] [task_2026031818032_99ca] [INFO] 准备测试环境：d:\cursor\ums_uiautomator\result\2026031818032_99ca
+[2026-03-18 18:03:29] [task_2026031818032_99ca] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031818032_99ca\allure_raw
+[2026-03-18 18:03:29] [task_2026031818032_99ca] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031818032_99ca\allure_html
+[2026-03-18 18:03:29] [task_2026031818032_99ca] [INFO] 测试目录初始化完成：d:\cursor\ums_uiautomator\result\2026031818032_99ca
+[2026-03-18 18:03:29] [task_2026031818032_99ca] [INFO] 测试用例校验通过：d:\cursor\ums_uiautomator\test_suite\case_4.py（文件大小：1.20KB）
+[2026-03-18 18:03:29] [task_2026031818032_99ca] [INFO] 开始执行Pytest测试...
+[2026-03-18 18:03:30] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-18 18:03:30] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-18 18:03:30] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-18 18:03:31] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-18 18:03:31] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行亮屏操作
+[2026-03-18 18:03:39] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-18 18:03:39] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行亮屏操作
+[2026-03-18 18:03:40] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-18 18:03:50] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-18 18:03:50] [task_2026031818032_99ca] [INFO] Pytest执行完成（耗时：21.24秒，返回码：0）
+[2026-03-18 18:03:50] [task_2026031818032_99ca] [INFO] Pytest日志已保存：d:\cursor\ums_uiautomator\result\2026031818032_99ca\task_2026031818032_99ca.log（大小：1.07KB）
+[2026-03-18 18:03:50] [task_2026031818032_99ca] [INFO] 开始生成Allure HTML报告...
+[2026-03-18 18:03:50] [task_2026031818032_99ca] [DEBUG] Allure生成命令包含--clean参数
+[2026-03-18 18:03:50] [task_2026031818032_99ca] [DEBUG] Allure报告标题：report_2026031818032_99ca
+[2026-03-18 18:03:50] [task_2026031818032_99ca] [DEBUG] Allure生成命令：allure generate d:\cursor\ums_uiautomator\result\2026031818032_99ca\allure_raw -o d:\cursor\ums_uiautomator\result\2026031818032_99ca\allure_html --clean --title report_2026031818032_99ca
+[2026-03-18 18:04:03] [task_2026031818032_99ca] [INFO] Allure生成日志已保存：d:\cursor\ums_uiautomator\result\2026031818032_99ca\allure_generate.log
+[2026-03-18 18:04:03] [task_2026031818032_99ca] [DEBUG] 报告压缩功能已禁用
+[2026-03-18 18:04:03] [task_2026031818032_99ca] [INFO] Allure报告生成成功：d:\cursor\ums_uiautomator\result\2026031818032_99ca\allure_html\index.html（目录大小：2433.21MB，耗时：12.75秒）
+[2026-03-18 18:04:03] [task_2026031818032_99ca] [INFO] 报告元数据已保存：d:\cursor\ums_uiautomator\result\2026031818032_99ca\report_meta.json
+[2026-03-18 18:04:03] [runtime_2026031818032_99ca] [INFO] 任务2026031818032_99ca准备停止录屏并收集文件
+[2026-03-18 18:04:03] [runtime_2026031818032_99ca] [WARNING] 任务2026031818032_99ca录屏未生成或为空（video_path=None）

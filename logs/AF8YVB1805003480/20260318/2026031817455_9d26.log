@@ -1,0 +1,44 @@
+[2026-03-18 17:45:53] [runtime_2026031817455_9d26] [INFO] 任务2026031817455_9d26后台线程启动：device=AF8YVB1805003480, record_video=True, suite=d:\cursor\ums_uiautomator\test_suite\case_4.py
+[2026-03-18 17:45:53] [runtime_2026031817455_9d26] [INFO] 任务2026031817455_9d26准备启动全程录屏：device=AF8YVB1805003480
+[2026-03-18 17:45:53] [runtime_2026031817455_9d26] [INFO] 任务2026031817455_9d26全程录屏线程已启动
+[2026-03-18 17:45:53] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-18 17:45:53] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-18 17:45:53] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-18 17:45:53] [runtime_2026031817455_9d26] [WARNING] 设备可能不支持 screenrecord（which 失败）：stdout=, stderr=
+[2026-03-18 17:45:53] [runtime_2026031817455_9d26] [DEBUG] 录屏目录探测写入失败：dir=/sdcard/Movies/UMSRecord, rc=1, stderr=/system/bin/sh: can't create /sdcard/Movies/UMSRecord/.ums_record_probe_1773827153272.tmp: No such file or directory
+[2026-03-18 17:45:53] [runtime_2026031817455_9d26] [DEBUG] 录屏目录探测写入失败：dir=/sdcard/Download/UMSRecord, rc=1, stderr=/system/bin/sh: can't create /sdcard/Download/UMSRecord/.ums_record_probe_1773827153272.tmp: No such file or directory
+[2026-03-18 17:45:53] [runtime_2026031817455_9d26] [DEBUG] 录屏目录探测写入失败：dir=/sdcard/DCIM/UMSRecord, rc=1, stderr=/system/bin/sh: can't create /sdcard/DCIM/UMSRecord/.ums_record_probe_1773827153272.tmp: No such file or directory
+[2026-03-18 17:45:53] [runtime_2026031817455_9d26] [DEBUG] 录屏目录探测写入失败：dir=/storage/emulated/0/Movies/UMSRecord, rc=1, stderr=/system/bin/sh: can't create /storage/emulated/0/Movies/UMSRecord/.ums_record_probe_1773827153272.tmp: No such file or directory
+[2026-03-18 17:45:54] [runtime_2026031817455_9d26] [DEBUG] 录屏目录探测写入失败：dir=/storage/emulated/0/Download/UMSRecord, rc=1, stderr=/system/bin/sh: can't create /storage/emulated/0/Download/UMSRecord/.ums_record_probe_1773827153272.tmp: No such file or directory
+[2026-03-18 17:45:54] [runtime_2026031817455_9d26] [DEBUG] 录屏目录探测写入失败：dir=/storage/self/primary/Movies/UMSRecord, rc=1, stderr=/system/bin/sh: can't create /storage/self/primary/Movies/UMSRecord/.ums_record_probe_1773827153272.tmp: No such file or directory
+[2026-03-18 17:45:54] [runtime_2026031817455_9d26] [DEBUG] 录屏目录探测写入失败：dir=/sdcard/UMSRecord, rc=1, stderr=/system/bin/sh: can't create /sdcard/UMSRecord/.ums_record_probe_1773827153272.tmp: No such file or directory
+[2026-03-18 17:45:54] [runtime_2026031817455_9d26] [DEBUG] 录屏目录探测写入失败：dir=/data/local/tmp/UMSRecord, rc=1, stderr=/system/bin/sh: can't create /data/local/tmp/UMSRecord/.ums_record_probe_1773827153272.tmp: No such file or directory
+[2026-03-18 17:45:54] [runtime_2026031817455_9d26] [ERROR] 未找到可写的设备端目录，无法录屏
+[2026-03-18 17:45:55] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-18 17:45:55] [task_2026031817455_9d26] [INFO] 准备测试环境：d:\cursor\ums_uiautomator\result\2026031817455_9d26
+[2026-03-18 17:45:55] [task_2026031817455_9d26] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031817455_9d26\allure_raw
+[2026-03-18 17:45:55] [task_2026031817455_9d26] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031817455_9d26\allure_html
+[2026-03-18 17:45:55] [task_2026031817455_9d26] [INFO] 测试目录初始化完成：d:\cursor\ums_uiautomator\result\2026031817455_9d26
+[2026-03-18 17:45:55] [task_2026031817455_9d26] [INFO] 测试用例校验通过：d:\cursor\ums_uiautomator\test_suite\case_4.py（文件大小：1.20KB）
+[2026-03-18 17:45:55] [task_2026031817455_9d26] [INFO] 开始执行Pytest测试...
+[2026-03-18 17:45:56] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-18 17:45:56] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-18 17:45:56] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-18 17:45:56] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-18 17:45:57] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行亮屏操作
+[2026-03-18 17:46:05] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-18 17:46:05] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行亮屏操作
+[2026-03-18 17:46:06] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-18 17:46:16] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480执行按键操作：home
+[2026-03-18 17:46:17] [task_2026031817455_9d26] [INFO] Pytest执行完成（耗时：21.91秒，返回码：0）
+[2026-03-18 17:46:17] [task_2026031817455_9d26] [INFO] Pytest日志已保存：d:\cursor\ums_uiautomator\result\2026031817455_9d26\task_2026031817455_9d26.log（大小：1.07KB）
+[2026-03-18 17:46:17] [task_2026031817455_9d26] [INFO] 开始生成Allure HTML报告...
+[2026-03-18 17:46:17] [task_2026031817455_9d26] [DEBUG] Allure生成命令包含--clean参数
+[2026-03-18 17:46:17] [task_2026031817455_9d26] [DEBUG] Allure报告标题：report_2026031817455_9d26
+[2026-03-18 17:46:17] [task_2026031817455_9d26] [DEBUG] Allure生成命令：allure generate d:\cursor\ums_uiautomator\result\2026031817455_9d26\allure_raw -o d:\cursor\ums_uiautomator\result\2026031817455_9d26\allure_html --clean --title report_2026031817455_9d26
+[2026-03-18 17:46:20] [task_2026031817455_9d26] [INFO] Allure生成日志已保存：d:\cursor\ums_uiautomator\result\2026031817455_9d26\allure_generate.log
+[2026-03-18 17:46:20] [task_2026031817455_9d26] [DEBUG] 报告压缩功能已禁用
+[2026-03-18 17:46:20] [task_2026031817455_9d26] [INFO] Allure报告生成成功：d:\cursor\ums_uiautomator\result\2026031817455_9d26\allure_html\index.html（目录大小：2433.21MB，耗时：3.16秒）
+[2026-03-18 17:46:20] [task_2026031817455_9d26] [INFO] 报告元数据已保存：d:\cursor\ums_uiautomator\result\2026031817455_9d26\report_meta.json
+[2026-03-18 17:46:20] [runtime_2026031817455_9d26] [INFO] 任务2026031817455_9d26准备停止录屏并收集文件
+[2026-03-18 17:46:20] [runtime_2026031817455_9d26] [WARNING] 任务2026031817455_9d26录屏未生成或为空（video_path=None）

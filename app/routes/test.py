@@ -8,12 +8,15 @@ import time
 import shutil
 import json
 from flask import Blueprint, jsonify, request, current_app
+from flask import send_file, abort
 from datetime import datetime
 from threading import Thread
 from core.test_executor import TestExecutor
 from core.device_manager import DeviceManager
-from util.log_util import TempLog
-from util.path_util import safe_join, ensure_dir_exists, get_report_root
+from core.video_recorder import VideoRecorder
+from core.screenshot_recorder import ScreenshotRecorder
+from util.log_util import TempLog, LogUtil
+from util.path_util import safe_join, ensure_dir_exists, get_report_root, get_record_root
 from core import db
 
 test_bp = Blueprint("test", __name__)
@@ -56,8 +59,45 @@ def get_test_suites() -> list[dict]:
         return []
 
 
-def run_task_background(task_id: str, device_id: str, suite_abs_path: str) -> None:
+def run_task_background(
+    task_id: str, device_id: str, suite_abs_path: str, record_video: bool = False
+) -> None:
     """后台执行测试任务（独立线程）"""
+    # 录屏与任务执行链路的关键日志：需要同时出现在控制台 & 任务落盘日志中
+    # 为避免与 TestExecutor 使用同名 logger 相互清 handler，这里用独立 logger_name。
+    task_log = None
+    try:
+        task_log = LogUtil(device_id=device_id, task_id=task_id, logger_name=f"runtime_{task_id}")
+    except Exception:
+        task_log = None
+
+    def _log_i(msg: str) -> None:
+        log.info(msg)
+        try:
+            if task_log:
+                task_log.info(msg)
+        except Exception:
+            pass
+
+    def _log_w(msg: str) -> None:
+        log.warning(msg)
+        try:
+            if task_log:
+                task_log.warning(msg)
+        except Exception:
+            pass
+
+    def _log_e(msg: str, exc_info: bool = False) -> None:
+        log.error(msg, exc_info=exc_info)
+        try:
+            if task_log:
+                task_log.error(msg, exc_info=exc_info)
+        except Exception:
+            pass
+
+    _log_i(
+        f"任务{task_id}后台线程启动：device={device_id}, record_video={bool(record_video)}, suite={suite_abs_path}"
+    )
     # 更新任务状态为"running"
     test_tasks[task_id]["status"] = "running"
     test_tasks[task_id]["start_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -68,6 +108,7 @@ def run_task_background(task_id: str, device_id: str, suite_abs_path: str) -> No
             task_id=task_id,
             status="running",
             start_time=test_tasks[task_id]["start_time"],
+            record_video=record_video,
         )
         db.upsert_task_runtime(
             task_id=task_id,
@@ -75,9 +116,53 @@ def run_task_background(task_id: str, device_id: str, suite_abs_path: str) -> No
             start_time=test_tasks[task_id]["start_time"],
         )
     except Exception as e:
-        log.error(f"更新任务{task_id}历史状态为running失败：{str(e)}", exc_info=True)
+        _log_e(f"更新任务{task_id}历史状态为running失败：{str(e)}", exc_info=True)
 
+    video_recorder = None
+    shot_recorder = None
     try:
+        # 0. 可选：全程录屏（后台分段）
+        if record_video:
+            try:
+                _log_i(f"任务{task_id}准备启动全程录屏：device={device_id}")
+                video_recorder = VideoRecorder(
+                    task_id=task_id,
+                    device_id=device_id,
+                    logger=(task_log or log),
+                )
+                if video_recorder.can_record():
+                    video_recorder.start()
+                    # 录屏线程启动不代表后端可用：等待 2.5s 确认不是秒退
+                    if video_recorder.wait_started(timeout=2.5):
+                        _log_i(f"任务{task_id}全程录屏已启动")
+                    else:
+                        _log_w(
+                            f"任务{task_id}录屏后端疑似不可用/秒退，将降级为每隔1s保存截图"
+                        )
+                        try:
+                            video_recorder.stop(wait=False)
+                        except Exception:
+                            pass
+                        video_recorder = None
+                        shot_recorder = ScreenshotRecorder(
+                            task_id=task_id,
+                            device_id=device_id,
+                            logger=(task_log or log),
+                            interval_sec=1.0,
+                        )
+                        shot_recorder.start()
+                else:
+                    _log_w(f"任务{task_id}当前环境无可用录屏方案，将降级为每隔1s保存截图")
+                    shot_recorder = ScreenshotRecorder(
+                        task_id=task_id,
+                        device_id=device_id,
+                        logger=(task_log or log),
+                        interval_sec=1.0,
+                    )
+                    shot_recorder.start()
+            except Exception as e:
+                _log_e(f"任务{task_id}启动录屏失败（忽略，不影响执行）：{e}", exc_info=True)
+
         # 1. 获取设备实例（确保初始化成功）
         DeviceManager.get_uiautomator_instance(device_id, task_id)
 
@@ -100,6 +185,30 @@ def run_task_background(task_id: str, device_id: str, suite_abs_path: str) -> No
             exec_duration = None
         # 写入/更新执行历史与运行时任务
         try:
+            video_path = None
+            if video_recorder:
+                try:
+                    _log_i(f"任务{task_id}准备停止录屏并收集文件")
+                    res = video_recorder.stop(wait=True)
+                    video_path = res.output_path if res else None
+                    if video_path:
+                        _log_i(f"任务{task_id}录屏已生成：{video_path}")
+                    else:
+                        _log_w(f"任务{task_id}录屏未生成或为空（video_path=None）")
+                except Exception as e:
+                    _log_w(f"任务{task_id}停止录屏失败：{e}")
+            if not video_path and shot_recorder:
+                try:
+                    _log_i(f"任务{task_id}准备停止截图录制并打包文件")
+                    res2 = shot_recorder.stop(wait=True)
+                    video_path = res2.output_path if res2 else None
+                    if video_path:
+                        _log_i(f"任务{task_id}截图包已生成：{video_path}")
+                    else:
+                        _log_w(f"任务{task_id}截图包未生成或为空（video_path=None）")
+                except Exception as e:
+                    _log_w(f"任务{task_id}停止截图录制失败：{e}")
+
             db.upsert_history(
                 task_id=task_id,
                 status=task_result.get("status"),
@@ -110,6 +219,7 @@ def run_task_background(task_id: str, device_id: str, suite_abs_path: str) -> No
                 pytest_returncode=task_result.get("pytest_returncode"),
                 report_generate_duration=task_result.get("report_generate_duration"),
                 error_msg=task_result.get("error_msg"),
+                video_path=video_path,
             )
             db.upsert_task_runtime(
                 task_id=task_id,
@@ -117,8 +227,19 @@ def run_task_background(task_id: str, device_id: str, suite_abs_path: str) -> No
                 end_time=task_result.get("end_time"),
             )
         except Exception as e:
-            log.error(f"写入任务{task_id}执行历史失败：{str(e)}", exc_info=True)
+            _log_e(f"写入任务{task_id}执行历史失败：{str(e)}", exc_info=True)
     finally:
+        # 兜底停止录屏
+        if video_recorder and not video_recorder.result:
+            try:
+                video_recorder.stop(wait=False)
+            except Exception:
+                pass
+        if shot_recorder and not shot_recorder.result:
+            try:
+                shot_recorder.stop(wait=False)
+            except Exception:
+                pass
         # 4. 释放设备实例（无论成功失败）
         DeviceManager.release_device(device_id)
 
@@ -128,8 +249,47 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
     监控执行集内所有子任务，全部结束后汇总Allure原始数据并生成一份执行集报告。
     报告目录：与单任务一致，位于 report_root/<main_task_id>/allure_html
     """
+    video_recorder = None
+    shot_recorder = None
     try:
         log.info(f"执行集主任务{main_task_id}开始监控子任务：{sub_task_ids}")
+
+        # 可选：执行集全程录屏（覆盖整个执行集周期）
+        try:
+            main_task = test_tasks.get(main_task_id) or {}
+            if bool(main_task.get("record_video")):
+                video_recorder = VideoRecorder(task_id=main_task_id, device_id=device_id, logger=log)
+                if video_recorder.can_record():
+                    video_recorder.start()
+                    if not video_recorder.wait_started(timeout=2.5):
+                        log.warning(
+                            f"执行集主任务{main_task_id}录屏后端疑似不可用/秒退，将降级为每隔1s保存截图"
+                        )
+                        try:
+                            video_recorder.stop(wait=False)
+                        except Exception:
+                            pass
+                        video_recorder = None
+                        shot_recorder = ScreenshotRecorder(
+                            task_id=main_task_id,
+                            device_id=device_id,
+                            logger=log,
+                            interval_sec=1.0,
+                        )
+                        shot_recorder.start()
+                else:
+                    log.warning(
+                        f"执行集主任务{main_task_id}当前环境无可用录屏方案，将降级为每隔1s保存截图"
+                    )
+                    shot_recorder = ScreenshotRecorder(
+                        task_id=main_task_id,
+                        device_id=device_id,
+                        logger=log,
+                        interval_sec=1.0,
+                    )
+                    shot_recorder.start()
+        except Exception as e:
+            log.error(f"执行集主任务{main_task_id}启动录屏失败（忽略，不影响执行）：{e}", exc_info=True)
 
         # 等待所有子任务结束（pending/running -> 结束状态）
         while True:
@@ -156,11 +316,25 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
             )
             test_tasks[main_task_id] = main_task
             try:
+                video_path = None
+                if video_recorder:
+                    try:
+                        res = video_recorder.stop(wait=True)
+                        video_path = res.output_path if res else None
+                    except Exception:
+                        video_path = None
+                if not video_path and shot_recorder:
+                    try:
+                        res2 = shot_recorder.stop(wait=True)
+                        video_path = res2.output_path if res2 else None
+                    except Exception:
+                        video_path = None
                 db.upsert_history(
                     task_id=main_task_id,
                     status="failure",
                     end_time=main_task["end_time"],
                     error_msg=main_task["report_error_msg"],
+                    video_path=video_path,
                 )
             except Exception as e:
                 log.error(f"写入执行集主任务{main_task_id}历史失败：{str(e)}", exc_info=True)
@@ -169,6 +343,16 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
         first_sub_task = test_tasks.get(sub_task_ids[0])
         if not first_sub_task or "suite_info" not in first_sub_task:
             log.error(f"执行集主任务{main_task_id}无法获取首个子任务信息，跳过报告生成")
+            if video_recorder:
+                try:
+                    video_recorder.stop(wait=False)
+                except Exception:
+                    pass
+            if shot_recorder:
+                try:
+                    shot_recorder.stop(wait=False)
+                except Exception:
+                    pass
             return
 
         first_suite = first_sub_task["suite_info"]
@@ -207,11 +391,25 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
             )
             test_tasks[main_task_id] = main_task
             try:
+                video_path = None
+                if video_recorder:
+                    try:
+                        res = video_recorder.stop(wait=True)
+                        video_path = res.output_path if res else None
+                    except Exception:
+                        video_path = None
+                if not video_path and shot_recorder:
+                    try:
+                        res2 = shot_recorder.stop(wait=True)
+                        video_path = res2.output_path if res2 else None
+                    except Exception:
+                        video_path = None
                 db.upsert_history(
                     task_id=main_task_id,
                     status="failure",
                     end_time=main_task["end_time"],
                     error_msg=main_task["report_error_msg"],
+                    video_path=video_path,
                 )
             except Exception as e:
                 log.error(f"写入执行集主任务{main_task_id}历史失败：{str(e)}", exc_info=True)
@@ -258,6 +456,20 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
                 exec_duration = max((end_dt - start_dt).total_seconds(), 0.0)
         except Exception:
             exec_duration = None
+        video_path = None
+        if video_recorder:
+            try:
+                res = video_recorder.stop(wait=True)
+                video_path = res.output_path if res else None
+            except Exception as e:
+                log.warning(f"执行集主任务{main_task_id}停止录屏失败：{e}")
+        if not video_path and shot_recorder:
+            try:
+                res2 = shot_recorder.stop(wait=True)
+                video_path = res2.output_path if res2 else None
+            except Exception:
+                video_path = None
+
         try:
             db.upsert_history(
                 task_id=main_task_id,
@@ -268,6 +480,7 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
                 report_meta_path=main_task.get("report_meta_path"),
                 report_generate_duration=main_task.get("report_generate_duration"),
                 error_msg=main_task.get("report_error_msg"),
+                video_path=video_path,
             )
             # 同步更新运行时任务表中的主任务状态，避免任务管理中残留“运行中”记录
             db.upsert_task_runtime(
@@ -303,6 +516,20 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
                 exec_duration = max((end_dt - start_dt).total_seconds(), 0.0)
         except Exception:
             exec_duration = None
+        video_path = None
+        if video_recorder:
+            try:
+                res = video_recorder.stop(wait=True)
+                video_path = res.output_path if res else None
+            except Exception:
+                video_path = None
+        if not video_path and shot_recorder:
+            try:
+                res2 = shot_recorder.stop(wait=True)
+                video_path = res2.output_path if res2 else None
+            except Exception:
+                video_path = None
+
         try:
             db.upsert_history(
                 task_id=main_task_id,
@@ -310,6 +537,7 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
                 end_time=main_task["end_time"],
                 exec_duration=exec_duration,
                 error_msg=main_task["report_error_msg"],
+                video_path=video_path,
             )
             # 同步更新运行时任务表中的主任务状态，避免任务管理中残留“运行中”记录
             db.upsert_task_runtime(
@@ -319,6 +547,18 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
             )
         except Exception as e2:
             log.error(f"写入执行集主任务{main_task_id}历史失败：{str(e2)}", exc_info=True)
+    finally:
+        # 兜底停止录屏
+        if video_recorder and not video_recorder.result:
+            try:
+                video_recorder.stop(wait=False)
+            except Exception:
+                pass
+        if shot_recorder and not shot_recorder.result:
+            try:
+                shot_recorder.stop(wait=False)
+            except Exception:
+                pass
 
 
 # ------------------- 接口定义 -------------------
@@ -351,6 +591,10 @@ def start_test():
         req_data = request.get_json() or {}
         device_id = req_data.get("device_id")
         suite_id = req_data.get("suite_id")
+        record_video = bool(req_data.get("record_video") or False)
+        log.info(
+            f"收到单用例启动请求：device_id={device_id}, suite_id={suite_id}, record_video={record_video}"
+        )
 
         # 2. 参数校验
         if not device_id:
@@ -413,6 +657,7 @@ def start_test():
             "task_id": task_id,
             "device_id": device_id,
             "suite_info": suite_info,
+            "record_video": record_video,
             "status": "pending",  # pending/running/success/failed
             "create_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
@@ -426,6 +671,7 @@ def start_test():
                 type_="single",
                 status="pending",
                 create_time=test_tasks[task_id]["create_time"],
+                record_video=record_video,
             )
             db.upsert_task_runtime(
                 task_id=task_id,
@@ -441,7 +687,7 @@ def start_test():
         # 5. 后台启动任务（避免阻塞Web请求）
         Thread(
             target=run_task_background,
-            args=(task_id, device_id, suite_abs_path),
+            args=(task_id, device_id, suite_abs_path, record_video),
             daemon=True  # 守护线程，Web服务退出时自动结束
         ).start()
 
@@ -1399,6 +1645,10 @@ def start_exec_set_test():
         req_data = request.get_json() or {}
         device_id = req_data.get("device_id")
         exec_set_id = req_data.get("exec_set_id")
+        record_video = bool(req_data.get("record_video") or False)
+        log.info(
+            f"收到执行集启动请求：device_id={device_id}, exec_set_id={exec_set_id}, record_video={record_video}"
+        )
 
         if not device_id or not exec_set_id:
             return jsonify({"code": 400, "msg": "请指定设备ID和执行集ID", "data": None})
@@ -1465,7 +1715,7 @@ def start_exec_set_test():
             # 后台启动子任务
             Thread(
                 target=run_task_background,
-                args=(sub_task_id, device_id, suite_abs_path),
+                args=(sub_task_id, device_id, suite_abs_path, False),
                 daemon=True
             ).start()
             sub_tasks.append(sub_task_id)
@@ -1480,7 +1730,8 @@ def start_exec_set_test():
             "sub_tasks": sub_tasks,
             "status": "running",
             "start_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "case_count": len(sub_tasks)
+            "case_count": len(sub_tasks),
+            "record_video": record_video,
         }
 
         # 主任务历史与运行时任务
@@ -1492,6 +1743,7 @@ def start_exec_set_test():
                 exec_set_id=exec_set_id,
                 status="running",
                 create_time=test_tasks[main_task_id]["start_time"],
+                record_video=record_video,
             )
             db.upsert_task_runtime(
                 task_id=main_task_id,
@@ -1526,3 +1778,178 @@ def start_exec_set_test():
         error_msg = f"启动执行集测试失败：{str(e)}"
         log.error(error_msg, exc_info=True)
         return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+
+@test_bp.get("/video/<task_id>")
+def download_task_video(task_id: str):
+    """下载任务录屏文件（mp4/zip）。"""
+    from flask import send_file, abort
+    import mimetypes
+    import os
+
+    record_root = get_record_root()
+    # 优先从 DB 中取 video_path
+    video_path = None
+    try:
+        h = db.get_history_by_task_id(task_id)
+        if h:
+            video_path = h.get("video_path")
+    except Exception:
+        video_path = None
+
+    candidates = []
+    if video_path:
+        candidates.append(video_path)
+    # 兜底按约定文件名寻找
+    candidates.append(safe_join(record_root, f"{task_id}.mp4"))
+    candidates.append(safe_join(record_root, f"{task_id}.zip"))
+
+    final_path = None
+    for p in candidates:
+        try:
+            if not p:
+                continue
+            abs_p = os.path.abspath(p)
+            if not abs_p.startswith(os.path.abspath(record_root)):
+                continue
+            if os.path.exists(abs_p) and os.path.isfile(abs_p):
+                final_path = abs_p
+                break
+        except Exception:
+            continue
+
+    if not final_path:
+        abort(404, description=f"任务{task_id}无可用录屏文件")
+
+    mime, _ = mimetypes.guess_type(final_path)
+    return send_file(
+        final_path,
+        mimetype=mime or "application/octet-stream",
+        as_attachment=True,
+        download_name=os.path.basename(final_path),
+        conditional=True,
+        max_age=0,
+    )
+
+
+@test_bp.get("/video/view/<task_id>")
+def view_task_video(task_id: str):
+    """
+    在线查看录屏：
+    - mp4：inline 直接播放
+    - zip：无法直接播放，回退为下载
+    """
+    from flask import send_file, abort
+    import mimetypes
+    import os
+
+    record_root = get_record_root()
+    video_path = None
+    try:
+        h = db.get_history_by_task_id(task_id)
+        if h:
+            video_path = h.get("video_path")
+    except Exception:
+        video_path = None
+
+    candidates = []
+    if video_path:
+        candidates.append(video_path)
+    candidates.append(safe_join(record_root, f"{task_id}.mp4"))
+    candidates.append(safe_join(record_root, f"{task_id}.zip"))
+
+    final_path = None
+    for p in candidates:
+        try:
+            if not p:
+                continue
+            abs_p = os.path.abspath(p)
+            if not abs_p.startswith(os.path.abspath(record_root)):
+                continue
+            if os.path.exists(abs_p) and os.path.isfile(abs_p):
+                final_path = abs_p
+                break
+        except Exception:
+            continue
+
+    if not final_path:
+        abort(404, description=f"任务{task_id}无可用录屏文件")
+
+    mime, _ = mimetypes.guess_type(final_path)
+    is_mp4 = final_path.lower().endswith(".mp4")
+    return send_file(
+        final_path,
+        mimetype=mime or ("video/mp4" if is_mp4 else "application/octet-stream"),
+        as_attachment=not is_mp4,
+        download_name=os.path.basename(final_path),
+        conditional=True,
+        max_age=0,
+    )
+
+
+@test_bp.get("/screenshots/<task_id>")
+def list_task_screenshots(task_id: str):
+    """
+    查询任务截图列表（用于在线预览）。
+    约定截图目录：record/<task_id>_shots/*.png
+    """
+    record_root = get_record_root()
+    shots_dir = safe_join(record_root, f"{task_id}_shots")
+    try:
+        if not os.path.exists(shots_dir) or not os.path.isdir(shots_dir):
+            return jsonify(
+                {
+                    "code": 404,
+                    "msg": "该任务无可用截图（截图目录不存在）",
+                    "data": {"items": []},
+                }
+            )
+        names = [
+            n
+            for n in os.listdir(shots_dir)
+            if isinstance(n, str) and n.lower().endswith(".png")
+        ]
+        names.sort()
+        items = [
+            {
+                "name": n,
+                "url": f"/api/test/screenshots/file/{task_id}/{n}",
+            }
+            for n in names
+        ]
+        return jsonify({"code": 200, "msg": "ok", "data": {"items": items}})
+    except Exception as e:
+        log.error(f"查询任务{task_id}截图列表失败：{e}", exc_info=True)
+        return jsonify({"code": 500, "msg": f"查询截图列表失败：{e}", "data": {"items": []}})
+
+
+@test_bp.get("/screenshots/file/<task_id>/<name>")
+def view_task_screenshot_file(task_id: str, name: str):
+    """在线查看单张截图（png）。"""
+    record_root = get_record_root()
+    # 只允许访问约定目录下 png 文件
+    shots_dir = safe_join(record_root, f"{task_id}_shots")
+    try:
+        if not name or "/" in name or "\\" in name:
+            abort(400, description="非法文件名")
+        if not name.lower().endswith(".png"):
+            abort(400, description="仅支持 png")
+        p = safe_join(shots_dir, name)
+        abs_p = os.path.abspath(p)
+        if not abs_p.startswith(os.path.abspath(record_root)):
+            abort(400, description="非法路径")
+        if not os.path.exists(abs_p) or not os.path.isfile(abs_p):
+            abort(404, description="截图不存在")
+        return send_file(
+            abs_p,
+            mimetype="image/png",
+            as_attachment=False,
+            download_name=name,
+            conditional=True,
+            max_age=0,
+        )
+    except Exception as e:
+        # abort 会抛异常，这里只在真正异常时记录
+        if "HTTPException" not in str(type(e)):
+            log.error(f"读取任务{task_id}截图失败：{e}", exc_info=True)
+        raise

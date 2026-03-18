@@ -90,6 +90,31 @@
                  </button>`
               : `<span class="text-light text-sm">无报告</span>`
           }
+          ${
+            h.video_path
+              ? `${String(h.video_path).toLowerCase().endsWith(".mp4")
+                  ? `<button class="ml-3 text-primary hover:text-primary/80 text-sm"
+                        data-action="view-media" data-kind="video" data-task-id="${encodeURIComponent(
+                          h.task_id
+                        )}" type="button">
+                      <i class="fa fa-play-circle mr-1"></i>查看视频
+                    </button>`
+                  : `<button class="ml-3 text-primary hover:text-primary/80 text-sm"
+                        data-action="view-media" data-kind="shots" data-task-id="${encodeURIComponent(
+                          h.task_id
+                        )}" type="button">
+                      <i class="fa fa-picture-o mr-1"></i>查看截图
+                    </button>`}
+                 <a class="ml-3 text-success hover:text-success/80 text-sm"
+                    href="/api/test/video/${encodeURIComponent(h.task_id)}">
+                    <i class="fa fa-download mr-1"></i>${
+                      String(h.video_path).toLowerCase().endsWith(".mp4")
+                        ? "下载视频"
+                        : "下载截图"
+                    }
+                 </a>`
+              : ``
+          }
         </td>
       </tr>
     `
@@ -135,12 +160,265 @@
                  </button>`
               : `<span class="text-light text-sm">无报告</span>`
           }
+          ${
+            h.video_path
+              ? `${String(h.video_path).toLowerCase().endsWith(".mp4")
+                  ? `<button class="ml-3 text-primary hover:text-primary/80 text-sm"
+                        data-action="view-media" data-kind="video" data-task-id="${encodeURIComponent(
+                          h.task_id
+                        )}" type="button">
+                      <i class="fa fa-play-circle mr-1"></i>查看视频
+                    </button>`
+                  : `<button class="ml-3 text-primary hover:text-primary/80 text-sm"
+                        data-action="view-media" data-kind="shots" data-task-id="${encodeURIComponent(
+                          h.task_id
+                        )}" type="button">
+                      <i class="fa fa-picture-o mr-1"></i>查看截图
+                    </button>`}
+                 <a class="ml-3 text-success hover:text-success/80 text-sm"
+                    href="/api/test/video/${encodeURIComponent(h.task_id)}">
+                    <i class="fa fa-download mr-1"></i>${
+                      String(h.video_path).toLowerCase().endsWith(".mp4")
+                        ? "下载视频"
+                        : "下载截图"
+                    }
+                 </a>`
+              : ``
+          }
         </td>
       </tr>
     `
       )
       .join("");
   }
+
+  // ---------------- 媒体弹窗：视频 / 截图 ----------------
+  const MediaViewer = (function () {
+    let state = { open: false, kind: null, taskId: null, items: [], idx: 0 };
+
+    function el(id) {
+      return document.getElementById(id);
+    }
+
+    function showModal() {
+      const modal = el("media-viewer-modal");
+      if (modal) modal.classList.remove("hidden");
+      state.open = true;
+    }
+
+    function hideModal() {
+      const modal = el("media-viewer-modal");
+      if (modal) modal.classList.add("hidden");
+      const video = el("media-viewer-video");
+      if (video) {
+        try {
+          video.pause();
+        } catch (e) {}
+        video.removeAttribute("src");
+        try {
+          video.load();
+        } catch (e) {}
+      }
+      state = { open: false, kind: null, taskId: null, items: [], idx: 0 };
+    }
+
+    function setMsg(text) {
+      const node = el("media-viewer-msg");
+      if (node) node.textContent = text || "";
+    }
+
+    function setTitle(title, taskId) {
+      const t = el("media-viewer-title");
+      const sub = el("media-viewer-subtitle");
+      if (t) t.textContent = title || "媒体预览";
+      if (sub) sub.textContent = taskId ? `task=${taskId}` : "";
+    }
+
+    function setPanels(kind) {
+      const vp = el("media-viewer-video-panel");
+      const sp = el("media-viewer-shot-panel");
+      if (vp) vp.classList.toggle("hidden", kind !== "video");
+      if (sp) sp.classList.toggle("hidden", kind !== "shots");
+      const icon = (document.querySelector("#media-viewer-title") || {}).previousElementSibling;
+      if (icon && icon.classList) {
+        icon.className =
+          kind === "video"
+            ? "fa fa-play-circle text-primary"
+            : "fa fa-picture-o text-primary";
+      }
+    }
+
+    function updateShotUI() {
+      const counter = el("media-viewer-counter");
+      const prevBtn = el("media-viewer-prev");
+      const nextBtn = el("media-viewer-next");
+      const total = state.items.length;
+      if (counter) {
+        counter.textContent = total
+          ? `${state.idx + 1} / ${total}（${state.items[state.idx].name}）`
+          : "- / -";
+      }
+      if (prevBtn) prevBtn.disabled = state.idx <= 0;
+      if (nextBtn) nextBtn.disabled = state.idx >= total - 1;
+    }
+
+    function renderThumbs() {
+      const wrap = el("media-viewer-thumbs");
+      if (!wrap) return;
+      wrap.innerHTML = "";
+      const total = state.items.length;
+      if (!total) return;
+      state.items.forEach((it, i) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className =
+          "border rounded overflow-hidden bg-white hover:opacity-90 focus:outline-none " +
+          (i === state.idx ? "ring-2 ring-primary" : "");
+        btn.style.width = "92px";
+        btn.style.height = "62px";
+        btn.dataset.idx = String(i);
+        const img = document.createElement("img");
+        img.alt = it.name || "thumb";
+        img.className = "w-full h-full object-cover";
+        img.loading = "lazy";
+        img.src = it.url + (it.url.includes("?") ? "&" : "?") + "thumb=1&t=" + Date.now();
+        btn.appendChild(img);
+        btn.addEventListener("click", () => showShotAt(i));
+        wrap.appendChild(btn);
+      });
+    }
+
+    function highlightThumbs() {
+      const wrap = el("media-viewer-thumbs");
+      if (!wrap) return;
+      Array.from(wrap.querySelectorAll("button[data-idx]")).forEach((b) => {
+        const i = parseInt(b.dataset.idx, 10);
+        b.classList.toggle("ring-2", i === state.idx);
+        b.classList.toggle("ring-primary", i === state.idx);
+      });
+    }
+
+    function showShotAt(i) {
+      const total = state.items.length;
+      if (!total) return;
+      state.idx = Math.max(0, Math.min(total - 1, i));
+      updateShotUI();
+      highlightThumbs();
+      const img = el("media-viewer-shot");
+      if (!img) return;
+      setMsg("加载中...");
+      const url = state.items[state.idx].url + (state.items[state.idx].url.includes("?") ? "&" : "?") + "t=" + Date.now();
+      img.onload = () => setMsg("");
+      img.onerror = () => setMsg("图片加载失败，请稍后重试或下载查看");
+      img.src = url;
+    }
+
+    async function openVideo(taskId) {
+      state.kind = "video";
+      state.taskId = taskId;
+      setTitle("视频预览", taskId);
+      setPanels("video");
+      setMsg("");
+      const video = el("media-viewer-video");
+      const dl = el("media-viewer-download");
+      if (dl) {
+        dl.href = `/api/test/video/${encodeURIComponent(taskId)}`;
+        dl.textContent = "下载视频";
+        dl.innerHTML = '<i class="fa fa-download mr-1"></i>下载视频';
+      }
+      if (video) {
+        video.src = `/api/test/video/view/${encodeURIComponent(taskId)}`;
+        try {
+          video.load();
+        } catch (e) {}
+      }
+      showModal();
+    }
+
+    async function openShots(taskId) {
+      state.kind = "shots";
+      state.taskId = taskId;
+      state.items = [];
+      state.idx = 0;
+      setTitle("截图预览", taskId);
+      setPanels("shots");
+      setMsg("正在加载截图列表...");
+      const dl = el("media-viewer-download");
+      if (dl) {
+        dl.href = `/api/test/video/${encodeURIComponent(taskId)}`;
+        dl.innerHTML = '<i class="fa fa-download mr-1"></i>下载截图';
+      }
+      showModal();
+      try {
+        const data = await apiGet(`/api/test/screenshots/${encodeURIComponent(taskId)}`);
+        if (!data || data.code !== 200) {
+          throw new Error((data && data.msg) || "加载截图列表失败");
+        }
+        const items = Array.isArray(data.data && data.data.items) ? data.data.items : [];
+        if (!items.length) {
+          setMsg("该任务无可用截图（你仍可以点击右下角下载查看）");
+          updateShotUI();
+          const wrap = el("media-viewer-thumbs");
+          if (wrap) wrap.innerHTML = "";
+          return;
+        }
+        state.items = items;
+        setMsg("");
+        renderThumbs();
+        showShotAt(0);
+      } catch (e) {
+        setMsg(`加载失败：${e.message}`);
+      }
+    }
+
+    function bindEventsOnce() {
+      const close = () => hideModal();
+      const c1 = el("media-viewer-close");
+      const c2 = el("media-viewer-close2");
+      if (c1 && !c1._bound) {
+        c1.addEventListener("click", close);
+        c1._bound = true;
+      }
+      if (c2 && !c2._bound) {
+        c2.addEventListener("click", close);
+        c2._bound = true;
+      }
+      const modal = el("media-viewer-modal");
+      if (modal && !modal._bound) {
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) close();
+        });
+        modal._bound = true;
+      }
+      const prevBtn = el("media-viewer-prev");
+      const nextBtn = el("media-viewer-next");
+      if (prevBtn && !prevBtn._bound) {
+        prevBtn.addEventListener("click", () => showShotAt(state.idx - 1));
+        prevBtn._bound = true;
+      }
+      if (nextBtn && !nextBtn._bound) {
+        nextBtn.addEventListener("click", () => showShotAt(state.idx + 1));
+        nextBtn._bound = true;
+      }
+      if (!window.__mediaViewerKeyBound) {
+        window.addEventListener("keydown", (e) => {
+          if (!state.open) return;
+          if (e.key === "Escape") {
+            hideModal();
+            return;
+          }
+          if (state.kind === "shots") {
+            if (e.key === "ArrowLeft") showShotAt(state.idx - 1);
+            if (e.key === "ArrowRight") showShotAt(state.idx + 1);
+          }
+        });
+        window.__mediaViewerKeyBound = true;
+      }
+    }
+
+    bindEventsOnce();
+    return { openVideo, openShots };
+  })();
 
   function updatePaginationUI(tabKey, page, totalPages, total) {
     if (tabKey === "single") {
@@ -330,6 +608,28 @@
     refreshActiveTab(true);
     initTabs();
     initClearButton();
+
+    // 历史表格的“查看视频/截图”按钮事件委托
+    function bindMediaClick(tbody) {
+      if (!tbody || tbody._boundMediaClick) return;
+      tbody.addEventListener("click", (e) => {
+        const btn = e.target && e.target.closest
+          ? e.target.closest("button[data-action='view-media']")
+          : null;
+        if (!btn) return;
+        const kind = btn.dataset.kind;
+        const taskId = btn.dataset.taskId ? decodeURIComponent(btn.dataset.taskId) : "";
+        if (!taskId) return;
+        if (kind === "video") {
+          MediaViewer.openVideo(taskId);
+        } else {
+          MediaViewer.openShots(taskId);
+        }
+      });
+      tbody._boundMediaClick = true;
+    }
+    bindMediaClick(taskHistoryTableSingle);
+    bindMediaClick(taskHistoryTableExecSet);
   }
 
   window.History = {

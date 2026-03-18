@@ -22,6 +22,7 @@
     execSetPageInfo,
     execSetPrevPage,
     execSetNextPage,
+    recordVideoCheckbox,
   } = Elements || {};
   const { apiGet, apiPost, addTaskLog, parseDateTime, formatDuration } =
     Common || {};
@@ -454,6 +455,7 @@
       const data = await apiPost("/api/test/start-exec-set", {
         device_id: deviceId,
         exec_set_id: execId,
+        record_video: !!(recordVideoCheckbox && recordVideoCheckbox.checked),
       });
       if (data.code === 200) {
         const mainTaskId = data.data.main_task_id;
