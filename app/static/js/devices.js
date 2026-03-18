@@ -6,6 +6,7 @@
     deviceList,
     onlineDeviceCount,
     refreshDeviceBtn,
+    atxGuideBtn,
     runningTaskTable,
     runningTaskCount,
     refreshRunningTasksBtn,
@@ -231,11 +232,42 @@
     if (refreshDeviceBtn) {
       refreshDeviceBtn.addEventListener("click", loadDeviceList);
     }
+    // ATX 安装指南 Tip
+    const atxGuideModal = document.getElementById("atx-guide-modal");
+    const closeAtxGuideBtn = document.getElementById("close-atx-guide-btn");
+    const atxGuideOkBtn = document.getElementById("atx-guide-ok-btn");
+    function openAtxGuide() {
+      if (!atxGuideModal) return;
+      atxGuideModal.classList.remove("hidden");
+    }
+    function closeAtxGuide() {
+      if (!atxGuideModal) return;
+      atxGuideModal.classList.add("hidden");
+    }
+    if (atxGuideBtn) {
+      atxGuideBtn.addEventListener("click", openAtxGuide);
+    } else {
+      // 兼容旧 Elements 未收录时的直接查找
+      const btn = document.getElementById("atx-guide-btn");
+      btn && btn.addEventListener("click", openAtxGuide);
+    }
+    closeAtxGuideBtn && closeAtxGuideBtn.addEventListener("click", closeAtxGuide);
+    atxGuideOkBtn && atxGuideOkBtn.addEventListener("click", closeAtxGuide);
+    atxGuideModal &&
+      atxGuideModal.addEventListener("click", (e) => {
+        if (e.target === atxGuideModal) closeAtxGuide();
+      });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeAtxGuide();
+    });
     if (refreshRunningTasksBtn) {
       refreshRunningTasksBtn.addEventListener("click", loadRunningTaskTable);
     }
     // 首次加载运行中任务列表
     loadRunningTaskTable();
+    // 10 秒轮询刷新在线设备与运行中任务（在线设备模块）
+    setInterval(loadDeviceList, 10000);
+    setInterval(loadRunningTaskTable, 10000);
   }
 
   window.Devices = {

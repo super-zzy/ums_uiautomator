@@ -135,15 +135,98 @@
                         <h2 class="text-lg font-semibold flex items-center">
                             <i class="fa fa-mobile text-primary mr-2"></i>在线设备
                         </h2>
-                        <button id="refresh-device-btn" class="text-primary text-sm flex items-center hover:text-primary/80">
-                            <i class="fa fa-refresh mr-1"></i>刷新
-                        </button>
+                        <div class="flex items-center gap-3">
+                            <button
+                                id="atx-guide-btn"
+                                type="button"
+                                class="text-light text-sm flex items-center hover:text-primary"
+                                title="手机未显示？点此查看 ATX 安装指南"
+                            >
+                                <i class="fa fa-question-circle mr-1"></i>ATX 安装指南
+                            </button>
+                            <button id="refresh-device-btn" class="text-primary text-sm flex items-center hover:text-primary/80">
+                                <i class="fa fa-refresh mr-1"></i>刷新
+                            </button>
+                        </div>
                     </div>
                     <div id="device-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
                         <!-- 设备列表将通过JS动态渲染 -->
                         <div class="text-center text-light py-8">
                             <i class="fa fa-spinner fa-spin text-2xl mb-2"></i>
                             <p>加载设备中...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ATX 安装指南（Tip 弹窗） -->
+                <div id="atx-guide-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+                    <div class="bg-white rounded-lg w-11/12 max-w-2xl max-h-[90vh] flex flex-col card-shadow">
+                        <div class="p-4 border-b flex justify-between items-center">
+                            <h3 class="text-lg font-bold flex items-center">
+                                <i class="fa fa-info-circle text-primary mr-2"></i>手机 ATX 安装/连接指南
+                            </h3>
+                            <button id="close-atx-guide-btn" class="text-gray-500 hover:text-gray-700" type="button" aria-label="关闭">
+                                <i class="fa fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="p-5 overflow-y-auto text-sm leading-6">
+                            <div class="bg-gray-50 border border-gray-200 rounded p-3 mb-4">
+                                <p class="text-dark font-medium mb-1">适用场景</p>
+                                <p class="text-light">在线设备列表看不到手机 / 无法运行 UI 自动化时，通常需要先开启开发者选项与 USB 调试，并在手机上安装并启动 atx-agent。</p>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div>
+                                    <p class="font-semibold">1) 打开开发者选项与 USB 调试</p>
+                                    <ul class="list-disc pl-5 text-light mt-1 space-y-1">
+                                        <li>设置 → 关于手机 → 连续点击“版本号”7 次，开启“开发者选项”。</li>
+                                        <li>设置 → 开发者选项 → 打开“USB 调试”。</li>
+                                        <li>（建议）同时打开“USB 调试（安全设置）/ 通过 USB 安装/ 允许模拟点击”等相关权限（不同品牌名称略有差异）。</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <p class="font-semibold">2) 连接电脑并确认 ADB 可识别</p>
+                                    <ul class="list-disc pl-5 text-light mt-1 space-y-1">
+                                        <li>使用数据线连接后，手机上弹出的授权提示选择“允许 USB 调试”。</li>
+                                        <li>在电脑执行：<span class="font-mono bg-gray-100 px-1 py-0.5 rounded">adb devices</span>，应能看到设备序列号与状态 <span class="font-mono bg-gray-100 px-1 py-0.5 rounded">device</span>。</li>
+                                        <li>如显示 <span class="font-mono bg-gray-100 px-1 py-0.5 rounded">unauthorized</span>：手机端撤销 USB 调试授权后重新插拔并再次允许。</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <p class="font-semibold">3) 安装并启动 atx-agent（常用方式）</p>
+                                    <p class="text-light mt-1">确保电脑已安装 Python 与相关工具后，执行以下命令之一（按你的环境选择）：</p>
+                                    <div class="bg-gray-900 text-gray-100 rounded p-3 mt-2 font-mono text-xs whitespace-pre-wrap">
+python -m pip install -U uiautomator2
+python -m uiautomator2 init
+                                    </div>
+                                    <ul class="list-disc pl-5 text-light mt-2 space-y-1">
+                                        <li>初始化成功后，手机会安装并启动 atx-agent（后台服务）。</li>
+                                        <li>如公司环境限制外网，请配置镜像或离线安装（需运维/开发提供安装包与源）。</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <p class="font-semibold">4) 验证 atx-agent 是否可用</p>
+                                    <ul class="list-disc pl-5 text-light mt-1 space-y-1">
+                                        <li>执行：<span class="font-mono bg-gray-100 px-1 py-0.5 rounded">adb shell ps | findstr atx</span>（Windows）或 <span class="font-mono bg-gray-100 px-1 py-0.5 rounded">adb shell ps | grep atx</span>（macOS/Linux）</li>
+                                        <li>也可执行：<span class="font-mono bg-gray-100 px-1 py-0.5 rounded">adb forward tcp:7912 tcp:7912</span> 后访问 <span class="font-mono bg-gray-100 px-1 py-0.5 rounded">http://127.0.0.1:7912</span>（若你的版本启用 web 服务）。</li>
+                                    </ul>
+                                </div>
+
+                                <div class="bg-warning/10 border border-warning/30 rounded p-3">
+                                    <p class="font-semibold text-warning mb-1">常见问题</p>
+                                    <ul class="list-disc pl-5 text-light space-y-1">
+                                        <li>设备反复掉线：更换数据线/USB 口，关闭省电策略，避免 USB 仅充电模式。</li>
+                                        <li>权限弹窗卡住：确保手机端允许“通过 USB 安装/调试”，并解锁屏幕后再执行 init。</li>
+                                        <li>多设备：建议一次只连一台排查，确认稳定后再批量接入。</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 border-t flex justify-end gap-2">
+                            <button id="atx-guide-ok-btn" type="button" class="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90">我知道了</button>
                         </div>
                     </div>
                 </div>
@@ -490,6 +573,15 @@
                     </tbody>
                 </table>
             </div>
+            <div id="history-single-pagination" class="flex items-center justify-between text-xs text-light mt-2">
+                <div>
+                    <span id="history-single-page-info">第 1 页</span>
+                </div>
+                <div class="space-x-2">
+                    <button id="history-single-prev-page" class="px-2 py-1 border rounded disabled:opacity-50" disabled>上一页</button>
+                    <button id="history-single-next-page" class="px-2 py-1 border rounded disabled:opacity-50">下一页</button>
+                </div>
+            </div>
 
             <!-- 执行集任务历史 -->
             <div id="history-panel-exec-set" class="overflow-x-auto hidden">
@@ -514,6 +606,15 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+            <div id="history-exec-set-pagination" class="flex items-center justify-between text-xs text-light mt-2 hidden">
+                <div>
+                    <span id="history-exec-set-page-info">第 1 页</span>
+                </div>
+                <div class="space-x-2">
+                    <button id="history-exec-set-prev-page" class="px-2 py-1 border rounded disabled:opacity-50" disabled>上一页</button>
+                    <button id="history-exec-set-next-page" class="px-2 py-1 border rounded disabled:opacity-50">下一页</button>
+                </div>
             </div>
         </div>
     </main>

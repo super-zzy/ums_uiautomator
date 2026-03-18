@@ -25,6 +25,7 @@ window.Elements = {
   // 设备列表
   deviceList: document.getElementById("device-list"),
   refreshDeviceBtn: document.getElementById("refresh-device-btn"),
+  atxGuideBtn: document.getElementById("atx-guide-btn"),
 
   // 任务管理（在线设备卡片下）
   runningTaskTable: document.getElementById("running-task-table"),
@@ -60,6 +61,20 @@ window.Elements = {
   historyPanelSingle: document.getElementById("history-panel-single"),
   historyPanelExecSet: document.getElementById("history-panel-exec-set"),
   clearHistoryBtn: document.getElementById("clear-history-btn"),
+  historySinglePagination: document.getElementById("history-single-pagination"),
+  historySinglePageInfo: document.getElementById("history-single-page-info"),
+  historySinglePrevPage: document.getElementById("history-single-prev-page"),
+  historySingleNextPage: document.getElementById("history-single-next-page"),
+  historyExecSetPagination: document.getElementById(
+    "history-exec-set-pagination"
+  ),
+  historyExecSetPageInfo: document.getElementById("history-exec-set-page-info"),
+  historyExecSetPrevPage: document.getElementById(
+    "history-exec-set-prev-page"
+  ),
+  historyExecSetNextPage: document.getElementById(
+    "history-exec-set-next-page"
+  ),
 
   // 顶部刷新
   refreshBtn: document.getElementById("refresh-btn"),

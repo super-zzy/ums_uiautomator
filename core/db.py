@@ -7,6 +7,43 @@ from util.log_util import TempLog
 
 log = TempLog()
 
+HISTORY_STATUS_SUCCESS = "success"
+HISTORY_STATUS_FAILURE = "failure"
+HISTORY_STATUS_STOP = "stop"
+
+
+def normalize_history_status(value: Optional[str]) -> Optional[str]:
+    """
+    将任意来源的状态归一化为三值枚举：
+    - success
+    - failure
+    - stop
+
+    对于 pending/running 等“非最终态”，返回 None（不写入 history.status），
+    历史列表查询仅展示最终态记录。
+    """
+    if value is None:
+        return None
+    s = str(value).strip().lower()
+    if not s:
+        return None
+
+    if s in ("success", "passed", "pass", "ok"):
+        return HISTORY_STATUS_SUCCESS
+
+    if s in ("failed", "failure", "error", "exception"):
+        return HISTORY_STATUS_FAILURE
+
+    if s in ("stopped", "stop", "stopping", "cancelled", "canceled", "killed"):
+        return HISTORY_STATUS_STOP
+
+    # 非最终态：不写入 history.status（避免出现额外状态值）
+    if s in ("pending", "running", "unknown"):
+        return None
+
+    # 兜底：不写入，避免污染枚举
+    return None
+
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
@@ -213,6 +250,40 @@ def _init_db() -> None:
                 pass
 
         conn.commit()
+
+        # 归一化历史状态（兼容旧值）：仅保留 success/failure/stop
+        try:
+            cur.execute(
+                """
+                UPDATE exec_history
+                SET status = 'failure'
+                WHERE LOWER(COALESCE(status, '')) = 'success_with_failure'
+                """
+            )
+            cur.execute(
+                """
+                UPDATE exec_history
+                SET status = 'failure'
+                WHERE LOWER(COALESCE(status, '')) IN ('failed', 'error', 'exception')
+                """
+            )
+            cur.execute(
+                """
+                UPDATE exec_history
+                SET status = 'stop'
+                WHERE LOWER(COALESCE(status, '')) IN ('stopped', 'cancelled', 'canceled')
+                """
+            )
+            cur.execute(
+                """
+                UPDATE exec_history
+                SET status = NULL
+                WHERE LOWER(COALESCE(status, '')) IN ('pending', 'running', 'unknown')
+                """
+            )
+            conn.commit()
+        except Exception:
+            pass
     finally:
         conn.close()
 
@@ -525,6 +596,7 @@ def upsert_history(
     """
     以 task_id 为唯一键做“插入或更新”，只覆盖传入非 None 的字段。
     """
+    status = normalize_history_status(status)
     conn = _get_conn()
     try:
         cur = conn.cursor()
@@ -629,19 +701,141 @@ def get_history_by_task_id(task_id: str) -> Optional[Dict[str, Any]]:
 
 
 def list_histories(limit: int = 100) -> List[Dict[str, Any]]:
-    """按创建时间倒序查询最近的执行历史"""
+    """按创建时间倒序查询最近的执行历史（兼容旧接口：仅limit）"""
     conn = _get_conn()
     try:
         cur = conn.cursor()
         cur.execute(
             """
-            SELECT *
-            FROM exec_history
-            ORDER BY create_time DESC
+            SELECT eh.*,
+                   tc.name AS case_name,
+                   es.name AS exec_set_name
+            FROM exec_history eh
+            LEFT JOIN test_case tc ON eh.case_id = tc.id
+            LEFT JOIN exec_set es ON eh.exec_set_id = es.id
+            ORDER BY eh.create_time DESC
             LIMIT ?
             """,
             (limit,),
         )
+        rows = cur.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def count_single_histories() -> int:
+    """统计单用例（含子任务）执行历史数量（仅最终态）"""
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT COUNT(1) AS cnt
+            FROM exec_history
+            WHERE (type IS NULL OR type = 'single')
+              AND status IN ('success', 'failure', 'stop')
+            """
+        )
+        row = cur.fetchone()
+        return int(row["cnt"]) if row else 0
+    finally:
+        conn.close()
+
+
+def list_single_histories_paginated(
+    offset: int, limit: int
+) -> List[Dict[str, Any]]:
+    """分页查询单用例（含子任务）执行历史（仅最终态）"""
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT eh.*,
+                   tc.name AS case_name
+            FROM exec_history eh
+            LEFT JOIN test_case tc ON eh.case_id = tc.id
+            WHERE (eh.type IS NULL OR eh.type = 'single')
+              AND eh.status IN ('success', 'failure', 'stop')
+            ORDER BY eh.create_time DESC
+            LIMIT ? OFFSET ?
+            """,
+            (limit, offset),
+        )
+        rows = cur.fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def count_exec_set_histories(exec_set_id: Optional[str] = None) -> int:
+    """统计执行集主任务历史数量（仅最终态），可按exec_set_id过滤。"""
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        if exec_set_id:
+            cur.execute(
+                """
+                SELECT COUNT(1) AS cnt
+                FROM exec_history
+                WHERE type = 'exec_set' AND exec_set_id = ?
+                  AND status IN ('success', 'failure', 'stop')
+                """,
+                (exec_set_id,),
+            )
+        else:
+            cur.execute(
+                """
+                SELECT COUNT(1) AS cnt
+                FROM exec_history
+                WHERE type = 'exec_set'
+                  AND status IN ('success', 'failure', 'stop')
+                """
+            )
+        row = cur.fetchone()
+        return int(row["cnt"]) if row else 0
+    finally:
+        conn.close()
+
+
+def list_exec_set_histories_paginated(
+    offset: int, limit: int, exec_set_id: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    """
+    分页查询执行集主任务历史（type='exec_set'），可按exec_set_id过滤。
+    """
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        if exec_set_id:
+            cur.execute(
+                """
+                SELECT eh.*,
+                       es.name AS exec_set_name
+                FROM exec_history eh
+                LEFT JOIN exec_set es ON eh.exec_set_id = es.id
+                WHERE eh.type = 'exec_set' AND eh.exec_set_id = ?
+                  AND eh.status IN ('success', 'failure', 'stop')
+                ORDER BY eh.create_time DESC
+                LIMIT ? OFFSET ?
+                """,
+                (exec_set_id, limit, offset),
+            )
+        else:
+            cur.execute(
+                """
+                SELECT eh.*,
+                       es.name AS exec_set_name
+                FROM exec_history eh
+                LEFT JOIN exec_set es ON eh.exec_set_id = es.id
+                WHERE eh.type = 'exec_set'
+                  AND eh.status IN ('success', 'failure', 'stop')
+                ORDER BY eh.create_time DESC
+                LIMIT ? OFFSET ?
+                """,
+                (limit, offset),
+            )
         rows = cur.fetchall()
         return [dict(r) for r in rows]
     finally:

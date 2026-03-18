@@ -149,7 +149,7 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
             main_task = test_tasks.get(main_task_id, {})
             main_task.update(
                 {
-                    "status": "failed",
+                    "status": "failure",
                     "end_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "report_error_msg": "执行集无子任务，未生成报告",
                 }
@@ -158,7 +158,7 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
             try:
                 db.upsert_history(
                     task_id=main_task_id,
-                    status="failed",
+                    status="failure",
                     end_time=main_task["end_time"],
                     error_msg=main_task["report_error_msg"],
                 )
@@ -200,7 +200,7 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
             main_task = test_tasks.get(main_task_id, {})
             main_task.update(
                 {
-                    "status": "failed",
+                    "status": "failure",
                     "end_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "report_error_msg": "未找到子任务Allure原始数据，未生成报告",
                 }
@@ -209,7 +209,7 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
             try:
                 db.upsert_history(
                     task_id=main_task_id,
-                    status="failed",
+                    status="failure",
                     end_time=main_task["end_time"],
                     error_msg=main_task["report_error_msg"],
                 )
@@ -224,11 +224,14 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
 
         # 汇总整体状态：只要有子任务失败，则标记为failed，否则success
         any_failed = any(
-            "failed" in (test_tasks.get(sid, {}).get("status") or "")
+            "failure" in (test_tasks.get(sid, {}).get("status") or "")
+            or "failed" in (test_tasks.get(sid, {}).get("status") or "")
             for sid in sub_task_ids
         )
         overall_status = (
-            "success" if (report_result["status"] == "success" and not any_failed) else "failed"
+            "success"
+            if (report_result["status"] == "success" and not any_failed)
+            else "failure"
         )
 
         main_task = test_tasks.get(main_task_id, {})
@@ -283,7 +286,7 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
         main_task = test_tasks.get(main_task_id, {})
         main_task.update(
             {
-                "status": "failed",
+                "status": "failure",
                 "end_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "report_error_msg": f"执行集报告生成异常：{str(e)}",
             }
@@ -303,7 +306,7 @@ def monitor_exec_set_report(main_task_id: str, device_id: str, sub_task_ids: lis
         try:
             db.upsert_history(
                 task_id=main_task_id,
-                status="failed",
+                status="failure",
                 end_time=main_task["end_time"],
                 exec_duration=exec_duration,
                 error_msg=main_task["report_error_msg"],
@@ -476,7 +479,11 @@ def get_task_status(task_id: str):
                     index_path = report_info.get("index_path")
                     report_dir = os.path.dirname(index_path) if index_path else None
 
-                    status = "success" if report_info.get("status") == "success" else "failed"
+                    status = (
+                        "success"
+                        if report_info.get("status") == "success"
+                        else "failure"
+                    )
 
                     # 尝试从执行历史中补充用例名称，避免前端显示“未知用例”
                     case_name = None
@@ -545,27 +552,63 @@ def get_task_status(task_id: str):
 
 @test_bp.get("/history")
 def get_history_list():
-    """获取最近的任务执行历史列表"""
-    try:
-        limit = int(request.args.get("limit", 100))
-        if limit <= 0:
+    """获取任务执行历史列表（支持分页）"""
+    # 兼容：若传 limit 则走旧逻辑（返回 list）
+    if request.args.get("limit") is not None and request.args.get("page") is None:
+        try:
+            limit = int(request.args.get("limit", 100))
+            if limit <= 0:
+                limit = 100
+        except Exception:
             limit = 100
+        try:
+            histories = db.list_histories(limit=limit)
+            return jsonify(
+                {
+                    "code": 200,
+                    "msg": f"获取执行历史成功（最近{len(histories)}条）",
+                    "data": histories,
+                }
+            )
+        except Exception as e:
+            error_msg = f"获取执行历史失败：{str(e)}"
+            log.error(error_msg, exc_info=True)
+            return jsonify({"code": 400, "msg": error_msg, "data": []})
+
+    # 新逻辑：分页（仅单用例/子任务）
+    try:
+        page = int(request.args.get("page", 1))
+        page_size = int(request.args.get("page_size", 10))
     except Exception:
-        limit = 100
+        page = 1
+        page_size = 10
+    page = max(page, 1)
+    page_size = min(max(page_size, 1), 100)
+    offset = (page - 1) * page_size
 
     try:
-        histories = db.list_histories(limit=limit)
+        total = db.count_single_histories()
+        items = db.list_single_histories_paginated(offset=offset, limit=page_size)
+        total_pages = max((total + page_size - 1) // page_size, 1)
         return jsonify(
             {
                 "code": 200,
-                "msg": f"获取执行历史成功（最近{len(histories)}条）",
-                "data": histories,
+                "msg": "获取执行历史成功",
+                "data": {
+                    "items": items,
+                    "page": page,
+                    "page_size": page_size,
+                    "total": total,
+                    "total_pages": total_pages,
+                },
             }
         )
     except Exception as e:
         error_msg = f"获取执行历史失败：{str(e)}"
         log.error(error_msg, exc_info=True)
-        return jsonify({"code": 400, "msg": error_msg, "data": []})
+        return jsonify(
+            {"code": 400, "msg": error_msg, "data": {"items": [], "total": 0}}
+        )
 
 
 @test_bp.get("/history/<task_id>")
@@ -658,26 +701,66 @@ def get_exec_set_history_list():
     支持通过query参数exec_set_id过滤指定执行集，limit控制返回数量。
     """
     exec_set_id = request.args.get("exec_set_id") or None
-    try:
-        limit = int(request.args.get("limit", 100))
-        if limit <= 0:
+
+    # 兼容：limit 模式（返回 list）
+    if request.args.get("limit") is not None and request.args.get("page") is None:
+        try:
+            limit = int(request.args.get("limit", 100))
+            if limit <= 0:
+                limit = 100
+        except Exception:
             limit = 100
+        try:
+            histories = db.list_exec_set_histories(exec_set_id=exec_set_id, limit=limit)
+            return jsonify(
+                {
+                    "code": 200,
+                    "msg": f"获取执行集执行历史成功（共{len(histories)}条）",
+                    "data": histories,
+                }
+            )
+        except Exception as e:
+            error_msg = f"获取执行集执行历史失败：{str(e)}"
+            log.error(error_msg, exc_info=True)
+            return jsonify({"code": 400, "msg": error_msg, "data": []})
+
+    # 新逻辑：分页
+    try:
+        page = int(request.args.get("page", 1))
+        page_size = int(request.args.get("page_size", 10))
     except Exception:
-        limit = 100
+        page = 1
+        page_size = 10
+    page = max(page, 1)
+    page_size = min(max(page_size, 1), 100)
+    offset = (page - 1) * page_size
 
     try:
-        histories = db.list_exec_set_histories(exec_set_id=exec_set_id, limit=limit)
+        total = db.count_exec_set_histories(exec_set_id=exec_set_id)
+        items = db.list_exec_set_histories_paginated(
+            exec_set_id=exec_set_id, offset=offset, limit=page_size
+        )
+        total_pages = max((total + page_size - 1) // page_size, 1)
         return jsonify(
             {
                 "code": 200,
-                "msg": f"获取执行集执行历史成功（共{len(histories)}条）",
-                "data": histories,
+                "msg": "获取执行集执行历史成功",
+                "data": {
+                    "items": items,
+                    "page": page,
+                    "page_size": page_size,
+                    "total": total,
+                    "total_pages": total_pages,
+                    "exec_set_id": exec_set_id,
+                },
             }
         )
     except Exception as e:
         error_msg = f"获取执行集执行历史失败：{str(e)}"
         log.error(error_msg, exc_info=True)
-        return jsonify({"code": 400, "msg": error_msg, "data": []})
+        return jsonify(
+            {"code": 400, "msg": error_msg, "data": {"items": [], "total": 0}}
+        )
 
 
 @test_bp.get("/exec-set/history/<main_task_id>")
@@ -806,7 +889,7 @@ def stop_test_task(task_id: str):
                 # 同步执行历史
                 db.upsert_history(
                     task_id=task_id,
-                    status="stopped",
+                    status="stop",
                     end_time=end_time,
                     exec_duration=exec_duration,
                     error_msg=stop_reason,
@@ -849,7 +932,7 @@ def stop_test_task(task_id: str):
         try:
             db.upsert_history(
                 task_id=task_id,
-                status="stopped",
+                status="stop",
                 end_time=task["end_time"],
                 exec_duration=exec_duration,
                 error_msg=task["stop_reason"],

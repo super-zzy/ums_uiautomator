@@ -77,6 +77,8 @@
     }
     // 首次进入页面时加载概览统计
     loadOverviewStats();
+    // 10 秒轮询刷新概览统计（banner 展示）
+    setInterval(loadOverviewStats, 10000);
     if (refreshBtn) {
       refreshBtn.addEventListener("click", handleRefreshClick);
     }

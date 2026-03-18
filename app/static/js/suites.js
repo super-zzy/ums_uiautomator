@@ -444,7 +444,8 @@
       }
     };
     poll();
-    AppState.refreshInterval = setInterval(poll, 3000);
+    // 10 秒轮询一次任务状态（任务管理）
+    AppState.refreshInterval = setInterval(poll, 10000);
   }
 
   async function stopCurrentTask() {
