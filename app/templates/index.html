@@ -73,7 +73,7 @@
     <!-- 主内容区 -->
     <main class="flex-grow container mx-auto px-4 py-6">
         <!-- 状态概览卡片 -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
             <div class="bg-white rounded-lg p-4 card-shadow flex items-center space-x-4">
                 <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                     <i class="fa fa-mobile text-2xl"></i>
@@ -90,6 +90,28 @@
                 <div>
                     <h3 class="text-light text-sm">可用测试用例</h3>
                     <p id="test-suite-count" class="text-2xl font-bold">0</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg p-4 card-shadow flex items-center space-x-4">
+                <div class="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center text-primary">
+                    <i class="fa fa-object-group text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-light text-sm">可用执行集</h3>
+                    <p id="exec-set-count" class="text-2xl font-bold">0</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg p-4 card-shadow flex items-center space-x-4">
+                <div class="w-12 h-12 rounded-full bg-warning/10 flex items-center justify-center text-warning">
+                    <i class="fa fa-history text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-light text-sm mb-1">已执行任务</h3>
+                    <p class="text-xs text-light">
+                        用例：<span id="history-single-count" class="font-semibold text-dark">0</span>
+                        &nbsp;/&nbsp;
+                        执行集：<span id="history-exec-set-count" class="font-semibold text-dark">0</span>
+                    </p>
                 </div>
             </div>
             <div class="bg-white rounded-lg p-4 card-shadow flex items-center space-x-4">

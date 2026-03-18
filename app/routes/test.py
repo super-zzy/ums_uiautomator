@@ -726,6 +726,38 @@ def get_running_tasks():
         })
 
 
+@test_bp.get("/overview")
+def get_overview_stats():
+    """
+    获取首页概览统计数据：
+    - case_count: 可用测试用例数量
+    - exec_set_count: 可用执行集数量
+    - history_single_count: 已执行单用例任务数量
+    - history_exec_set_count: 已执行执行集任务数量
+    """
+    try:
+        case_count = len(db.list_cases())
+        exec_set_count = db.count_exec_sets()
+        history_single_count = db.count_histories_by_type(None)
+        history_exec_set_count = db.count_histories_by_type("exec_set")
+        return jsonify(
+            {
+                "code": 200,
+                "msg": "获取概览统计成功",
+                "data": {
+                    "case_count": case_count,
+                    "exec_set_count": exec_set_count,
+                    "history_single_count": history_single_count,
+                    "history_exec_set_count": history_exec_set_count,
+                },
+            }
+        )
+    except Exception as e:
+        error_msg = f"获取概览统计失败：{str(e)}"
+        log.error(error_msg, exc_info=True)
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+
 @test_bp.post("/stop/<task_id>")
 def stop_test_task(task_id: str):
     """停止指定测试任务"""

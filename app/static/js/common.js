@@ -17,6 +17,9 @@ window.Elements = {
   onlineDeviceCount: document.getElementById("online-device-count"),
   testSuiteCount: document.getElementById("test-suite-count"),
   runningTaskCount: document.getElementById("running-task-count"),
+  execSetCount: document.getElementById("exec-set-count"),
+  historySingleCount: document.getElementById("history-single-count"),
+  historyExecSetCount: document.getElementById("history-exec-set-count"),
   currentTime: document.getElementById("current-time"),
 
   // 设备列表

@@ -348,6 +348,18 @@ def list_exec_sets_with_case_count() -> List[Dict[str, Any]]:
         conn.close()
 
 
+def count_exec_sets() -> int:
+    """统计执行集总数"""
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(1) AS cnt FROM exec_set")
+        row = cur.fetchone()
+        return int(row["cnt"]) if row else 0
+    finally:
+        conn.close()
+
+
 def get_exec_set_with_cases(exec_set_id: str) -> Optional[Dict[str, Any]]:
     conn = _get_conn()
     try:
@@ -632,6 +644,38 @@ def list_histories(limit: int = 100) -> List[Dict[str, Any]]:
         )
         rows = cur.fetchall()
         return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def count_histories_by_type(type_: Optional[str]) -> int:
+    """
+    统计执行历史数量。
+    - type_ 为 None 时，统计单用例任务（type IS NULL 或 type='single'）
+    - type_ 为 'exec_set' 时，仅统计执行集主任务
+    """
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        if type_ is None:
+            cur.execute(
+                """
+                SELECT COUNT(1) AS cnt
+                FROM exec_history
+                WHERE type IS NULL OR type = 'single'
+                """
+            )
+        else:
+            cur.execute(
+                """
+                SELECT COUNT(1) AS cnt
+                FROM exec_history
+                WHERE type = ?
+                """,
+                (type_,),
+            )
+        row = cur.fetchone()
+        return int(row["cnt"]) if row else 0
     finally:
         conn.close()
 
