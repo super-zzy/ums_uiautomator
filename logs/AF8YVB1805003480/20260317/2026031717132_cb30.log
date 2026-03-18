@@ -1,0 +1,20 @@
+[2026-03-17 17:13:20] [device_AF8YVB1805003480] [INFO] 开始初始化设备：AF8YVB1805003480
+[2026-03-17 17:13:20] [device_AF8YVB1805003480] [DEBUG] 设备AF8YVB1805003480在线状态：True
+[2026-03-17 17:13:20] [device_AF8YVB1805003480] [DEBUG] 尝试直接连接已存在的 uiautomator2 会话：AF8YVB1805003480
+[2026-03-17 17:13:20] [device_AF8YVB1805003480] [INFO] 设备AF8YVB1805003480已存在可用的 uiautomator2 会话，跳过 init
+[2026-03-17 17:13:20] [task_2026031717132_cb30] [INFO] 准备测试环境：d:\cursor\ums_uiautomator\result\2026031717132_cb30
+[2026-03-17 17:13:20] [task_2026031717132_cb30] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031717132_cb30\allure_raw
+[2026-03-17 17:13:20] [task_2026031717132_cb30] [DEBUG] 创建目录成功：d:\cursor\ums_uiautomator\result\2026031717132_cb30\allure_html
+[2026-03-17 17:13:20] [task_2026031717132_cb30] [INFO] 测试目录初始化完成：d:\cursor\ums_uiautomator\result\2026031717132_cb30
+[2026-03-17 17:13:20] [task_2026031717132_cb30] [INFO] 测试用例校验通过：d:\cursor\ums_uiautomator\test_suite\case.py（文件大小：0.52KB）
+[2026-03-17 17:13:20] [task_2026031717132_cb30] [INFO] 开始执行Pytest测试...
+[2026-03-17 17:13:23] [task_2026031717132_cb30] [INFO] Pytest执行完成（耗时：3.23秒，返回码：1）
+[2026-03-17 17:13:23] [task_2026031717132_cb30] [INFO] Pytest日志已保存：d:\cursor\ums_uiautomator\result\2026031717132_cb30\task_2026031717132_cb30.log（大小：0.45KB）
+[2026-03-17 17:13:23] [task_2026031717132_cb30] [INFO] 开始生成Allure HTML报告...
+[2026-03-17 17:13:23] [task_2026031717132_cb30] [DEBUG] Allure生成命令包含--clean参数
+[2026-03-17 17:13:23] [task_2026031717132_cb30] [DEBUG] Allure报告标题：report_2026031717132_cb30
+[2026-03-17 17:13:23] [task_2026031717132_cb30] [DEBUG] Allure生成命令：allure generate d:\cursor\ums_uiautomator\result\2026031717132_cb30\allure_raw -o d:\cursor\ums_uiautomator\result\2026031717132_cb30\allure_html --clean --title report_2026031717132_cb30
+[2026-03-17 17:13:57] [task_2026031717132_cb30] [INFO] Allure生成日志已保存：d:\cursor\ums_uiautomator\result\2026031717132_cb30\allure_generate.log
+[2026-03-17 17:13:57] [task_2026031717132_cb30] [DEBUG] 报告压缩功能已禁用
+[2026-03-17 17:13:57] [task_2026031717132_cb30] [INFO] Allure报告生成成功：d:\cursor\ums_uiautomator\result\2026031717132_cb30\allure_html\index.html（目录大小：2423.55MB，耗时：33.58秒）
+[2026-03-17 17:13:57] [task_2026031717132_cb30] [INFO] 报告元数据已保存：d:\cursor\ums_uiautomator\result\2026031717132_cb30\report_meta.json

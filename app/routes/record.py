@@ -367,8 +367,9 @@ def get_device_info():
 
 def _generate_python_code(device_id: str, actions: List[Dict[str, Any]]) -> str:
     """
-    根据录制的动作生成 Python 脚本。
-    简单示例：按顺序重放点击动作。
+    根据录制的动作生成 Python 脚本（pytest + allure 风格）。
+    - 不再在脚本中直接连接设备，改为依赖 pytest/conftest 中的夹具（d）
+    - 自动补充基础的 allure 标注，方便集成到现有报告体系
     """
     body_lines: List[str] = []
     last_time = None
@@ -426,17 +427,22 @@ def _generate_python_code(device_id: str, actions: List[Dict[str, Any]]) -> str:
     if not body_lines:
         body_lines.append("# TODO: 当前录制无任何可执行动作")
 
-    code = f'''import uiautomator2 as u2
-import time
+    code = f'''import time
+import allure
+import pytest
 
 
-def test_recorded_case(device_id="{device_id}"):
+@allure.epic("UI自动化平台")
+@allure.feature("录制用例")
+@allure.story("录制回放")
+@allure.severity("normal")
+@pytest.mark.usefixtures("setup_and_teardown_demo")
+def test_recorded_case(d):
     """
     通过 UI 自动化平台录制生成的示例用例。
-    可根据需要自行补充断言等逻辑。
+    已自动接入 pytest 夹具与 allure 标注，可根据需要自行补充断言和标签。
+    d 为平台注入的设备实例（无需在脚本中手动连接设备）。
     """
-    d = u2.connect(device_id)
-    d.healthcheck()  # 确保会话可用
 
     # 录制动作回放开始
 {textwrap.indent("\n".join(body_lines), "    ")}

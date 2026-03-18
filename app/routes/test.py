@@ -36,13 +36,14 @@ def get_test_suites() -> list[dict]:
         suites = db.list_cases()
 
         # 统一返回前端需要的结构（补充创建/更新时间，便于前端展示）
+        # 不再依赖持久化的文件路径信息，按用例名称展示
         log.info(f"获取用例完成（仅SQLite），共{suites and len(suites) or 0}个可用用例")
         return [
             {
                 "id": s["id"],
                 "name": s["name"],
-                "abs_path": s.get("file_name") or "",
-                "rel_path": s.get("rel_path") or s.get("file_name") or "",
+                "abs_path": "",
+                "rel_path": s.get("name") or "",
                 # 旧数据可能缺少 updated_at，这里做一个兜底：若为空则回退到 created_at
                 "created_at": s.get("created_at") or "",
                 "updated_at": s.get("updated_at") or s.get("created_at") or "",
@@ -355,15 +356,45 @@ def start_test():
             return jsonify({"code": 400, "msg": "请指定用例ID", "data": None})
 
         # 3. 获取用例路径
-        suites = get_test_suites()
-        if suite_id < 0 or suite_id >= len(suites):
-            return jsonify({"code": 404, "msg": f"用例ID{suite_id}不存在", "data": None})
-        suite_info = suites[suite_id]
+        # 兼容两种传参方式：
+        # - 旧版：suite_id 为前端列表下标（0,1,2,...）
+        # - 新版：suite_id 直接为 SQLite 中的用例主键 ID
+        case = None
+        suite_info = None
 
-        # 从SQLite获取用例内容，并在测试用例目录生成临时.py文件
-        case = db.get_case(suite_info["id"])
-        if not case:
-            return jsonify({"code": 404, "msg": "用例不存在", "data": None})
+        # 3.1 优先按“用例主键ID”方式解析
+        try:
+            case = db.get_case(int(suite_id))
+        except Exception:
+            case = None
+
+        if case:
+            suite_info = {
+                "id": case["id"],
+                "name": case["name"],
+                "file_name": case.get("file_name"),
+                "rel_path": case.get("rel_path"),
+            }
+        else:
+            # 3.2 回退到“列表下标”模式，兼容老前端
+            suites = get_test_suites()
+            if not isinstance(suite_id, int):
+                try:
+                    suite_id = int(suite_id)
+                except Exception:
+                    return jsonify(
+                        {"code": 400, "msg": "用例ID格式不正确", "data": None}
+                    )
+
+            if suite_id < 0 or suite_id >= len(suites):
+                return jsonify(
+                    {"code": 404, "msg": f"用例ID{suite_id}不存在", "data": None}
+                )
+            suite_info = suites[suite_id]
+
+            case = db.get_case(suite_info["id"])
+            if not case:
+                return jsonify({"code": 404, "msg": "用例不存在", "data": None})
 
         test_suite_dir = current_app.config["TEST_SUITE_DIR"]
         ensure_dir_exists(test_suite_dir)
@@ -852,7 +883,7 @@ def create_test_suite():
         if not name:
             return jsonify({"code": 400, "msg": "用例名称不能为空", "data": None})
 
-        case = db.create_case(name=name, content=content, rel_path=None)
+        case = db.create_case(name=name, content=content)
 
         return jsonify({
             "code": 200,
@@ -911,38 +942,32 @@ def delete_test_suite(suite_id):
 
 @test_bp.get("/suites/<int:suite_id>/content")
 def get_suite_content(suite_id):
-    """获取测试用例内容"""
+    """获取测试用例内容（suite_id 直接为 SQLite 中的用例 id）"""
     try:
-        suites = get_test_suites()
-        if suite_id < 0 or suite_id >= len(suites):
-            return jsonify({"code": 404, "msg": f"用例ID{suite_id}不存在", "data": None})
-
-        case = db.get_case(suites[suite_id]["id"])
+        case = db.get_case(suite_id)
         if not case:
             return jsonify({"code": 404, "msg": "用例不存在", "data": None})
-        content = case["content"]
 
-        return jsonify({
-            "code": 200,
-            "msg": "获取用例内容成功",
-            "data": {
-                "content": content,
-                "path": case.get("rel_path")
+        content = case.get("content")
+        return jsonify(
+            {
+                "code": 200,
+                "msg": "获取用例内容成功",
+                "data": {
+                    "content": content,
+                    "path": case.get("name"),
+                },
             }
-        })
+        )
     except Exception as e:
         error_msg = f"获取用例内容失败：{str(e)}"
         log.error(error_msg)
-        return jsonify({
-            "code": 400,
-            "msg": error_msg,
-            "data": None
-        })
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
 
 
 @test_bp.put("/suites/<int:suite_id>")
 def update_suite(suite_id):
-    """更新测试用例"""
+    """更新测试用例（suite_id 直接为 SQLite 中的用例 id）"""
     try:
         req_data = request.get_json() or {}
         new_name = req_data.get("name")
@@ -951,29 +976,16 @@ def update_suite(suite_id):
         if not new_name or new_content is None:
             return jsonify({"code": 400, "msg": "名称和内容不能为空", "data": None})
 
-        suites = get_test_suites()
-        if suite_id < 0 or suite_id >= len(suites):
-            return jsonify({"code": 404, "msg": f"用例ID{suite_id}不存在", "data": None})
-
-        case_id = suites[suite_id]["id"]
-        ok = db.update_case(case_id, name=new_name, content=new_content)
+        ok = db.update_case(suite_id, name=new_name, content=new_content)
         if not ok:
             return jsonify({"code": 404, "msg": "用例不存在", "data": None})
 
-        log.info(f"用例{case_id}更新成功（名称与内容已更新）")
-        return jsonify({
-            "code": 200,
-            "msg": "用例更新成功",
-            "data": None
-        })
+        log.info(f"用例{suite_id}更新成功（名称与内容已更新）")
+        return jsonify({"code": 200, "msg": "用例更新成功", "data": None})
     except Exception as e:
         error_msg = f"更新用例失败：{str(e)}"
         log.error(error_msg)
-        return jsonify({
-            "code": 400,
-            "msg": error_msg,
-            "data": None
-        })
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
 
 
 @test_bp.post("/format-code")

@@ -88,9 +88,14 @@
     if (!els.recordScreenImg) return;
     stopScreenshotLoop();
 
+    let loading = false;
+    let lastObjectUrl = null;
+
     const loadShot = async () => {
       const deviceId = getSelectedDeviceId();
       if (!deviceId || !isRecording) return;
+      if (loading) return;
+      loading = true;
       try {
         const resp = await fetch(
           `/api/record/screenshot?device_id=${encodeURIComponent(deviceId)}`,
@@ -101,14 +106,21 @@
         }
         const blob = await resp.blob();
         const url = URL.createObjectURL(blob);
+        if (lastObjectUrl) {
+          URL.revokeObjectURL(lastObjectUrl);
+        }
+        lastObjectUrl = url;
         els.recordScreenImg.src = url;
       } catch (e) {
         console.error("加载截图失败:", e);
+      } finally {
+        loading = false;
       }
     };
 
     loadShot();
-    screenshotTimer = setInterval(loadShot, 1000);
+    // 提升交互流畅度：缩短轮询间隔，同时避免请求堆积
+    screenshotTimer = setInterval(loadShot, 400);
   }
 
   function stopScreenshotLoop() {

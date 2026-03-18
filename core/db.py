@@ -27,14 +27,12 @@ def _init_db() -> None:
     try:
         cur = conn.cursor()
 
-        # 用例表
+        # 用例表（不再保存文件名/相对路径，仅保存名称与内容）
         cur.execute(
             """
             CREATE TABLE IF NOT EXISTS test_case (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                file_name TEXT NOT NULL,
-                rel_path TEXT,
                 content TEXT NOT NULL,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
@@ -115,11 +113,45 @@ def _init_db() -> None:
             """
         )
 
+        # 兼容旧库：若 test_case 仍存在 file_name/rel_path 字段，则迁移为仅 name+content 结构
+        try:
+            cur.execute("PRAGMA table_info(test_case)")
+            cols = cur.fetchall()
+            col_names = {c["name"] for c in cols}
+            if "file_name" in col_names or "rel_path" in col_names:
+                now_str_mig = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                cur.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS test_case_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT NOT NULL,
+                        content TEXT NOT NULL,
+                        created_at TEXT NOT NULL,
+                        updated_at TEXT NOT NULL
+                    )
+                    """
+                )
+                cur.execute(
+                    """
+                    INSERT INTO test_case_new (id, name, content, created_at, updated_at)
+                    SELECT
+                        id,
+                        name,
+                        content,
+                        COALESCE(created_at, ?),
+                        COALESCE(updated_at, created_at, ?)
+                    FROM test_case
+                    """,
+                    (now_str_mig, now_str_mig),
+                )
+                cur.execute("DROP TABLE test_case")
+                cur.execute("ALTER TABLE test_case_new RENAME TO test_case")
+        except Exception:
+            # 若表不存在或迁移失败，则保持现状，避免影响启动
+            pass
+
         # 为已有表补充缺失字段（兼容旧库）
         for sql in [
-            # test_case 时间字段（老库可能没有）
-            "ALTER TABLE test_case ADD COLUMN created_at TEXT",
-            "ALTER TABLE test_case ADD COLUMN updated_at TEXT",
             # exec_set 时间字段（老库可能没有）
             "ALTER TABLE exec_set ADD COLUMN created_at TEXT",
             "ALTER TABLE exec_set ADD COLUMN updated_at TEXT",
@@ -199,8 +231,6 @@ def list_cases() -> List[Dict[str, Any]]:
             """
             SELECT id,
                    name,
-                   file_name,
-                   rel_path,
                    created_at,
                    updated_at
             FROM test_case
@@ -219,7 +249,7 @@ def get_case(case_id: int) -> Optional[Dict[str, Any]]:
         cur = conn.cursor()
         cur.execute(
             """
-            SELECT id, name, file_name, rel_path, content
+            SELECT id, name, content
             FROM test_case
             WHERE id = ?
             """,
@@ -231,20 +261,18 @@ def get_case(case_id: int) -> Optional[Dict[str, Any]]:
         conn.close()
 
 
-def create_case(name: str, content: str, rel_path: Optional[str] = None) -> Dict[str, Any]:
+def create_case(name: str, content: str) -> Dict[str, Any]:
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    # 默认 file_name 统一为 case.py
-    file_name = "case.py"
 
     conn = _get_conn()
     try:
         cur = conn.cursor()
         cur.execute(
             """
-            INSERT INTO test_case (name, file_name, rel_path, content, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO test_case (name, content, created_at, updated_at)
+            VALUES (?, ?, ?, ?)
             """,
-            (name, file_name, rel_path, content, now, now),
+            (name, content, now, now),
         )
         conn.commit()
         case_id = cur.lastrowid
@@ -252,8 +280,6 @@ def create_case(name: str, content: str, rel_path: Optional[str] = None) -> Dict
         return {
             "id": case_id,
             "name": name,
-            "file_name": file_name,
-            "rel_path": rel_path,
         }
     finally:
         conn.close()
@@ -341,9 +367,7 @@ def get_exec_set_with_cases(exec_set_id: str) -> Optional[Dict[str, Any]]:
         cur.execute(
             """
             SELECT esc.case_id,
-                   tc.name,
-                   tc.file_name,
-                   tc.rel_path
+                   tc.name
             FROM exec_set_case esc
             JOIN test_case tc ON esc.case_id = tc.id
             WHERE esc.exec_set_id = ?
