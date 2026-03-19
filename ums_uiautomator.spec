@@ -7,6 +7,7 @@ import yaml
 import pytest_timeout
 from PyInstaller.building.api import EXE, PYZ
 from PyInstaller.building.build_main import Analysis
+from PyInstaller.utils.hooks import collect_submodules
 
 # 项目根目录
 PROJECT_ROOT = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -25,17 +26,22 @@ a = Analysis(
     datas=[
         (os.path.join(PROJECT_ROOT, 'conf'), 'conf'),
         (os.path.join(PROJECT_ROOT, 'test_suite'), 'test_suite'),
-        (os.path.join(PROJECT_ROOT, 'core'), 'core'),
         (os.path.join(PROJECT_ROOT, 'app', 'templates'), 'app/templates'),
         # uiautomator2 运行时需要的 u2.jar，放到打包后的 uiautomator2/assets 目录下
         # 这样 uiautomator2.utils.with_package_resource 才能在包内正确找到 assets/u2.jar
         (UIA2_JAR_PATH, os.path.join('uiautomator2', 'assets')),
     ],
+    # 确保 core.* 的所有子模块都被打入 PYZ，
+    # 避免运行时缺少 core/ 目录导致导入失败
     hiddenimports=[
-        'yaml', 'flask', 'apscheduler', 'uiautomator2', 'yaml',
-        'pytest-timeout', 'pytest', 'allure_pytest', 'core',
-        'core.device_manager', 'core.uiautomator'
-    ],
+        'yaml',
+        'flask',
+        'apscheduler',
+        'uiautomator2',
+        'pytest-timeout',
+        'pytest',
+        'allure_pytest',
+    ] + collect_submodules('core'),
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

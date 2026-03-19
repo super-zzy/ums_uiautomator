@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import sys
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -57,7 +58,11 @@ def normalize_history_status(value: Optional[str]) -> Optional[str]:
     return None
 
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if getattr(sys, "frozen", False):
+    # 打包运行时：把数据落到 exe 所在目录，避免依赖 core 是否以“真实目录文件形式”存在
+    PROJECT_ROOT = os.path.dirname(sys.executable)
+else:
+    PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(PROJECT_ROOT, "data")
 os.makedirs(DATA_DIR, exist_ok=True)
 

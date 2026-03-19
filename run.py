@@ -20,12 +20,30 @@ if getattr(sys, "frozen", False):
     exe_dir = os.path.dirname(sys.executable)
     os.chdir(exe_dir)
 
-# 第一步：强制将项目根目录加入 sys.path（重中之重！）
-# 作用：确保后续导入 app 时，app/__init__.py 能找到上层的 conf 模块
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))  # 获取 run.py 所在目录（项目根目录）
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)  # 插入到 sys.path 最前面，优先加载
-    print(f"[DEBUG] 已将项目根目录加入 sys.path：{PROJECT_ROOT}")
+# 第一步：冻结模式下避免“dist 目录旧文件”影子覆盖
+# - frozen(onefile/onedir)：优先使用 PyInstaller 解包目录 _MEIPASS（若存在）
+# - frozen：不要把 dist/ 根目录硬塞到 sys.path，避免导入到旧的 util/core/conf 源码
+# - 开发模式：按原逻辑把项目根目录加入 sys.path
+if getattr(sys, "frozen", False):
+    exe_dir = os.path.dirname(sys.executable)
+    exe_dir_abs = os.path.abspath(exe_dir)
+    disk_has_util = os.path.exists(os.path.join(exe_dir, "util", "path_util.py"))
+    disk_has_core_pkg = os.path.exists(os.path.join(exe_dir, "core", "__init__.py"))
+    # 仅当磁盘上存在旧的 util/core 源码包时，才移除 exe_dir 避免影子覆盖
+    if disk_has_util or disk_has_core_pkg:
+        sys.path = [
+            p
+            for p in sys.path
+            if p not in ("", None) and os.path.abspath(p) != exe_dir_abs
+        ]
+    _meipass = getattr(sys, "_MEIPASS", None)
+    if _meipass and _meipass not in sys.path:
+        sys.path.insert(0, _meipass)
+else:
+    PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))  # 获取 run.py 所在目录（项目根目录）
+    if PROJECT_ROOT not in sys.path:
+        sys.path.insert(0, PROJECT_ROOT)  # 插入到 sys.path 最前面，优先加载
+        print(f"[DEBUG] 已将项目根目录加入 sys.path：{PROJECT_ROOT}")
 
 # 第二步：此时再导入 app 和 conf（顺序不能错！）
 from app import create_app
