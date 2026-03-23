@@ -27,6 +27,7 @@ a = Analysis(
         (os.path.join(PROJECT_ROOT, 'conf'), 'conf'),
         (os.path.join(PROJECT_ROOT, 'test_suite'), 'test_suite'),
         (os.path.join(PROJECT_ROOT, 'app', 'templates'), 'app/templates'),
+        (os.path.join(PROJECT_ROOT, 'app', 'static'), 'app/static'),
         # uiautomator2 运行时需要的 u2.jar，放到打包后的 uiautomator2/assets 目录下
         # 这样 uiautomator2.utils.with_package_resource 才能在包内正确找到 assets/u2.jar
         (UIA2_JAR_PATH, os.path.join('uiautomator2', 'assets')),

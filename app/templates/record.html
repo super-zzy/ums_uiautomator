@@ -160,10 +160,10 @@
     </footer>
 
     <!-- JS：复用通用模块 + 设备列表 + 日志 + 录制逻辑 -->
-    <script src="/static/js/common.js"></script>
-    <script src="/static/js/task_log.js"></script>
-    <script src="/static/js/devices.js"></script>
-    <script src="/static/js/record.js"></script>
+    <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/task_log.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/devices.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/record.js') }}"></script>
     <script>
       document.addEventListener('DOMContentLoaded', async () => {
         // 初始化设备模块与录制模块

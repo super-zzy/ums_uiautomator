@@ -108,8 +108,10 @@ window.Elements = {
   // 用例/执行集管理 Tabs 与列表分页
   caseManageTab: document.getElementById("case-manage-tab"),
   execSetManageTab: document.getElementById("exec-set-manage-tab"),
+  publicMethodManageTab: document.getElementById("public-method-manage-tab"),
   caseManagePanel: document.getElementById("case-manage-panel"),
   execSetManagePanel: document.getElementById("exec-set-manage-panel"),
+  publicMethodManagePanel: document.getElementById("public-method-manage-panel"),
   caseListTbody: document.getElementById("case-list-tbody"),
   casePageInfo: document.getElementById("case-page-info"),
   casePrevPage: document.getElementById("case-prev-page"),
@@ -128,6 +130,15 @@ async function apiGet(url) {
 async function apiPost(url, body) {
   const resp = await fetch(url, {
     method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return resp.json();
+}
+
+async function apiPut(url, body) {
+  const resp = await fetch(url, {
+    method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
   });
@@ -214,6 +225,7 @@ function formatDuration(seconds) {
 window.Common = {
   apiGet,
   apiPost,
+  apiPut,
   addTaskLog,
   saveHistory,
   loadHistory,

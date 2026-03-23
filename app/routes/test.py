@@ -1301,6 +1301,103 @@ def delete_test_suite(suite_id):
         return jsonify({"code": 400, "msg": error_msg, "data": None})
 
 
+@test_bp.get("/public-methods")
+def list_public_methods_api():
+    """公共方法列表（不含源码正文，用于配置页）"""
+    try:
+        items = db.list_public_methods_meta()
+        return jsonify({"code": 200, "msg": "ok", "data": items})
+    except Exception as e:
+        error_msg = f"获取公共方法列表失败：{str(e)}"
+        log.error(error_msg)
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+
+@test_bp.get("/public-methods/<int:method_id>")
+def get_public_method_api(method_id: int):
+    """获取单条公共方法（含源码）"""
+    try:
+        row = db.get_public_method(method_id)
+        if not row:
+            return jsonify({"code": 404, "msg": "公共方法不存在", "data": None})
+        return jsonify({"code": 200, "msg": "ok", "data": row})
+    except Exception as e:
+        error_msg = f"获取公共方法失败：{str(e)}"
+        log.error(error_msg)
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+
+@test_bp.post("/public-methods")
+def create_public_method_api():
+    """新建公共方法"""
+    try:
+        req_data = request.get_json() or {}
+        name = (req_data.get("name") or "").strip()
+        description = req_data.get("description")
+        content = req_data.get("content", "")
+        if not name:
+            return jsonify({"code": 400, "msg": "方法名称不能为空", "data": None})
+        if content is None or not str(content).strip():
+            return jsonify({"code": 400, "msg": "方法代码不能为空", "data": None})
+        created = db.create_public_method(name, description, str(content))
+        if not created:
+            return jsonify({"code": 400, "msg": "方法名称已存在", "data": None})
+        return jsonify({"code": 200, "msg": "公共方法创建成功", "data": created})
+    except Exception as e:
+        error_msg = f"创建公共方法失败：{str(e)}"
+        log.error(error_msg)
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+
+@test_bp.put("/public-methods/<int:method_id>")
+def update_public_method_api(method_id: int):
+    """更新公共方法"""
+    try:
+        req_data = request.get_json() or {}
+        name = req_data.get("name")
+        description = req_data.get("description")
+        content = req_data.get("content")
+        if name is not None:
+            name = str(name).strip()
+            if not name:
+                return jsonify({"code": 400, "msg": "方法名称不能为空", "data": None})
+        if content is not None and not str(content).strip():
+            return jsonify({"code": 400, "msg": "方法代码不能为空", "data": None})
+        ok = db.update_public_method(
+            method_id,
+            name=name,
+            description=description,
+            content=content,
+        )
+        if not ok:
+            return jsonify(
+                {
+                    "code": 404,
+                    "msg": "公共方法不存在或名称与其他记录冲突",
+                    "data": None,
+                }
+            )
+        return jsonify({"code": 200, "msg": "公共方法已更新", "data": None})
+    except Exception as e:
+        error_msg = f"更新公共方法失败：{str(e)}"
+        log.error(error_msg)
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+
+@test_bp.delete("/public-methods/<int:method_id>")
+def delete_public_method_api(method_id: int):
+    """删除公共方法"""
+    try:
+        ok = db.delete_public_method(method_id)
+        if not ok:
+            return jsonify({"code": 404, "msg": "公共方法不存在", "data": None})
+        return jsonify({"code": 200, "msg": "公共方法已删除", "data": None})
+    except Exception as e:
+        error_msg = f"删除公共方法失败：{str(e)}"
+        log.error(error_msg)
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+
 @test_bp.get("/suites/<int:suite_id>/content")
 def get_suite_content(suite_id):
     """获取测试用例内容（suite_id 直接为 SQLite 中的用例 id）"""

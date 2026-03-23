@@ -26,8 +26,10 @@
     // Tabs
     caseManageTab,
     execSetManageTab,
+    publicMethodManageTab,
     caseManagePanel,
     execSetManagePanel,
+    publicMethodManagePanel,
     recordVideoCheckbox,
   } = Elements || {};
   const { apiGet, apiPost, addTaskLog, parseDateTime, formatDuration } =
@@ -43,6 +45,66 @@
   let allSuitesForList = [];
   let casePage = 1;
   const CASE_PAGE_SIZE = 10;
+
+  function setConfigTabStyles(tabEl, active) {
+    if (!tabEl) return;
+    if (active) {
+      tabEl.classList.add("border-primary", "text-primary");
+      tabEl.classList.remove(
+        "border-transparent",
+        "text-light",
+        "hover:text-primary",
+        "hover:border-primary/50"
+      );
+    } else {
+      tabEl.classList.remove("border-primary", "text-primary");
+      tabEl.classList.add(
+        "border-transparent",
+        "text-light",
+        "hover:text-primary",
+        "hover:border-primary/50"
+      );
+    }
+  }
+
+  function switchConfigTab(which) {
+    const caseTab =
+      caseManageTab || document.getElementById("case-manage-tab");
+    const execTab =
+      execSetManageTab || document.getElementById("exec-set-manage-tab");
+    const pmTab =
+      publicMethodManageTab ||
+      document.getElementById("public-method-manage-tab");
+    const casePanel =
+      caseManagePanel || document.getElementById("case-manage-panel");
+    const execPanel =
+      execSetManagePanel || document.getElementById("exec-set-manage-panel");
+    const pmPanel =
+      publicMethodManagePanel ||
+      document.getElementById("public-method-manage-panel");
+
+    setConfigTabStyles(caseTab, which === "cases");
+    setConfigTabStyles(execTab, which === "exec_sets");
+    setConfigTabStyles(pmTab, which === "public_methods");
+
+    if (casePanel) {
+      casePanel.classList.toggle("hidden", which !== "cases");
+    }
+    if (execPanel) {
+      execPanel.classList.toggle("hidden", which !== "exec_sets");
+    }
+    if (pmPanel) {
+      pmPanel.classList.toggle("hidden", which !== "public_methods");
+    }
+
+    if (which === "public_methods" && window.PublicMethods?.loadPublicMethodList) {
+      window.PublicMethods.loadPublicMethodList();
+    }
+
+    if (window.adjustPanelHeights) {
+      window.adjustPanelHeights();
+    }
+  }
 
   function renderCaseList() {
     if (!caseListTbody) return;
@@ -292,6 +354,7 @@
         if (editor) {
           setTimeout(() => editor.refresh(), 0);
         }
+        window.PublicMethods?.refreshSuiteEditorPicker?.();
       } else {
         throw new Error(data.msg || "获取用例内容失败");
       }
@@ -620,34 +683,24 @@
       });
     }
 
-    // 用例 / 执行集 管理 Tabs 切换
-    if (caseManageTab && execSetManageTab && caseManagePanel && execSetManagePanel) {
-      caseManageTab.addEventListener("click", () => {
-        caseManageTab.classList.add("border-primary", "text-primary");
-        caseManageTab.classList.remove("text-light");
-        execSetManageTab.classList.remove("border-primary", "text-primary");
-        execSetManageTab.classList.add("text-light");
-        caseManagePanel.classList.remove("hidden");
-        execSetManagePanel.classList.add("hidden");
-
-        // 切回用例管理时，恢复左侧卡片自适应高度
-        if (window.adjustPanelHeights) {
-          window.adjustPanelHeights();
-        }
-      });
-      execSetManageTab.addEventListener("click", () => {
-        execSetManageTab.classList.add("border-primary", "text-primary");
-        execSetManageTab.classList.remove("text-light");
-        caseManageTab.classList.remove("border-primary", "text-primary");
-        caseManageTab.classList.add("text-light");
-        execSetManagePanel.classList.remove("hidden");
-        caseManagePanel.classList.add("hidden");
-
-        // 当切换到执行集管理时，同步左侧高度与“测试配置”一致
-        if (window.adjustPanelHeights) {
-          window.adjustPanelHeights();
-        }
-      });
+    // 用例 / 执行集 / 公共方法 Tabs 切换
+    const caseTabEl =
+      caseManageTab || document.getElementById("case-manage-tab");
+    const execTabEl =
+      execSetManageTab || document.getElementById("exec-set-manage-tab");
+    const pmTabEl =
+      publicMethodManageTab ||
+      document.getElementById("public-method-manage-tab");
+    if (caseTabEl) {
+      caseTabEl.addEventListener("click", () => switchConfigTab("cases"));
+    }
+    if (execTabEl) {
+      execTabEl.addEventListener("click", () => switchConfigTab("exec_sets"));
+    }
+    if (pmTabEl) {
+      pmTabEl.addEventListener("click", () =>
+        switchConfigTab("public_methods")
+      );
     }
 
     if (startBtnEl) {
@@ -702,6 +755,7 @@
         if (editor) {
           setTimeout(() => editor.refresh(), 0);
         }
+        window.PublicMethods?.refreshSuiteEditorPicker?.();
       });
     }
 

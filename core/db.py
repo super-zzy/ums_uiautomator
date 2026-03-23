@@ -120,6 +120,20 @@ def _init_db() -> None:
             """
         )
 
+        # 公共方法（Python 源码片段，供用例复用）
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS public_method (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                description TEXT,
+                content TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+
         # 执行历史表（测试结果表）
         cur.execute(
             """
@@ -239,6 +253,7 @@ def _init_db() -> None:
             "test_case",
             "exec_set",
             "exec_set_case",
+            "public_method",
             "exec_history",
             "task_runtime",
         ]:
@@ -407,6 +422,114 @@ def delete_case(case_id: int) -> bool:
     try:
         cur = conn.cursor()
         cur.execute("DELETE FROM test_case WHERE id = ?", (case_id,))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+# ------------- 公共方法相关操作 -------------
+
+
+def list_public_methods_meta() -> List[Dict[str, Any]]:
+    """列出公共方法（不含 content，便于列表展示）"""
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT id, name, description, created_at, updated_at
+            FROM public_method
+            ORDER BY name COLLATE NOCASE ASC
+            """
+        )
+        return [dict(r) for r in cur.fetchall()]
+    finally:
+        conn.close()
+
+
+def get_public_method(method_id: int) -> Optional[Dict[str, Any]]:
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT id, name, description, content, created_at, updated_at
+            FROM public_method
+            WHERE id = ?
+            """,
+            (method_id,),
+        )
+        row = cur.fetchone()
+        return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def create_public_method(name: str, description: Optional[str], content: str) -> Optional[Dict[str, Any]]:
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        try:
+            cur.execute(
+                """
+                INSERT INTO public_method (name, description, content, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (name.strip(), (description or "").strip() or None, content, now, now),
+            )
+        except sqlite3.IntegrityError:
+            return None
+        conn.commit()
+        mid = cur.lastrowid
+        log.info(f"创建公共方法成功：id={mid}, name={name}")
+        return {"id": mid, "name": name.strip()}
+    finally:
+        conn.close()
+
+
+def update_public_method(
+    method_id: int,
+    name: Optional[str],
+    description: Optional[str],
+    content: Optional[str],
+) -> bool:
+    if name is None and description is None and content is None:
+        return True
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        fields: List[str] = []
+        params: List[Any] = []
+        if name is not None:
+            fields.append("name = ?")
+            params.append(name.strip())
+        if description is not None:
+            fields.append("description = ?")
+            params.append((description or "").strip() or None)
+        if content is not None:
+            fields.append("content = ?")
+            params.append(content)
+        fields.append("updated_at = ?")
+        params.append(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        params.append(method_id)
+        sql = f"UPDATE public_method SET {', '.join(fields)} WHERE id = ?"
+        try:
+            cur.execute(sql, params)
+        except sqlite3.IntegrityError:
+            return False
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def delete_public_method(method_id: int) -> bool:
+    conn = _get_conn()
+    try:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM public_method WHERE id = ?", (method_id,))
         conn.commit()
         return cur.rowcount > 0
     finally:
