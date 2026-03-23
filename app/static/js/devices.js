@@ -265,8 +265,7 @@
     }
     // 首次加载运行中任务列表
     loadRunningTaskTable();
-    // 10 秒轮询刷新在线设备与运行中任务（在线设备模块）
-    setInterval(loadDeviceList, 10000);
+    // 在线设备列表不轮询，仅首次加载与手动刷新（刷新按钮 / 顶部全局刷新）
     setInterval(loadRunningTaskTable, 10000);
   }
 
