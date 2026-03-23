@@ -109,9 +109,15 @@ window.Elements = {
   caseManageTab: document.getElementById("case-manage-tab"),
   execSetManageTab: document.getElementById("exec-set-manage-tab"),
   publicMethodManageTab: document.getElementById("public-method-manage-tab"),
+  assertionMethodManageTab: document.getElementById(
+    "assertion-method-manage-tab"
+  ),
   caseManagePanel: document.getElementById("case-manage-panel"),
   execSetManagePanel: document.getElementById("exec-set-manage-panel"),
   publicMethodManagePanel: document.getElementById("public-method-manage-panel"),
+  assertionMethodManagePanel: document.getElementById(
+    "assertion-method-manage-panel"
+  ),
   caseListTbody: document.getElementById("case-list-tbody"),
   casePageInfo: document.getElementById("case-page-info"),
   casePrevPage: document.getElementById("case-prev-page"),

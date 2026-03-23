@@ -1398,6 +1398,18 @@ def delete_public_method_api(method_id: int):
         return jsonify({"code": 400, "msg": error_msg, "data": None})
 
 
+@test_bp.get("/assertion-methods")
+def list_assertion_methods_api():
+    """uiautomator2 断言方法目录（系统预置，仅查询，不可通过接口修改）"""
+    try:
+        items = db.list_assertion_methods()
+        return jsonify({"code": 200, "msg": "ok", "data": items})
+    except Exception as e:
+        error_msg = f"获取断言方法目录失败：{str(e)}"
+        log.error(error_msg)
+        return jsonify({"code": 400, "msg": error_msg, "data": None})
+
+
 @test_bp.get("/suites/<int:suite_id>/content")
 def get_suite_content(suite_id):
     """获取测试用例内容（suite_id 直接为 SQLite 中的用例 id）"""

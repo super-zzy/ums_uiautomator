@@ -317,6 +317,14 @@ python -m uiautomator2 init
                     >
                         公共方法配置
                     </button>
+                    <button
+                        id="assertion-method-manage-tab"
+                        type="button"
+                        class="ml-2 px-4 py-2 text-sm font-medium border-b-2 border-transparent text-light hover:text-primary hover:border-primary/50"
+                        data-tab="assertion_methods"
+                    >
+                        断言方法配置
+                    </button>
                 </div>
 
                 <!-- 用例管理面板 -->
@@ -434,6 +442,31 @@ python -m uiautomator2 init
                             <tbody id="public-method-list-tbody">
                                 <tr>
                                     <td colspan="5" class="text-center py-4 text-light">加载中...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 断言方法配置（只读参考，数据来自库表 assertion_method） -->
+                <div id="assertion-method-manage-panel" class="hidden">
+                    <p class="text-xs text-light mb-3 leading-relaxed">
+                        以下为系统预置的 <span class="font-medium text-dark">uiautomator2</span> 常用断言与校验写法说明，供编写用例时对照；本页仅支持查看，不提供增删改。
+                    </p>
+                    <div class="overflow-x-auto mb-2 max-h-[min(520px,55vh)] overflow-y-auto border border-gray-100 rounded-lg">
+                        <table class="w-full min-w-[880px]">
+                            <thead class="sticky top-0 bg-gray-50 z-10">
+                                <tr class="border-b border-gray-200">
+                                    <th class="text-left py-3 px-3 text-sm font-medium text-light whitespace-nowrap">分类</th>
+                                    <th class="text-left py-3 px-3 text-sm font-medium text-light whitespace-nowrap">标识</th>
+                                    <th class="text-left py-3 px-3 text-sm font-medium text-light">名称</th>
+                                    <th class="text-left py-3 px-3 text-sm font-medium text-light min-w-[220px]">说明</th>
+                                    <th class="text-left py-3 px-3 text-sm font-medium text-light min-w-[260px]">参考写法</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assertion-method-list-tbody">
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-light">切换到此页签时加载…</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -560,6 +593,17 @@ python -m uiautomator2 init
                             </select>
                         </div>
                         <button type="button" id="insert-public-method-code-btn" class="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90">
+                            插入到光标处
+                        </button>
+                    </div>
+                    <div class="mb-3 flex flex-wrap items-end gap-3 border border-gray-100 rounded-lg p-3 bg-gray-50/80">
+                        <div class="flex-grow min-w-[200px]">
+                            <label class="block text-xs font-medium text-light mb-1">插入断言参考代码（uiautomator2）</label>
+                            <select id="suite-editor-assertion-method-select" class="w-full px-3 py-2 border rounded text-sm bg-white">
+                                <option value="">请选择断言条目…</option>
+                            </select>
+                        </div>
+                        <button type="button" id="insert-assertion-method-code-btn" class="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90">
                             插入到光标处
                         </button>
                     </div>
@@ -780,6 +824,7 @@ python -m uiautomator2 init
     <!-- 用例管理与单用例执行逻辑 -->
     <script src="{{ url_for('static', filename='js/suites.js') }}"></script>
     <script src="{{ url_for('static', filename='js/public_methods.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/assertion_methods.js') }}"></script>
     <!-- 执行集管理与执行逻辑 -->
     <script src="{{ url_for('static', filename='js/exec_sets.js') }}"></script>
     <!-- 录制脚本逻辑 -->
@@ -799,6 +844,7 @@ python -m uiautomator2 init
         window.Banner && window.Banner.initBanner();
         window.Suites && window.Suites.initSuites();
         window.PublicMethods && window.PublicMethods.init();
+        window.AssertionMethods && window.AssertionMethods.init();
         window.ExecSets && window.ExecSets.initExecSets();
         window.Record && window.Record.initRecordUI();
 

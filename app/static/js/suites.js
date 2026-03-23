@@ -27,9 +27,11 @@
     caseManageTab,
     execSetManageTab,
     publicMethodManageTab,
+    assertionMethodManageTab,
     caseManagePanel,
     execSetManagePanel,
     publicMethodManagePanel,
+    assertionMethodManagePanel,
     recordVideoCheckbox,
   } = Elements || {};
   const { apiGet, apiPost, addTaskLog, parseDateTime, formatDuration } =
@@ -75,6 +77,9 @@
     const pmTab =
       publicMethodManageTab ||
       document.getElementById("public-method-manage-tab");
+    const amTab =
+      assertionMethodManageTab ||
+      document.getElementById("assertion-method-manage-tab");
     const casePanel =
       caseManagePanel || document.getElementById("case-manage-panel");
     const execPanel =
@@ -82,10 +87,14 @@
     const pmPanel =
       publicMethodManagePanel ||
       document.getElementById("public-method-manage-panel");
+    const amPanel =
+      assertionMethodManagePanel ||
+      document.getElementById("assertion-method-manage-panel");
 
     setConfigTabStyles(caseTab, which === "cases");
     setConfigTabStyles(execTab, which === "exec_sets");
     setConfigTabStyles(pmTab, which === "public_methods");
+    setConfigTabStyles(amTab, which === "assertion_methods");
 
     if (casePanel) {
       casePanel.classList.toggle("hidden", which !== "cases");
@@ -96,9 +105,18 @@
     if (pmPanel) {
       pmPanel.classList.toggle("hidden", which !== "public_methods");
     }
+    if (amPanel) {
+      amPanel.classList.toggle("hidden", which !== "assertion_methods");
+    }
 
     if (which === "public_methods" && window.PublicMethods?.loadPublicMethodList) {
       window.PublicMethods.loadPublicMethodList();
+    }
+    if (
+      which === "assertion_methods" &&
+      window.AssertionMethods?.loadAssertionMethodList
+    ) {
+      window.AssertionMethods.loadAssertionMethodList();
     }
 
     if (window.adjustPanelHeights) {
@@ -355,6 +373,7 @@
           setTimeout(() => editor.refresh(), 0);
         }
         window.PublicMethods?.refreshSuiteEditorPicker?.();
+        window.AssertionMethods?.refreshSuiteEditorAssertionSelect?.();
       } else {
         throw new Error(data.msg || "获取用例内容失败");
       }
@@ -691,6 +710,9 @@
     const pmTabEl =
       publicMethodManageTab ||
       document.getElementById("public-method-manage-tab");
+    const amTabEl =
+      assertionMethodManageTab ||
+      document.getElementById("assertion-method-manage-tab");
     if (caseTabEl) {
       caseTabEl.addEventListener("click", () => switchConfigTab("cases"));
     }
@@ -700,6 +722,11 @@
     if (pmTabEl) {
       pmTabEl.addEventListener("click", () =>
         switchConfigTab("public_methods")
+      );
+    }
+    if (amTabEl) {
+      amTabEl.addEventListener("click", () =>
+        switchConfigTab("assertion_methods")
       );
     }
 
@@ -756,6 +783,7 @@
           setTimeout(() => editor.refresh(), 0);
         }
         window.PublicMethods?.refreshSuiteEditorPicker?.();
+        window.AssertionMethods?.refreshSuiteEditorAssertionSelect?.();
       });
     }
 
